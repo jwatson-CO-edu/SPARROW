@@ -54,6 +54,8 @@ Value_F( size_t alloc_ = DEFAULT_ALLOC_BYTES ) : N_bytes(alloc_) {
 template<typename T>
 T get_as(){  return *((T*) dataPtr);  }
 
+void* get_ref(){  return dataPtr;  }
+
 template<typename T>
 void set( const T* dataPtr_ ){
     void* src = (void*) dataPtr_;
@@ -134,8 +136,6 @@ class ValueTable_F;
 
 class Var_F{ 
 
-// FIXME: A VARIABLE NEEDS A TYPE
-
 protected: 
     friend class Arcs_F;
     friend class ValueTable_F;
@@ -145,12 +145,11 @@ uint   bound;
 
 public:
 
-Var_F*  parent;
-Value_F data; // Value
-Arcs_F  in;
-Arcs_F  out;
-
-string /*---*/ type_f;
+Var_F*     parent;
+Value_F    data; 
+Arcs_F     in;
+Arcs_F     out;
+FINCH_TYPE typ_f;
 
 Var_F( size_t dataBytes ) : data( Value_F( dataBytes ) ){}
 
@@ -158,6 +157,8 @@ Var_F( size_t dataBytes ) : data( Value_F( dataBytes ) ){}
 
 template<typename T>
 T get_as(){  return data.get_as<T>();  }
+
+void* get_ref(){  return data.get_ref();  }
 
 template<typename T>
 void set( const T* dataPtr_ ){  data.set( dataPtr_ );  }
@@ -252,6 +253,9 @@ Var_F* pop_out_addr( Var_F* target ){
 };
 
 /********** INTERPRETER **************************************************************************/
+
+/***** ValueTable_F ****************************/
+
 class ValueTable_F{ public:
 
 map<string,Var_F*> table;
@@ -270,6 +274,40 @@ bool unbind( string name ){
 }
 
 };
+
+auto get_var_value( Var_F* var ){
+    
+    switch( var->typ_f ){
+    
+    case INT_F:
+        auto result = var->get_as<int64_t>();
+        return result;
+
+    case FLOAT_F:
+        auto result = var->get_as<double>();
+        return result;
+
+    case CHAR_F:
+        auto result = var->get_as<char>();
+        return result;
+
+    case USRTYP_F:
+        auto result = var->get_ref();
+        return result;
+    
+    default:
+        break;
+    }
+}
+
+Var_F* add( Var_F* op1, Var_F* op2 ){
+    if( (op1->typ_f != USRTYP_F) || (op1->typ_f != ERRTYP_F) ){
+        auto result = get_var_value( op1 ) + get_var_value( op2 );
+        Var_F* rtnVal = new Var_F( sizeof(result) );
+        rtnVal->set( result );
+        return rtnVal;
+    }
+}
 
 
 
