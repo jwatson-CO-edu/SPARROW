@@ -3,10 +3,12 @@
 #define DEFAULT_ALLOC_BYTES  8
 
 #include<iostream>
-#include<vector>
 #include<string>
 #include<memory>
 #include<cstring>
+#include<vector>
+#include<iterator>
+#include<map>
 
 using std::cout;
 using std::cerr;
@@ -14,6 +16,9 @@ using std::endl;
 using std::vector;
 using std::shared_ptr;
 using std::string;
+using std::map;
+using std::pair;
+
 
 /***** Primitive Types *****/
 
@@ -82,45 +87,61 @@ Value_F operator=( const Value_F& other ){
 };
 
 /***** Arcs_F **********************************/
+class Var_F;
 
 class Arcs_F{ public:
 
 size_t /*----*/ N_arcs;
 vector<Var_F*>  arcs;
 vector<Value_F> weights;
+map<Var_F*,size_t> lookup;
 
 Arcs_F(){  N_arcs = 0;  }
 
 void add_arc( Var_F* target ){
     // http://www.cplusplus.com/reference/memory/shared_ptr/operator=/
     arcs.push_back( target );
+    lookup[ target ] = N_arcs;
     N_arcs++;
 }
 
 Var_F* pop_arc( size_t index = SIZE_MAX ){
     Var_F* rtnVal = nullptr;
+    bool   removd = false;
     if( N_arcs == 0 ){
         return rtnVal;
     }else if( index == SIZE_MAX ){
         rtnVal = arcs.back();
         arcs.pop_back();
         N_arcs--;
+        removd = true;
     }else if( index < N_arcs ){
         rtnVal = arcs[ index ];
         arcs.erase( arcs.begin() + index );
         N_arcs--;
+        removd = true;
     }
+    if( removd ){  lookup.erase( rtnVal );  }
     return rtnVal;
 }
+
+Var_F* pop_by_addr( Var_F* target ){  return pop_arc( lookup[ target ] );  }
+
 };
 
 /***** Var_F ***********************************/
+class ValueTable_F;
 
 class Var_F{ 
 
-protected: friend class Arcs_F;
+// FIXME: A VARIABLE NEEDS A TYPE
+
+protected: 
+    friend class Arcs_F;
+    friend class ValueTable_F;
 
 size_t refCount;
+uint   bound;
 
 public:
 
@@ -149,27 +170,106 @@ void set( const T& dataRef_ ){  data.set( dataRef_ );  }
 
 void add_in( Var_F* target ){ 
     // I reference `target`
+    if( in.N_arcs == 0 ){  parent = target;  }
     in.add_arc( target );
-    target->refCount++;
+    // `target` references me
+    target->out.add_arc( this );
 
-    // Target references me
-    target->add_out( this );
-    refCount++;
+    if( target != this ){
+        target->refCount++; // I reference `target`
+        refCount++; // ------- `target` references me
+    }
 }
 
 Var_F* pop_in( size_t index = SIZE_MAX ){  
     // I forget `target`
     Var_F* rtnPtr = in.pop_arc( index );   
-
+    if( in.N_arcs == 0 ){  parent = nullptr;  }
+    // `target` forgets me
+    rtnPtr->out.pop_by_addr( this );
+    // Update ref counts
+    if( rtnPtr != this ){
+        rtnPtr->refCount--; // I forget `target`
+        refCount--; // ------- `target` forgets me
+    }
+    return rtnPtr;
 }
 
-void   add_out( Var_F* target           ){  out.add_arc( target );         }
-Var_F* pop_out( size_t index = SIZE_MAX ){  return out.pop_arc( index );   }
+Var_F* pop_in_addr( Var_F* target ){  
+    // I forget `target`
+    Var_F* rtnPtr = in.pop_by_addr( target );   
+    if( in.N_arcs == 0 ){  parent = nullptr;  }
+    // `target` forgets me
+    rtnPtr->out.pop_by_addr( this );
+    // Update ref counts
+    if( target != this ){
+        rtnPtr->refCount--; // I forget `target`
+        refCount--; // ------- `target` forgets me
+    }
+    return rtnPtr;
+}
+
+void add_out( Var_F* target ){ 
+    // I reference `target`
+    out.add_arc( target );
+    // `target` references me
+    if( target->in.N_arcs == 0 ){  target->parent = this;  }
+    target->in.add_arc( this );
+    // Update ref counts
+    if( target != this ){
+        target->refCount++; // I reference `target`
+        refCount++; // ------- `target` references me
+    }
+}
+
+Var_F* pop_out( size_t index = SIZE_MAX ){  
+    // I forget `target`
+    Var_F* rtnPtr = out.pop_arc( index );   
+    // `target` forgets me
+    rtnPtr->in.pop_by_addr( this );
+    if( rtnPtr->in.N_arcs == 0 ){  rtnPtr->parent = nullptr;  }
+    if( rtnPtr != this ){
+        rtnPtr->refCount--; // I forget `target`
+        refCount--; // ------- `target` forgets me
+    }
+    return rtnPtr;
+}
+
+Var_F* pop_out_addr( Var_F* target ){  
+    // I forget `target`
+    Var_F* rtnPtr = out.pop_by_addr( target );   
+    // `target` forgets me
+    rtnPtr->in.pop_by_addr( this );
+    if( rtnPtr->in.N_arcs == 0 ){  rtnPtr->parent = nullptr;  }
+    // Update ref counts
+    if( target != this ){
+        rtnPtr->refCount--; // I forget `target`
+        refCount--; // ------- `target` forgets me
+    }
+    return rtnPtr;
+}
 
 };
 
 /********** INTERPRETER **************************************************************************/
+class ValueTable_F{ public:
 
+map<string,Var_F*> table;
+
+bool bind( string name, Var_F* var ){
+    var->refCount++;
+    var->bound = 1;
+    table[ name ] = var;
+}
+
+bool unbind( string name ){
+    Var_F* var = table[ name ];
+    var->refCount--;
+    var->bound = 0;
+    table[ name + "_DEAD" ] = var;
+}
+
+};
 
 
 
