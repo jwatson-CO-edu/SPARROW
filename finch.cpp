@@ -25,9 +25,10 @@ using std::pair;
 enum FINCH_TYPE{
     INT_F,
     FLOAT_F,
-    CHAR_F,
+    UCHAR_F,
     USRTYP_F,
-    ERRTYP_F
+    ERRTYP_F,
+    NULL_F
 };
 
 /********** VARIABLES ****************************************************************************/
@@ -99,6 +100,13 @@ vector<Value_F> weights;
 map<Var_F*,size_t> lookup;
 
 Arcs_F(){  N_arcs = 0;  }
+
+Var_F* get( size_t index ){
+    if( index < arcs.size() )
+        return arcs[ index ];
+    else
+        return nullptr;
+}
 
 void add_arc( Var_F* target ){
     // http://www.cplusplus.com/reference/memory/shared_ptr/operator=/
@@ -275,6 +283,8 @@ bool unbind( string name ){
 
 };
 
+/***** Evaluation ******************************/
+
 auto get_var_value( Var_F* var ){
     
     switch( var->typ_f ){
@@ -287,12 +297,8 @@ auto get_var_value( Var_F* var ){
         auto result = var->get_as<double>();
         return result;
 
-    case CHAR_F:
-        auto result = var->get_as<char>();
-        return result;
-
-    case USRTYP_F:
-        auto result = var->get_ref();
+    case UCHAR_F:
+        auto result = var->get_as<u_char>();
         return result;
     
     default:
@@ -300,14 +306,63 @@ auto get_var_value( Var_F* var ){
     }
 }
 
-Var_F* add( Var_F* op1, Var_F* op2 ){
-    if( (op1->typ_f != USRTYP_F) || (op1->typ_f != ERRTYP_F) ){
-        auto result = get_var_value( op1 ) + get_var_value( op2 );
-        Var_F* rtnVal = new Var_F( sizeof(result) );
-        rtnVal->set( result );
-        return rtnVal;
+FINCH_TYPE implicit_type_f( FINCH_TYPE op1, FINCH_TYPE op2 ){
+    FINCH_TYPE steps[] = { FLOAT_F, INT_F };
+    u_char     N /*-*/ = 2;
+    for( u_char i = 0 ; i < N ; i++ ){  
+        if( (op1 == steps[i]) || (op2 == steps[i]) ){  return steps[i];  }
     }
+    return UCHAR_F;
 }
+
+FINCH_TYPE get_implicit_type_f( Var_F* op1, Var_F* op2 ){
+    return implicit_type_f( op1->typ_f, op2->typ_f );
+}
+
+
+/***** Operators *******************************/
+
+Var_F* op_add( Var_F* op1, Var_F* op2 ){
+    auto   result = get_var_value( op1 ) + get_var_value( op2 );
+    Var_F* rtnVal = new Var_F( sizeof(result) );
+    rtnVal->set( result );
+    rtnVal->typ_f = get_implicit_type_f( op1, op1 );
+    return rtnVal;
+}
+
+Var_F* apply(){}
+
+
+/********** EVALUATION ***************************************************************************/
+#define MAX_ARGS 50
+typedef string FuncProto_F[3];
+typedef Var_F* ArgsArr_F[MAX_ARGS];
+
+
+/***** Evaluator_F *****************************/
+
+class Evaluator_F{ public:
+
+ArgsArr_F* get_args( Var_F* oprtr ){
+    ArgsArr_F* rtnArgs = (ArgsArr_F*) malloc( sizeof( ArgsArr_F ) );
+    Var_F*     nxtArg  = oprtr->out.arcs[0];
+    u_char     index   = 0;
+    while( nxtArg ){
+        (*rtnArgs)[ index ] = nxtArg;
+        index++;
+        nxtArg = oprtr->out.get( index );
+    }
+    for( u_char i = index ; i < MAX_ARGS ; i++ ){  (*rtnArgs)[i] = nullptr;  }
+}
+
+map<FuncProto_F,Var_F*(*)(ArgsArr_F*)> applicationTable;
+// All funcs must have signature: Var_F* FuncName(ArgsArr_F args)
+
+};
+
+/***** AST *************************************/
+
+/***** Parsing *********************************/
 
 
 
