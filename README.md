@@ -1,2 +1,5 @@
+# YOU DO NOT NEED A PROGRAMMING LANGUAGE
+# DECIDE WHAT YOU WANT BEFORE PROCEEDING
 # FINCH
 [F]lexible [I]nterpreted [N]ode [C]omputing [H]elper
+

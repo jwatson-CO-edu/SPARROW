@@ -15,16 +15,6 @@ using std::vector;
 using std::shared_ptr;
 using std::string;
 
-template<typename T>
-void delete_as( T* ptr ){
-    if( ptr ){  
-        T* addr = (T*) ptr;
-        delete addr;
-    }
-}
-
-/********** VARIABLES ****************************************************************************/
-
 /***** Primitive Types *****/
 
 enum FINCH_TYPE{
@@ -35,137 +25,169 @@ enum FINCH_TYPE{
     ERRTYP_F
 };
 
+/********** VARIABLES ****************************************************************************/
+
+/***** Value_F *********************************/
+
 // Idea: Pre-allocate var memory for spacial locality?
-class Var{ 
+class Value_F{ 
 
-private:
+protected:
 
-FINCH_TYPE typ_f;
-void* /**/ dataPtr;
-size_t     N_bytes;
-string     typKw;
+size_t N_bytes;
+void*  dataPtr;
 
 
 public:
 
-Var( FINCH_TYPE typ_ ) : typ_f( typ_ ) {  
-    switch( typ_ ){
-        case FINCH_TYPE::INT_F:
-            N_bytes = sizeof( int64_t );
-            typKw   = "int";
-            break;
+size_t n_bytes(){  return N_bytes;  }
 
-        case FINCH_TYPE::FLOAT_F:
-            N_bytes = sizeof( double );  
-            typKw   = "float";
-            break;
-
-        case FINCH_TYPE::CHAR_F:
-            N_bytes = sizeof( char );
-            typKw   = "int";
-            break;
-        
-        case FINCH_TYPE::USRTYP_F:
-            N_bytes = sizeof( void* );
-            typKw   = "type";
-            break;
-
-        default:
-            N_bytes = sizeof( void* );
-            typKw   = "BROKEN";
-            break;
-    }
-
+Value_F( size_t alloc_ = DEFAULT_ALLOC_BYTES ) : N_bytes(alloc_) {  
     dataPtr = malloc( N_bytes );
 }
-
-~Var(){  if( dataPtr ) free( dataPtr );  }
 
 template<typename T>
 T get_as(){  return *((T*) dataPtr);  }
 
-auto get(){  
-    // CHEAT: https://devblogs.microsoft.com/oldnewthing/20191106-00/?p=103066
-    struct value{
-        Var* var;
-        operator int64_t(){
-            return var->get_as<int64_t>();
-        }
-        operator double(){
-            return var->get_as<double>();
-        }
-        operator char(){
-            return var->get_as<char>();
-        }
-    };
-    return value{ this };
-};
-
 template<typename T>
-void set( const T& data_ ){
-    void* src = (void*) (&data_);
+void set( const T* dataPtr_ ){
+    void* src = (void*) dataPtr_;
     memcpy( dataPtr, src, N_bytes );
 }
 
-};
-
-
-
-/********** NODE CLASSES *************************************************************************/
-
-/***** Node *****/
-
-class Node{ public:
-
-void* data;
-
-auto get_ptr(){
-    return data;
+template<typename T>
+void set( const T& dataRef_ ){
+    void* src = (void*) (&dataRef_);
+    memcpy( dataPtr, src, N_bytes );
 }
 
-template<typename T>
-auto get(){
-    return *((T*) data);
+/** Rule of 3 **/
+
+// I. destructor
+~Value_F(){  if( dataPtr ) free( dataPtr );  }
+
+// II. copy constructor
+Value_F( const Value_F& other ) : N_bytes( other.N_bytes ){
+    set( other.dataPtr );
 }
 
-template<typename T>
-void set_ptr( T* data_ ){
-    data = (void*) data_;
-}
-
-template<typename T>
-void set( T& data_ ){
-    data = (void*) (&data_);
+// III. copy assignment
+Value_F operator=( const Value_F& other ){
+    if (this == &other) return *this;
+    N_bytes = other.N_bytes;
+    set( other.dataPtr );
+    return *this;
 }
 
 };
+
+/***** Arcs_F **********************************/
+
+class Arcs_F{ public:
+
+size_t /*----*/ N_arcs;
+vector<Var_F*>  arcs;
+vector<Value_F> weights;
+
+Arcs_F(){  N_arcs = 0;  }
+
+void add_arc( Var_F* target ){
+    // http://www.cplusplus.com/reference/memory/shared_ptr/operator=/
+    arcs.push_back( target );
+    N_arcs++;
+}
+
+Var_F* pop_arc( size_t index = SIZE_MAX ){
+    Var_F* rtnVal = nullptr;
+    if( N_arcs == 0 ){
+        return rtnVal;
+    }else if( index == SIZE_MAX ){
+        rtnVal = arcs.back();
+        arcs.pop_back();
+        N_arcs--;
+    }else if( index < N_arcs ){
+        rtnVal = arcs[ index ];
+        arcs.erase( arcs.begin() + index );
+        N_arcs--;
+    }
+    return rtnVal;
+}
+};
+
+/***** Var_F ***********************************/
+
+class Var_F{ 
+
+protected: friend class Arcs_F;
+
+size_t refCount;
+
+public:
+
+Var_F*  parent;
+Value_F data; // Value
+Arcs_F  in;
+Arcs_F  out;
+
+string /*---*/ type_f;
+
+Var_F( size_t dataBytes ) : data( Value_F( dataBytes ) ){}
+
+/** Value Wrappers **/
+
+template<typename T>
+T get_as(){  return data.get_as<T>();  }
+
+template<typename T>
+void set( const T* dataPtr_ ){  data.set( dataPtr_ );  }
+
+template<typename T>
+void set( const T& dataRef_ ){  data.set( dataRef_ );  }
+
+
+/** Graph Modification **/
+
+void add_in( Var_F* target ){ 
+    // I reference `target`
+    in.add_arc( target );
+    target->refCount++;
+
+    // Target references me
+    target->add_out( this );
+    refCount++;
+}
+
+Var_F* pop_in( size_t index = SIZE_MAX ){  
+    // I forget `target`
+    Var_F* rtnPtr = in.pop_arc( index );   
+
+}
+
+void   add_out( Var_F* target           ){  out.add_arc( target );         }
+Var_F* pop_out( size_t index = SIZE_MAX ){  return out.pop_arc( index );   }
+
+};
+
+/********** INTERPRETER **************************************************************************/
+
+
 
 
 /********** TEST/MAIN ****************************************************************************/
 int main(){
 
-cout << "Test 1" << endl;
-Var a{INT};
-Var b{FINCH_TYPE.INT};
+cout << "`Value_F` Test" << endl;
+Value_F a( 8 );
+Value_F b( 8 );
 int64_t val1 = 4;
 a.set( val1 );
-b.set( 3 );
-cout << a.get() << " + " << b.get();
-cout << " = " << a.get() + b.get() << endl;
+b.set( (int64_t) 3 );
+cout << a.get_as<int64_t>() << " + " << b.get_as<int64_t>();
+cout << " = " << a.get_as<int64_t>() + b.get_as<int64_t>() << endl;
 cout << endl << endl;
+int64_t val2 = a.get_as<int64_t>();
+int64_t val3 = b.get_as<int64_t>();
 
-
-cout << "Test 2" << endl;
-Node /*----*/ foo{};
-int val = 1;
-foo.set_ptr( &val );
-cout << *(int*) foo.get_ptr() << ", " << foo.get<int>() << endl;
-cout << endl << endl;
-int val2 = foo.get<int>();
-
-
-cout << "Test 3" << endl;
-Var xur{};
 
 cout << "Complete!" << endl;
 return 0;

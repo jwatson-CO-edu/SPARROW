@@ -18,8 +18,7 @@ class class1
  
 int main()
 {
-   class1
-         a1(RATS);
+   class1 a1(RATS);
  
    return 0;
 }
