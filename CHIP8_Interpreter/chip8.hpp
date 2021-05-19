@@ -145,7 +145,7 @@ bool fetch_decode_exec(){
 
         /// Machine Sub ///
         case 0x0:
-            // NOT USED: pause execution of the CHIP-8 program and call a subroutine written in machine language at address NNN instead.
+            // NOT USED: pause execution of the CHIP-8 and call a sub written in machine language at address NNN instead.
             break;
 
         /// Jump ///
