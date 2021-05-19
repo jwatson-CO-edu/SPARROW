@@ -57,7 +57,27 @@ Reg8 sound;
 // 16 8-bit (one byte) general-purpose variable registers numbered 0 - F, ie. 0 through 15 in decimal, called V0 through `VF
 Reg8 VX[_REG_VARI];
 
+///// Utilities /////////////////////////////////
+inline bool UT_incr_PC(){
+    // Increment the Program Counter
+    PC += 2;
+    return 0;
+}
 
+inline Reg8 UT_VX_contents( Byte x ){
+    // Fetch contents of the `VX` register
+    return VX[ x ];
+}
+
+inline bool UT_VX_equal( Byte x, Word nn ){
+    // Return 1 if the contents of register VX are equal to `NN`, Otherwise return 0
+    return UT_VX_contents( x ) == nn;
+}
+
+inline bool UT_VX_VY_equal( Byte x, Byte y ){
+    // Return 1 if the contents of register VX are equal to `NN`, Otherwise return 0
+    return UT_VX_contents( x ) == UT_VX_contents( y );
+}
 
 ///// OpCodes ///////////////////////////////////
 inline bool OP_clear_screen(){
@@ -91,6 +111,45 @@ inline bool OP_return(){
     return 0;
 }
 
+inline bool OP_skip_VX_equal_value( Byte x, Word nn ){
+    // skip one instruction if the value in VX is equal to NN
+    if( UT_VX_equal( x, nn ) ){  UT_incr_PC();  }
+    return 0;
+}
+
+inline bool OP_skip_VX_not_equal_value( Byte x, Word nn ){
+    // skip one instruction if the value in VX is equal to NN
+    if( !UT_VX_equal( x, nn ) ){  UT_incr_PC();  }
+    return 0;
+}
+
+inline bool OP_skip_VX_VY_equal( Byte x, Byte y ){
+    if( UT_VX_VY_equal( x, y ) ){  UT_incr_PC();  }
+    return 0;
+}
+
+inline bool OP_skip_VX_VY_not_equal( Byte x, Byte y ){
+    if( !UT_VX_VY_equal( x, y ) ){  UT_incr_PC();  }
+    return 0;
+}
+
+inline bool OP_set_VX( Byte x, Word nn ){
+    // Set the contents of register VX equal to `NN`
+    VX[ x ] = nn;
+    return 0;
+}
+
+inline bool OP_add_to_VX( Byte x, Word nn ){
+    // Accumulate `NN` into register VX
+    // NOTE: Carry bit NOT set by this op!
+    VX[ x ] += nn;
+    return 0;
+}
+
+inline bool OP_set_VX_to_VY( Byte x, Byte y ){
+    VX[ x ] = VX[ y ];
+    return 0;
+}
 
 ///// Engine ////////////////////////////////////
 
@@ -102,7 +161,7 @@ void decrement_timers(){
 
 Dubw fetch(){
     // read two successive bytes from memory and combine them into one 16-bit instruction.
-    PC += 2;
+    UT_incr_PC();
     return *(RAM + PC) << 8 + *(RAM + (PC + 1));
 }
 
@@ -135,10 +194,13 @@ bool fetch_decode_exec(){
             OP_return();
             break;
 
+        /// Else Op has arguments, break ///
         default:
             break;
 
     }
+
+    
 
     //// Operations with Arguments ////
     switch( T ){
@@ -160,23 +222,27 @@ bool fetch_decode_exec(){
         
         /// Skip VX Equal Value ///
         case 0x3:
-            // FIXME: START HERE
+            OP_skip_VX_equal_value( X, NN );
             break;
 
         /// Skip VX Not Equal Value ///
         case 0x4:
+            OP_skip_VX_not_equal_value( X, NN );
             break;
 
         /// Skip VX Equal VY ///
         case 0x5:
+            OP_skip_VX_VY_equal( X, Y );
             break;
 
         /// Set VX to Value ///
         case 0x6:
+            OP_set_VX( X, NN );
             break;
 
-        /// Add VX to Value ///
+        /// Add Value to VX ///
         case 0x7:
+            OP_add_to_VX( X, NN );
             break;
 
         /// Arithemetic & Logic ///
@@ -184,30 +250,39 @@ bool fetch_decode_exec(){
 
             switch( N ){
 
+                // Set //
                 case 0x0:
                     break;
 
+                // Logical OR //
                 case 0x1:
                     break;
 
+                // Logical AND //
                 case 0x2:
                     break;
 
+                // Logical XOR //
                 case 0x3:
                     break;
 
+                // Subtract VX-VY //
                 case 0x4:
                     break;
 
+                // Subtract VY-VX //
                 case 0x6:
                     break;
 
+                // Shift Right //
                 case 0x7:
                     break;
 
+                // Shift Left //
                 case 0xE:
                     break;
 
+                // NO-OP //
                 default:
                     break;
             }
@@ -216,8 +291,34 @@ bool fetch_decode_exec(){
 
         /// Skip VX Not Equal VY ///
         case 0x9:
+            OP_skip_VX_VY_not_equal( X, Y );
             break;
 
+        /// Set Index ///
+        case 0xA:
+            break;
+
+        /// Jump with Offset ///
+        case 0xB:
+            break;
+
+        /// Random ///
+        case 0xC:
+            break;
+
+        /// Draw ///
+        case 0xD:
+            break;
+
+        /// Skip if Keydown ///
+        case 0xE:
+            break;
+
+        /// Timer Manipulation ///
+        case 0xF:
+            break;
+
+        /// NO-OP ///
         default:
             break;
     }
