@@ -4,9 +4,11 @@
 
 #include <string>
     using std::string;
-#include<map>
+#include <map>
     using std::map;
     using std::pair;
+#include <vector>
+    using std::vector;
 
 
 
@@ -105,28 +107,30 @@ Atom* append( Atom* list ){
 /********** PARSING ******************************************************************************/
 map<string, string> _RESERVED;
 
-Atom* tokenize( string expStr ){
+vector<string> tokenize( string expStr ){
     // Parse an expression string into an s-expression
     // 0. For character in `expStr`
-    size_t depth = 0;
-    size_t len   = expStr.length();
-    string c;
-    string token = "";
-    Atom*  sExpr = make_cons();
+    size_t /*---*/ len   = expStr.length();
+    string /*---*/ c;
+    string /*---*/ token = "";
+    vector<string> tokens;
     for( size_t i = 0 ; i < len ; ++i ){
         c = expStr[i];
 
         // Case Open Paren
         if( _RESERVED.find( c )->second == "open_parn" ){
-            depth++;
+            // TODO: Accept token whether spaced or not
         } else 
 
         // Case Close Paren
         if( _RESERVED.find( c )->second == "clos_parn" ){
-            depth--;
+            // TODO: Accept token whether spaced or not
         } //else 
-
     }
+}
+
+Atom* consify_tokens( const vector<string>& tokens ){
+    // TODO: Render tokens as a LISP list
 }
 
 int main(){
