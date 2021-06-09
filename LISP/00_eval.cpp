@@ -104,10 +104,16 @@ Atom* consify_atom( Atom* atm ){
 
 Atom* append( Atom* list, Atom* atom ){
     Atom* rtnLst = list;
+
+    // Case 1: This is an atom that needs to be a list
+    if( list->typ != CONS ){
+        rtnLst = consify_atom( list );
+    }
+
     // Case 1: This is a cons being treated as a list
     if( list->typ == CONS ){
         // FIXME: START HERE
-    // Case 2: This is an atom that needs to be a list
+    // Case 2:
     }else{
 
     }
