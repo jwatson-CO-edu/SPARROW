@@ -9,6 +9,7 @@
     using std::pair;
 #include <vector>
     using std::vector;
+#include "demo2400_helpers.hpp"
 
 
 
@@ -93,48 +94,80 @@ Atom* find_terminus( Atom* list ){
     }else{
 
     }
+    return nullptr;
 }
 
-Atom* append( Atom* list ){
+Atom* consify_atom( Atom* atm ){
+    // Wrap the `atm` in a cons, with `atm` as 'car'
+    return make_cons( atm, make_null() );
+}
+
+Atom* append( Atom* list, Atom* atom ){
+    Atom* rtnLst = list;
+    // Case 1: This is a cons being treated as a list
     if( list->typ == CONS ){
         // FIXME: START HERE
+    // Case 2: This is an atom that needs to be a list
     }else{
 
     }
+    return nullptr;
 }
 
 
 /********** PARSING ******************************************************************************/
 map<string, string> _RESERVED;
 
-vector<string> tokenize( string expStr ){
+vector<string> tokenize( string expStr, string sepChar = " " ){
     // Parse an expression string into an s-expression
     // 0. For character in `expStr`
     size_t /*---*/ len   = expStr.length();
     string /*---*/ c;
     string /*---*/ token = "";
     vector<string> tokens;
+
+    auto stow_token = [&tokens, &token](){
+        tokens.push_back( token );
+        token = "";
+    };
+    auto stow_char  = [&c, &tokens](){  tokens.push_back( c );  };
+    auto cache_char = [&c, &token ](){  token += c;             };
+
+    // 0. Apply the postfix hack
+    expStr += ' ';
+    // 1. For every character in the string
     for( size_t i = 0 ; i < len ; ++i ){
+        // 2. Fetch character
         c = expStr[i];
 
+        // 3. Either add char to present token or create a new one
         // Case Open Paren
-        if( _RESERVED.find( c )->second == "open_parn" ){
-            // TODO: Accept token whether spaced or not
-        } else 
-
+        if( _RESERVED.find( c )->second == "open_parn" ){  stow_char();  } else 
         // Case Close Paren
-        if( _RESERVED.find( c )->second == "clos_parn" ){
-            // TODO: Accept token whether spaced or not
-        } //else 
+        if( _RESERVED.find( c )->second == "clos_parn" ){  
+            if( token.length() ){  stow_token();  }
+            stow_char();  
+        } else 
+        // Case separator
+        if( c == sepChar ){  stow_token();  } else
+        // Case any other char
+        cache_char();
     }
+
+    // N. Return the list of tokens
+    return tokens;
 }
 
 Atom* consify_tokens( const vector<string>& tokens ){
     // TODO: Render tokens as a LISP list
+    return nullptr;
 }
 
 int main(){
     /// Reserved Symbols and Keywords ///
     _RESERVED.insert( pair<string, string>( "(", "open_parn" ) ); // Open  paren
     _RESERVED.insert( pair<string, string>( ")", "clos_parn" ) ); // Close paren
+
+    string expr = "(cons a b)";
+    cout << tokenize( expr ) << endl;
 }
