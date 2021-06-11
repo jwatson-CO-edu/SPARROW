@@ -1,9 +1,11 @@
 /* Text:    [L]ISP [I]n [S]mall [P]ieces by Christian Quinnec 
  * Chapter: 1
+ * Project: [S]cheme [P] [A] [R] [R][O][W]
  * Project: Micro-evaluator, written in C++ instead of Scheme */
 
 #include <string>
     using std::string;
+    using std::to_string;
 #include <map>
     using std::map;
     using std::pair;
@@ -32,6 +34,17 @@ struct Atom{
     double num; // Numeric data
 };
 
+Atom* make_cons( Atom* car_ = nullptr, Atom* cdr_ = nullptr ){
+    // Make a pair
+    Atom* rtnAtm = new Atom{};
+    rtnAtm->typ  = CONS;
+    rtnAtm->car  = car_ ? car_ : make_null(); // pair left
+    rtnAtm->cdr  = cdr_ ? cdr_ : make_null(); // pair right
+    rtnAtm->str  = ""; 
+    rtnAtm->num  = nan(""); 
+    return rtnAtm;
+}
+
 Atom* make_strn( string str_ ){
     // Make a string
     Atom* rtnAtm = new Atom{};
@@ -39,7 +52,7 @@ Atom* make_strn( string str_ ){
     rtnAtm->car  = nullptr;
     rtnAtm->cdr  = nullptr;
     rtnAtm->str  = str_; // String or symbol
-    rtnAtm->str  = 0.0;
+    rtnAtm->num  = nan(""); 
     return rtnAtm;
 }
 
@@ -50,7 +63,7 @@ Atom* make_nmbr( double nmbr_ ){
     rtnAtm->car  = nullptr;
     rtnAtm->cdr  = nullptr;
     rtnAtm->str  = ""; 
-    rtnAtm->str  = nmbr_; // Number
+    rtnAtm->num  = nmbr_; // Number
     return rtnAtm;
 }
 
@@ -60,68 +73,81 @@ Atom* make_null(){
     rtnAtm->typ  = Null; // Null
     rtnAtm->car  = nullptr;
     rtnAtm->cdr  = nullptr;
-    rtnAtm->str  = ""; 
-    rtnAtm->str  = 0.0; 
-    return rtnAtm;
-}
-
-Atom* make_cons( Atom* car_ = nullptr, Atom* cdr_ = nullptr ){
-    // Make a cons pair
-    Atom* rtnAtm = new Atom{};
-    rtnAtm->typ  = CONS;
-    rtnAtm->car  = car_ ? car_ : make_null(); // pair left
-    rtnAtm->cdr  = cdr_ ? cdr_ : make_null(); // pair right
     rtnAtm->str  = "";
-    rtnAtm->str  = 0.0;
+    rtnAtm->num  = nan(""); 
     return rtnAtm;
 }
 
 
 /********** LIST PROCESSING **********************************************************************/
 
-// Return T if this atom is `Null`, Otherwise return F
-bool p_Null( Atom* op ){  return (op->typ == Null);  }
+/***** Type Tests *****/
+
+bool p_Null( Atom* op ){  return (op->typ == Null);  } // Return T if this atom is `Null`, Otherwise return F
+bool p_cons( Atom* op ){  return (op->typ == CONS);  } // Return T if this atom is `CONS`, Otherwise return F
+
+
+/***** Cons Modifiers *****/
 
 void set_car_B( Atom* cons, Atom* valu ){  cons->car = valu;  }
 void set_cdr_B( Atom* cons, Atom* valu ){  cons->cdr = valu;  }
-
-Atom* find_terminus( Atom* list ){
-    // Iterate to the end of the list
-    Atom* ptr = list->cdr;
-    if( list->typ == CONS ){
-        while( !p_Null( ptr ) ){  ptr = list->cdr;  }
-        
-    }else{
-
-    }
-    return nullptr;
-}
 
 Atom* consify_atom( Atom* atm ){
     // Wrap the `atm` in a cons, with `atm` as 'car'
     return make_cons( atm, make_null() );
 }
 
-Atom* append( Atom* list, Atom* atom ){
-    Atom* rtnLst = list;
 
-    // Case 1: This is an atom that needs to be a list
-    if( list->typ != CONS ){
-        rtnLst = consify_atom( list );
-    }
-
-    // Case 1: This is a cons being treated as a list
+Atom* find_terminus( Atom* list ){
+    // Iterate to the ending cons of the list and return a pointer to it
+    Atom* ptr = list->cdr;
     if( list->typ == CONS ){
-        // FIXME: START HERE
-    // Case 2:
+        while( !p_Null( ptr->cdr ) ){  ptr = ptr->cdr;  }
+        return ptr;
     }else{
-
+        return list;
     }
-    return nullptr;
+}
+
+
+Atom* append( Atom* list, Atom* atom = nullptr ){
+    // Append an atom to the end of a conslist, Create a conslist if none exists
+    Atom* rtnLst = list;
+    Atom* endCns = nullptr;
+    // If the list was actually a non-cons atom, This is an atom that needs to be a list
+    if( list->typ != CONS ){  rtnLst = consify_atom( list );  }
+    // If there was a second arg
+    if( atom ){
+        // Find the end of the list
+        endCns = find_terminus( list );
+        // Wrap the atom in a cons and append
+        set_cdr_B( endCns, consify_atom( atom ) );
+    }  
+    return list;
+}
+
+/***** Printing *****/
+
+string str( Atom* item ){
+    // Return the string representation of the `item`
+    string rtnStr = "<EMPTY>";
+    switch (item->typ){
+        /* Null */ case Null:  rtnStr = "\xE2\xA7\x84";  break; // https://www.fileformat.info/info/unicode/char/29c4/index.htm
+        /* Str/Sym */ case STRN:  rtnStr = item->str; /*-*/ break;
+        /* Num */ case NMBR:  rtnStr = to_string( item->num ); break;
+        
+
+        case CONS: // Cons pair
+            if(  ) // FIXME: START HERE
+
+        default:
+            break;
+    }
 }
 
 
 /********** PARSING ******************************************************************************/
+
 map<string, string> _RESERVED;
 
 vector<string> tokenize( string expStr, string sepChar = " " ){
@@ -165,9 +191,11 @@ vector<string> tokenize( string expStr, string sepChar = " " ){
 }
 
 Atom* consify_tokens( const vector<string>& tokens ){
-    // TODO: Render tokens as a LISP list
-    return nullptr;
+    // Render tokens as a LISP list
+    // FIXME: PART TWO
 }
+
+/********** TESTING ******************************************************************************/
 
 int main(){
     /// Reserved Symbols and Keywords ///
