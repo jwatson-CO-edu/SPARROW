@@ -1,7 +1,7 @@
-/* Text:    [L]ISP [I]n [S]mall [P]ieces by Christian Quinnec 
- * Chapter: 1
- * Project: [S]cheme [P] [A] [R] [R][O][W]
- * Project: Micro-evaluator, written in C++ instead of Scheme */
+/* Text:      [L]ISP [I]n [S]mall [P]ieces by Christian Quinnec 
+ * Chapter:   1
+ * Project:   SPARROW, [S]cheme [P]rogram [A]llowing [R]easonable [R]eckoning [O]f [W]ork
+ * Component: Micro-evaluator, written in C++ instead of Scheme */
 
 #include <string>
     using std::string;
@@ -197,11 +197,22 @@ Atom* consify_tokens( const vector<string>& tokens ){
 
 /********** TESTING ******************************************************************************/
 
-int main(){
-    /// Reserved Symbols and Keywords ///
+void setup(){
+    // Set variables and prepare environment for REPL
+
+    /*** Reserved Symbols and Keywords ***/
     _RESERVED.insert( pair<string, string>( "(", "open_parn" ) ); // Open  paren
     _RESERVED.insert( pair<string, string>( ")", "clos_parn" ) ); // Close paren
+}
 
+int main(){
+    /*** Init env ***/
+    setup();
+
+    /*** Test expression tokenization ***/
     string expr = "(cons a b)";
     cout << tokenize( expr ) << endl;
+
+    /*** Test vector consification ***/
+    // FIXME: CONSIFY
 }
