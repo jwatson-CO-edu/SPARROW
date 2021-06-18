@@ -108,6 +108,7 @@ bool p_cons( Atom* op ){  return (op->typ == CONS);  }
 void set_car_B( Atom* cons, Atom* valu ){  cons->car = valu;  }
 void set_cdr_B( Atom* cons, Atom* valu ){  cons->cdr = valu;  }
 
+
 Atom* consify_atom( Atom* atm ){
     // Wrap the `atm` in a cons, with `atm` as 'car'
     return make_cons( atm, make_null() );
@@ -130,6 +131,20 @@ Atom* append( Atom* list, Atom* atom = nullptr ){
     // Append an atom to the end of a conslist, Create a conslist if none exists
     Atom* rtnLst = list;
     Atom* endCns = nullptr;
+
+    // If the given list is a cons list, it is either an empty cons or the head of a LISP list
+    if( list->typ == CONS ){
+        if( atom ){
+            
+        }
+        if(  p_Null( list->car )  ){  set_car_B( list, atom );  } 
+        else{
+
+        }
+    }
+
+
+
     // If the list was actually a non-cons atom, This is an atom that needs to be a list
     if( list->typ != CONS ){  rtnLst = consify_atom( list );  }
     // If there was a second arg
@@ -237,20 +252,52 @@ bool p_float_string( const string& inputStr ){
 
 bool p_null_string( const string& inputStr ){
     // Return T if the string is appropriate for Null conversion, otherwise return F
-    if( !inputStr.length() )  return true;
-    if( toupper( inputStr.c_str() ) )
+    // if( !inputStr.length() ) /*------------*/ return true; // 2021-06-18: For now, do not consider empty string null
+    if( str_to_upper( inputStr ) == "NULL" )  return true; // Consider any capitalization of "NULL"
+    return false;
 }
 
 
 Atom* atomize_string( const string& token ){
+    // Convert a string into a non-cons atom
     if(  p_float_string( token )  )  return make_nmbr( stod( token ) ); 
-
+    if(  p_null_string( token )   )  return make_null();
+    /* else assume it is string --*/ return make_strn( token );
 }
 
-Atom* consify_tokens( const vector<string>& tokens ){
+Atom* consify_tokens( const vector<string>& tokens, size_t bgnDex = 0, int depth = -1 ){
     // Render tokens as a cons structure
+    string token;
+    size_t len /**/ = tokens.size();
+    Atom*  rtnTree  = nullptr; // Cons structure to return
+    Atom*  listTail = nullptr; // Tail of the current list
+    // If there are one or more strings to process, then attempt to construct a token tree
     if( tokens.size() ){
-        Atom* rtnTree = make_cons(  )
+        
+        // Start off by creating a cons list
+
+        // For each token in the vector
+        for( size_t i = bgnDex ; i < len ; ++i ){
+            // Fetch token at this index
+            token = tokens[i];
+
+            // Case: This is an Open Paren
+            if(  find_reserved( token ) == "open_parn"  ){
+                depth++;
+                // If we are still at the top level, then begin begin the list at this level
+                if( depth == 0 ){
+                
+                // else there is a new level of depth to the structure, recur
+                }else{
+
+                }
+            }
+        }
+
+
+        
+    
+    // else there were no tokens, return Null
     }else{
         return make_null();
     }
