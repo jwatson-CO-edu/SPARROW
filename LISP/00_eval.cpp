@@ -6,6 +6,12 @@
 #include <string>
     using std::string;
     using std::to_string;
+    using std::stod;
+#include <cstring>
+    using std::toupper;
+#include <iostream> // std::cout, std::skipws, std::noskipws
+    using std::noskipws;
+#include <sstream>
 #include <map>
     using std::map;
     using std::pair;
@@ -13,6 +19,20 @@
     using std::vector;
 #include "demo2400_helpers.hpp"
 
+
+/********** HELPER FUNCTIONS *********************************************************************/
+
+string str_to_upper( const string& inputStr ){
+    // Return the uppercase version of the string
+    string rtnStr;
+    char   c;
+    size_t len = rtnStr.length();
+    for( size_t i = 0 ; i < len ; ++i ){
+        c = inputStr[i];
+        rtnStr += toupper( c );
+    }
+    return rtnStr;
+}
 
 
 /********** ATOMS ********************************************************************************/
@@ -84,11 +104,7 @@ Atom* make_null(){
 /***** Type Tests *****/
 
 bool p_Null( Atom* op ){  return (op->typ == Null);  } // Return T if this atom is `Null`, Otherwise return F
-bool p_cons( Atom* op ){  return (op->typ == CONS);  } // Return T if this atom is `CONS`, Otherwise return F
-
-
-/***** Cons Modifiers *****/
-
+bool p_cons( Atom* op ){  return (op->typ == CONS);  }
 void set_car_B( Atom* cons, Atom* valu ){  cons->car = valu;  }
 void set_cdr_B( Atom* cons, Atom* valu ){  cons->cdr = valu;  }
 
@@ -128,18 +144,23 @@ Atom* append( Atom* list, Atom* atom = nullptr ){
 
 /***** Printing *****/
 
-string str( Atom* item ){
+string str( Atom* item, string rtnStr = "", bool isNested = true ){
     // Return the string representation of the `item`
-    string rtnStr = "<EMPTY>";
     switch (item->typ){
-        /* Null */ case Null:  rtnStr = "\xE2\xA7\x84";  break; // https://www.fileformat.info/info/unicode/char/29c4/index.htm
-        /* Str/Sym */ case STRN:  rtnStr = item->str; /*-*/ break;
-        /* Num */ case NMBR:  rtnStr = to_string( item->num ); break;
-        
-
-        case CONS: // Cons pair
-            if(  ) // FIXME: START HERE
-
+        /* Null ---*/ case Null:  rtnStr += "\xE2\xA7\x84";  break; // https://www.fileformat.info/info/unicode/char/29c4/index.htm
+        /* Str/Sym */ case STRN:  rtnStr += item->str; /*-*/ break;
+        /* Num ----*/ case NMBR:  rtnStr += to_string( item->num ); break;
+        /* Pair ---*/ case CONS: 
+            if( isNested ){  rtnStr += "( ";  }
+            // If the `car` is another cons, assume a complex nested structure
+            if( item->car->typ == CONS ){
+                rtnStr += str( item->car, rtnStr, true  ) + ", " + str( item->cdr, rtnStr, true  );
+            // else assume it is a common LISP list
+            }else{
+                rtnStr += str( item->car, rtnStr, false ) + ", " + str( item->cdr, rtnStr, false );
+            }
+            if( isNested ){  rtnStr += " ) ";  }
+            break;
         default:
             break;
     }
@@ -149,6 +170,13 @@ string str( Atom* item ){
 /********** PARSING ******************************************************************************/
 
 map<string, string> _RESERVED;
+
+string find_reserved( const string& token ){
+    // Return the name of the reserved symbol, or an empty string if not found
+    map<string,string>::iterator it = _RESERVED.find( token );
+    if( it == _RESERVED.end() ){  return "";  }
+    else{  return it->second;  }
+}
 
 vector<string> tokenize( string expStr, string sepChar = " " ){
     // Parse an expression string into an s-expression
@@ -174,9 +202,9 @@ vector<string> tokenize( string expStr, string sepChar = " " ){
 
         // 3. Either add char to present token or create a new one
         // Case Open Paren
-        if( _RESERVED.find( c )->second == "open_parn" ){  stow_char();  } else 
+        if( find_reserved( c ) == "open_parn" ){  stow_char();  } else 
         // Case Close Paren
-        if( _RESERVED.find( c )->second == "clos_parn" ){  
+        if( find_reserved( c ) == "clos_parn" ){  
             if( token.length() ){  stow_token();  }
             stow_char();  
         } else 
@@ -190,9 +218,51 @@ vector<string> tokenize( string expStr, string sepChar = " " ){
     return tokens;
 }
 
+/*
+CONS, // Cons pair
+STRN, // String/Symbol
+Null  // Null
+*/
+
+bool p_float_string( const string& inputStr ){
+    // Return T if the string is appropriate for float conversion, otherwise return F
+    // Author: Bill the Lizard,  https://stackoverflow.com/a/447307
+    std::istringstream iss( inputStr );
+    float f;
+    iss >> noskipws >> f; // noskipws considers leading whitespace invalid
+    // Check the entire string was consumed and if either failbit or badbit is set
+    return iss.eof() && !iss.fail(); 
+}
+
+
+bool p_null_string( const string& inputStr ){
+    // Return T if the string is appropriate for Null conversion, otherwise return F
+    if( !inputStr.length() )  return true;
+    if( toupper( inputStr.c_str() ) )
+}
+
+
+Atom* atomize_string( const string& token ){
+    if(  p_float_string( token )  )  return make_nmbr( stod( token ) ); 
+
+}
+
 Atom* consify_tokens( const vector<string>& tokens ){
-    // Render tokens as a LISP list
-    // FIXME: PART TWO
+    // Render tokens as a cons structure
+    if( tokens.size() ){
+        Atom* rtnTree = make_cons(  )
+    }else{
+        return make_null();
+    }
+
+
+    // Case Open Paren
+    if( _RESERVED.find( c )->second == "open_parn" ){  stow_char();  } else 
+    // Case Close Paren
+    if( _RESERVED.find( c )->second == "clos_parn" ){  
+        if( token.length() ){  stow_token();  }
+        stow_char();  
+    }
 }
 
 /********** TESTING ******************************************************************************/
