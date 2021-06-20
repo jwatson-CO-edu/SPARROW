@@ -139,7 +139,8 @@ Atom* append( Atom* list, Atom* atom = nullptr ){
         }
         if(  p_Null( list->car )  ){  set_car_B( list, atom );  } 
         else{
-
+            endCns = find_terminus( list );
+            // FIXME: ADD A NEW CONS
         }
     }
 
@@ -265,6 +266,7 @@ Atom* atomize_string( const string& token ){
     /* else assume it is string --*/ return make_strn( token );
 }
 
+
 Atom* consify_tokens( const vector<string>& tokens, size_t bgnDex = 0, int depth = -1 ){
     // Render tokens as a cons structure
     string token;
@@ -275,6 +277,7 @@ Atom* consify_tokens( const vector<string>& tokens, size_t bgnDex = 0, int depth
     if( tokens.size() ){
         
         // Start off by creating a cons list
+        rtnTree = make_cons();
 
         // For each token in the vector
         for( size_t i = bgnDex ; i < len ; ++i ){
@@ -284,6 +287,7 @@ Atom* consify_tokens( const vector<string>& tokens, size_t bgnDex = 0, int depth
             // Case: This is an Open Paren
             if(  find_reserved( token ) == "open_parn"  ){
                 depth++;
+                
                 // If we are still at the top level, then begin begin the list at this level
                 if( depth == 0 ){
                 
