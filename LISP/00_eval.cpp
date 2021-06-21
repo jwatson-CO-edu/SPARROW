@@ -126,7 +126,6 @@ Atom* find_terminus( Atom* list ){
     }
 }
 
-
 Atom* append( Atom* list, Atom* atom = nullptr ){
     // Append an atom to the end of a conslist, Create a conslist if none exists
     Atom* rtnLst = list;
@@ -135,27 +134,20 @@ Atom* append( Atom* list, Atom* atom = nullptr ){
     // If the given list is a cons list, it is either an empty cons or the head of a LISP list
     if( list->typ == CONS ){
         if( atom ){
-            
+            if(  p_Null( list->car )  ){  set_car_B( list, atom );  } 
+            else{
+                endCns = find_terminus( list );
+                set_cdr_B( endCns, consify_atom( atom ) );
+            }
         }
-        if(  p_Null( list->car )  ){  set_car_B( list, atom );  } 
-        else{
-            endCns = find_terminus( list );
-            // FIXME: ADD A NEW CONS
-        }
+
+    // Else we either have one or two non-cons atoms
+    }else{
+        rtnLst = consify_atom( list ); // ----------------------- ( `list` , [X] )
+        if( atom )  set_cdr_B( rtnLst, consify_atom( atom ) ); // ( `list` , ( `atom` , [X] ) )
     }
 
-
-
-    // If the list was actually a non-cons atom, This is an atom that needs to be a list
-    if( list->typ != CONS ){  rtnLst = consify_atom( list );  }
-    // If there was a second arg
-    if( atom ){
-        // Find the end of the list
-        endCns = find_terminus( list );
-        // Wrap the atom in a cons and append
-        set_cdr_B( endCns, consify_atom( atom ) );
-    }  
-    return list;
+    return rtnLst;
 }
 
 /***** Printing *****/
@@ -276,9 +268,6 @@ Atom* consify_tokens( const vector<string>& tokens, size_t bgnDex = 0, int depth
     // If there are one or more strings to process, then attempt to construct a token tree
     if( tokens.size() ){
         
-        // Start off by creating a cons list
-        rtnTree = make_cons();
-
         // For each token in the vector
         for( size_t i = bgnDex ; i < len ; ++i ){
             // Fetch token at this index
@@ -287,13 +276,11 @@ Atom* consify_tokens( const vector<string>& tokens, size_t bgnDex = 0, int depth
             // Case: This is an Open Paren
             if(  find_reserved( token ) == "open_parn"  ){
                 depth++;
-                
-                // If we are still at the top level, then begin begin the list at this level
-                if( depth == 0 ){
-                
-                // else there is a new level of depth to the structure, recur
-                }else{
-
+                // Start off by creating a cons list, if needed
+                if( !rtnTree )  rtnTree = make_cons();
+                // If there is a new level of depth to the structure, recur
+                if( depth > 1 ){
+                    
                 }
             }
         }

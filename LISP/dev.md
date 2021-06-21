@@ -1,6 +1,9 @@
 # Implementation
 ## Decisions
 * `Atom` struct contains members to support *all* primitive types, `(-)` Wastes space, `(+)` Makes prototyping easier
+## TODO
+* Free memory of all created atoms!
+
 
 ## Ideas
 * Array type
