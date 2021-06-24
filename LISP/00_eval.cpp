@@ -39,10 +39,10 @@ string str_to_upper( const string& inputStr ){
 
 enum Type{
     // This micro-language has the following types, all packaged into the every Atom
-    CONS, // Cons pair
-    STRN, // String/Symbol
-    NMBR, // Number
-    Null  // Null
+    CONS = 10, // Cons pair
+    STRN = 20, // String/Symbol
+    NMBR = 30, // Number
+    Null = 40  // Null
 };
 
 struct Atom{
@@ -50,53 +50,68 @@ struct Atom{
     Type   typ; // Type of atom data
     Atom*  car; // Pair left
     Atom*  cdr; // Pair right
-    string str; // String data
+    char*  str; // String data
     double num; // Numeric data
 };
 
-Atom* make_cons( Atom* car_ = nullptr, Atom* cdr_ = nullptr ){
-    // Make a pair
-    Atom* rtnAtm = new Atom{};
-    rtnAtm->typ  = CONS;
-    rtnAtm->car  = car_ ? car_ : make_null(); // pair left
-    rtnAtm->cdr  = cdr_ ? cdr_ : make_null(); // pair right
-    rtnAtm->str  = ""; 
+
+Atom* make_null(){
+    // Make a Null
+    cout << "make_null" << endl;
+    Atom* rtnAtm = (Atom*) malloc( sizeof( Atom ) );
+    rtnAtm->typ  = Null; // Null
+    rtnAtm->car  = nullptr;
+    rtnAtm->cdr  = nullptr;
+    rtnAtm->str  = (char*) malloc( sizeof( char[16] ) );
     rtnAtm->num  = nan(""); 
+    cout << "Null populated" << endl;
     return rtnAtm;
 }
 
-Atom* make_strn( string str_ ){
+
+Atom* make_cons( Atom* car_ = nullptr, Atom* cdr_ = nullptr ){
+    // Make a pair
+    cout << "make_cons" << endl;
+    Atom* rtnAtm = (Atom*) malloc( sizeof( Atom ) );
+    rtnAtm->typ  = CONS;
+    rtnAtm->car  = car_ ? car_ : make_null(); // pair left
+    rtnAtm->cdr  = cdr_ ? cdr_ : make_null(); // pair right
+    cout << "sides of pair populated" << endl;
+    rtnAtm->str = (char*) malloc( sizeof( char[16] ) );
+    cout << "string populated" << endl;
+    rtnAtm->num  = nan(""); 
+    cout << "number populated" << endl;
+    return rtnAtm;
+}
+
+Atom* make_strn( const char* str_ ){
     // Make a string
-    Atom* rtnAtm = new Atom{};
+    cout << "Create string atom" << endl;
+    Atom* rtnAtm = (Atom*) malloc( sizeof( Atom ) );
+    cout << "Allocated" << endl;
     rtnAtm->typ  = STRN;
     rtnAtm->car  = nullptr;
     rtnAtm->cdr  = nullptr;
-    rtnAtm->str  = str_; // String or symbol
+    rtnAtm->str = (char*) malloc( sizeof( char[16] ) );
+    strcpy( rtnAtm->str, str_ ); // String or symbol
+    cout << "Copied: " << rtnAtm->str << endl;
     rtnAtm->num  = nan(""); 
+    cout << "populated number" << endl;
     return rtnAtm;
 }
 
 Atom* make_nmbr( double nmbr_ ){
     // Make a string
-    Atom* rtnAtm = new Atom{};
+    Atom* rtnAtm = (Atom*) malloc( sizeof( Atom ) );
     rtnAtm->typ  = NMBR;
     rtnAtm->car  = nullptr;
     rtnAtm->cdr  = nullptr;
-    rtnAtm->str  = ""; 
+    rtnAtm->str = (char*) malloc( sizeof( char[16] ) );
     rtnAtm->num  = nmbr_; // Number
     return rtnAtm;
 }
 
-Atom* make_null(){
-    // Make a Null
-    Atom* rtnAtm = new Atom{};
-    rtnAtm->typ  = Null; // Null
-    rtnAtm->car  = nullptr;
-    rtnAtm->cdr  = nullptr;
-    rtnAtm->str  = "";
-    rtnAtm->num  = nan(""); 
-    return rtnAtm;
-}
+
 
 
 /********** LIST PROCESSING **********************************************************************/
@@ -117,9 +132,13 @@ Atom* consify_atom( Atom* atm ){
 
 Atom* find_terminus( Atom* list ){
     // Iterate to the ending cons of the list and return a pointer to it
-    Atom* ptr = list->cdr;
+    cout << "\t\t\tFunction `find_terminus`" << endl;
+    Atom* ptr = list;
     if( list->typ == CONS ){
-        while( !p_Null( ptr->cdr ) ){  ptr = ptr->cdr;  }
+        while( !p_Null( ptr->cdr ) ){  
+            cout << "\t\t\tcdr = " << ptr->cdr << endl;
+            ptr = ptr->cdr;  
+        }
         return ptr;
     }else{
         return list;
@@ -128,50 +147,57 @@ Atom* find_terminus( Atom* list ){
 
 Atom* append( Atom* list, Atom* atom = nullptr ){
     // Append an atom to the end of a conslist, Create a conslist if none exists
+
+    cout << "\t\tFunction `append`" << endl;
+
     Atom* rtnLst = list;
     Atom* endCns = nullptr;
 
     // If the given list is a cons list, it is either an empty cons or the head of a LISP list
     if( list->typ == CONS ){
+        cout << "\t\t Input was `cons`" << endl;
         if( atom ){
-            if(  p_Null( list->car )  ){  set_car_B( list, atom );  } 
-            else{
+            if(  p_Null( list->car )  ){  
+                cout << "\t\t `set-car!`" << endl;
+                set_car_B( list, atom );  
+            }else{
+                cout << "\t\t Extend!" << endl;
                 endCns = find_terminus( list );
+                cout << "\t\t Terminus located!" << endl;
                 set_cdr_B( endCns, consify_atom( atom ) );
+                cout << "\t\t cdr set!" << endl;
             }
         }
 
     // Else we either have one or two non-cons atoms
     }else{
+        cout << "\t\t Input was literal" << endl;
         rtnLst = consify_atom( list ); // ----------------------- ( `list` , [X] )
         if( atom )  set_cdr_B( rtnLst, consify_atom( atom ) ); // ( `list` , ( `atom` , [X] ) )
     }
 
+    cout << "\t\tEnd `append`" << endl;
     return rtnLst;
 }
 
 /***** Printing *****/
 
-string str( Atom* item, string rtnStr = "", bool isNested = true ){
+string str( Atom* item ){
     // Return the string representation of the `item`
+    string rtnStr = "";
     switch (item->typ){
-        /* Null ---*/ case Null:  rtnStr += "\xE2\xA7\x84";  break; // https://www.fileformat.info/info/unicode/char/29c4/index.htm
-        /* Str/Sym */ case STRN:  rtnStr += item->str; /*-*/ break;
-        /* Num ----*/ case NMBR:  rtnStr += to_string( item->num ); break;
-        /* Pair ---*/ case CONS: 
-            if( isNested ){  rtnStr += "( ";  }
-            // If the `car` is another cons, assume a complex nested structure
-            if( item->car->typ == CONS ){
-                rtnStr += str( item->car, rtnStr, true  ) + ", " + str( item->cdr, rtnStr, true  );
-            // else assume it is a common LISP list
-            }else{
-                rtnStr += str( item->car, rtnStr, false ) + ", " + str( item->cdr, rtnStr, false );
-            }
-            if( isNested ){  rtnStr += " ) ";  }
+        /* Null ---*/ case Null:  rtnStr = "\xE2\xA7\x84"; /*---*/ break; // https://www.fileformat.info/info/unicode/char/29c4/index.htm
+        /* Str/Sym */ case STRN:  rtnStr = item->str; /*--------*/ break;
+        /* Num ----*/ case NMBR:  rtnStr = to_string( item->num ); break;
+        /* Pair ---*/ case CONS:
+            rtnStr = "( ";
+            rtnStr += str( item->car ) + ", " + str( item->cdr );
+            rtnStr += " ) ";
             break;
         default:
             break;
     }
+    return rtnStr;
 }
 
 
@@ -253,54 +279,88 @@ bool p_null_string( const string& inputStr ){
 
 Atom* atomize_string( const string& token ){
     // Convert a string into a non-cons atom
-    if(  p_float_string( token )  )  return make_nmbr( stod( token ) ); 
-    if(  p_null_string( token )   )  return make_null();
-    /* else assume it is string --*/ return make_strn( token );
+    if(  p_float_string( token )  ){
+        cout << "\t Create float literal" << endl;
+        return make_nmbr( stod( token ) ); 
+    }  
+    if(  p_null_string( token )   ){
+        cout << "\t Create Null literal" << endl;
+        return make_null();
+    }  
+    /* else assume it is string --*/
+    cout << "\t Create string literal" << endl;
+    return make_strn( token.c_str() );
 }
 
 
 Atom* consify_tokens( const vector<string>& tokens, size_t bgnDex = 0, int depth = -1 ){
     // Render tokens as a cons structure
     string token;
-    size_t len /**/ = tokens.size();
+    size_t len /**/ = tokens.size() - bgnDex;
     Atom*  rtnTree  = nullptr; // Cons structure to return
-    Atom*  listTail = nullptr; // Tail of the current list
     // If there are one or more strings to process, then attempt to construct a token tree
     if( tokens.size() ){
         
+        // Start off by creating a cons list, if needed
+        cout << "create cons" << endl;
+        rtnTree = make_cons();
+        cout << "created" << endl;
+
         // For each token in the vector
         for( size_t i = bgnDex ; i < len ; ++i ){
             // Fetch token at this index
             token = tokens[i];
 
+            cout << "Iteration " << i << ", Token " << token << endl;
+
             // Case: This is an Open Paren
             if(  find_reserved( token ) == "open_parn"  ){
+                cout << "\t Open Paren" << endl;
                 depth++;
-                // Start off by creating a cons list, if needed
-                if( !rtnTree )  rtnTree = make_cons();
+                // cout << "create cons" << endl;
+                // rtnTree = make_cons();
+                // cout << "created" << endl;
                 // If there is a new level of depth to the structure, recur
-                if( depth > 1 ){
-                    
-                }
+                append(
+                    rtnTree ,
+                    consify_tokens( tokens, i+1, depth )
+                );
+                cout << "\tAppended!" << endl;
+            }else 
+
+            if(  find_reserved( token ) == "clos_parn"  ){
+                cout << "\t Close Paren" << endl;
+                // depth--;
+                return rtnTree;
+            }else
+
+            if(  p_null_string( token )  ){
+                cout << "\t Null" << endl;
+                append(
+                    rtnTree ,
+                    make_null()
+                );
+                cout << "\tAppended!" << endl;
+            } 
+
+            else{
+                cout << "\t Literal" << endl;
+                append(
+                    rtnTree ,
+                    atomize_string( token )
+                );
+                cout << "\tAppended!" << endl;
             }
+            
         }
 
-
-        
-    
     // else there were no tokens, return Null
     }else{
+        // rtnTree = make_null();
         return make_null();
     }
 
-
-    // Case Open Paren
-    if( _RESERVED.find( c )->second == "open_parn" ){  stow_char();  } else 
-    // Case Close Paren
-    if( _RESERVED.find( c )->second == "clos_parn" ){  
-        if( token.length() ){  stow_token();  }
-        stow_char();  
-    }
+    // return rtnTree;
 }
 
 /********** TESTING ******************************************************************************/
@@ -318,9 +378,13 @@ int main(){
     setup();
 
     /*** Test expression tokenization ***/
-    string expr = "(cons a b)";
-    cout << tokenize( expr ) << endl;
+    string t_expr = "(cons a b)";
+    vector<string> l_expr = tokenize( t_expr );
+    cout << l_expr << endl;
 
     /*** Test vector consification ***/
-    // FIXME: CONSIFY
+    cout << "consify_tokens" << endl;
+    Atom* s_expr = consify_tokens( l_expr, 0, -1 );
+
+    cout << str( s_expr ) << endl;
 }
