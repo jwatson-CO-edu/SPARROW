@@ -173,18 +173,14 @@ Atom* append( Atom* list, Atom* atom = nullptr ){
 
 string str( Atom* item ){
     // Return the string representation of the `item`
+    // Null Symbol: https://www.fileformat.info/info/unicode/char/29c4/index.htm
     string rtnStr = "";
     switch (item->typ){
-        /* Null ---*/ case Null:  rtnStr = "\xE2\xA7\x84"; /*---*/ break; // https://www.fileformat.info/info/unicode/char/29c4/index.htm
-        /* Str/Sym */ case STRN:  rtnStr = item->str; /*--------*/ break;
-        /* Num ----*/ case NMBR:  rtnStr = to_string( item->num ); break;
-        /* Pair ---*/ case CONS:
-            rtnStr = "( ";
-            rtnStr += str( item->car ) + ", " + str( item->cdr );
-            rtnStr += " ) ";
-            break;
-        default:
-            break;
+        /* Null ---*/ case Null:  rtnStr = "\xE2\xA7\x84"; /*---------------------------*/ break; 
+        /* Str/Sym */ case STRN:  rtnStr = item->str; /*--------------------------------*/ break;
+        /* Num ----*/ case NMBR:  rtnStr = to_string( item->num ); /*-------------------*/ break;
+        /* Pair ---*/ case CONS:  rtnStr = "( "+str(item->car)+", "+str(item->cdr)+" ) ";  break;
+        /* Nothing */ default: /*-------------------------------------------------------*/ break;
     }
     return rtnStr;
 }
@@ -203,17 +199,19 @@ string find_reserved( const string& token ){
 
 vector<string> tokenize( string expStr, string sepChar = " " ){
     // Parse an expression string into an s-expression
-    // 0. For character in `expStr`
-    size_t /*---*/ len   = expStr.length(); // FIXME: CONTINUE COMMENTS FROM HERE
-    string /*---*/ token = "";
-    string /*---*/ c;
-    vector<string> tokens;
+    size_t /*---*/ len   = expStr.length(); // Length of the given string
+    string /*---*/ token = ""; // ------------ Current token in progress
+    string /*---*/ c; // --------------------- Current character
+    vector<string> tokens; // ---------------- Vector of string tokens
 
+    // LAMBDA: Add the current token to the vector and reset current token to empty
     auto stow_token = [&tokens, &token](){
         tokens.push_back( token );
         token = "";
     };
+    // LAMBDA: Add the current character to the vector and reset token to empty
     auto stow_char  = [&c, &tokens](){  tokens.push_back( c );  };
+    // LAMBDA: Add the current character to the current token
     auto cache_char = [&c, &token ](){  token += c;             };
 
     // 0. Apply the postfix hack
@@ -222,30 +220,27 @@ vector<string> tokenize( string expStr, string sepChar = " " ){
     for( size_t i = 0 ; i < len ; ++i ){
         // 2. Fetch character
         c = expStr[i];
-
         // 3. Either add char to present token or create a new one
+        
         // Case Open Paren
         if( find_reserved( c ) == "open_parn" ){  stow_char();  } else 
+        
         // Case Close Paren
         if( find_reserved( c ) == "clos_parn" ){  
             if( token.length() ){  stow_token();  }
             stow_char();  
         } else 
+        
         // Case separator
         if( c == sepChar ){  stow_token();  } else
+        
         // Case any other char
         cache_char();
     }
-
-    // N. Return the list of tokens
+    // N. Return the vector of tokens
     return tokens;
 }
 
-/*
-CONS, // Cons pair
-STRN, // String/Symbol
-Null  // Null
-*/
 
 bool p_float_string( const string& inputStr ){
     // Return T if the string is appropriate for float conversion, otherwise return F
@@ -268,98 +263,53 @@ bool p_null_string( const string& inputStr ){
 
 Atom* atomize_string( const string& token ){
     // Convert a string into a non-cons atom
-    if(  p_float_string( token )  ){
-        // cout << "\t Create float literal" << endl;
-        return make_number( stod( token ) ); 
-    }  
-    if(  p_null_string( token )   ){
-        // cout << "\t Create Null literal" << endl;
-        return make_null();
-    }  
-    /* else assume it is string --*/
-    // cout << "\t Create string literal" << endl;
-    return make_string( token.c_str() );
+    if(  p_float_string( token )  ){  return make_number( stod( token ) );  }  
+    if(  p_null_string( token )   ){  return make_null();                   }  
+    /* else assume it is string ---*/ return make_string( token.c_str() );
 }
 
 
 Atom* consify_tokens( const vector<string>& tokens, size_t& i ){
     // Render tokens as a cons structure
-    string token;
-    size_t len /**/ = tokens.size();
-    Atom*  rtnTree  = nullptr; // Cons structure to return
 
-    // cout << "consify_tokens" << endl;
+    string token; // ----------------- Current token from the vector
+    size_t len     = tokens.size(); // Number of tokens in the given vector
+    Atom*  rtnTree = nullptr; // ----- Cons structure to return
 
-    // If there are one or more strings to process, then attempt to construct a token tree
+    // 1. If there are one or more strings to process, then attempt to construct a token tree
     if( (tokens.size()-i) > 1 ){
-        
-        // Start off by creating a cons list, if needed
-        // cout << "create cons" << endl;
+        // 2. Start off by creating a cons list, if needed
         rtnTree = make_cons();
-        // cout << "created" << endl;
 
-        // For each token in the vector
-        // for( size_t i = bgnDex ; i < len ; ++i ){
+        // 3. For each token in the vector
         while( i < len ){
-            // Fetch token at this index
+            // 4. Fetch token at this index
             token = tokens[i];
             i++;
 
-            // cout << "Iteration " << i << ", Token " << token << ", Tree: " << str( rtnTree ) << endl;
-
-            // Case: This is an Open Paren
+            // 5. Case Open Paren
             if(  find_reserved( token ) == "open_parn"  ){
-                // cout << "\t Open Paren" << endl;
-                // cout << "create cons" << endl;
-                // rtnTree = make_cons();
-                // cout << "created" << endl;
                 // If there is a new level of depth to the structure, recur
-                if(i>1)
-                    append(
-                        rtnTree ,
-                        consify_tokens( tokens, i )
-                    );
-                else
-                    rtnTree = consify_tokens( tokens, i );
-                // cout << "\tAppended!" << endl;
+                if(i>1)  append(  rtnTree , consify_tokens( tokens, i )  );
+                // else this is the first level
+                else     rtnTree = consify_tokens( tokens, i );
             }else
 
-            if(  find_reserved( token ) == "clos_parn"  ){
-                // cout << "\t Close Paren" << endl;
-                // depth--;
-                // cout << "\t About to return the tree: " << str( rtnTree ) << endl;
-                return rtnTree;
-            }else
+            // 6. Case Close Paren
+            if(  find_reserved( token ) == "clos_parn"  ){  return rtnTree;  }else
 
-            if(  p_null_string( token )  ){
-                // cout << "\t Null" << endl;
-                append(
-                    rtnTree ,
-                    make_null()
-                );
-                // cout << "\tAppended!" << endl;
-            } 
+            // 7. Case Null
+            if(  p_null_string( token )  ){  append( rtnTree , make_null() ); } 
 
-            else{
-                // cout << "\t Literal" << endl;
-                append(
-                    rtnTree ,
-                    atomize_string( token )
-                );
-                // cout << "\tAppended!" << endl;
-            }
-            
-            // cout << "\tEnd of Iteration" << i+1 << ": " << str( rtnTree ) << endl;
-
+            // 8. Case Literal
+            else{  append( rtnTree , atomize_string( token ) );  }
         }
         // return rtnTree;
-    // else there were no tokens, return Null
+    // 9. else there were no tokens, return Null
     }else{
         rtnTree = make_null();
-        // cout << "\t About to return the tree: " << str( rtnTree ) << endl;
         return rtnTree;
     }
-
     return rtnTree;
 }
 
