@@ -57,46 +57,46 @@ struct Atom{
 
 Atom* make_null(){
     // Make a Null
-    cout << "make_null" << endl;
+    // cout << "make_null" << endl;
     Atom* rtnAtm = (Atom*) malloc( sizeof( Atom ) );
     rtnAtm->typ  = Null; // Null
     rtnAtm->car  = nullptr;
     rtnAtm->cdr  = nullptr;
     rtnAtm->str  = (char*) malloc( sizeof( char[16] ) );
     rtnAtm->num  = nan(""); 
-    cout << "Null populated" << endl;
+    // cout << "Null populated" << endl;
     return rtnAtm;
 }
 
 
 Atom* make_cons( Atom* car_ = nullptr, Atom* cdr_ = nullptr ){
     // Make a pair
-    cout << "make_cons" << endl;
+    // cout << "make_cons" << endl;
     Atom* rtnAtm = (Atom*) malloc( sizeof( Atom ) );
     rtnAtm->typ  = CONS;
     rtnAtm->car  = car_ ? car_ : make_null(); // pair left
     rtnAtm->cdr  = cdr_ ? cdr_ : make_null(); // pair right
-    cout << "sides of pair populated" << endl;
+    // cout << "sides of pair populated" << endl;
     rtnAtm->str = (char*) malloc( sizeof( char[16] ) );
-    cout << "string populated" << endl;
+    // cout << "string populated" << endl;
     rtnAtm->num  = nan(""); 
-    cout << "number populated" << endl;
+    // cout << "number populated" << endl;
     return rtnAtm;
 }
 
 Atom* make_strn( const char* str_ ){
     // Make a string
-    cout << "Create string atom" << endl;
+    // cout << "Create string atom" << endl;
     Atom* rtnAtm = (Atom*) malloc( sizeof( Atom ) );
-    cout << "Allocated" << endl;
+    // cout << "Allocated" << endl;
     rtnAtm->typ  = STRN;
     rtnAtm->car  = nullptr;
     rtnAtm->cdr  = nullptr;
     rtnAtm->str = (char*) malloc( sizeof( char[16] ) );
     strcpy( rtnAtm->str, str_ ); // String or symbol
-    cout << "Copied: " << rtnAtm->str << endl;
+    // cout << "Copied: " << rtnAtm->str << endl;
     rtnAtm->num  = nan(""); 
-    cout << "populated number" << endl;
+    // cout << "populated number" << endl;
     return rtnAtm;
 }
 
@@ -132,11 +132,11 @@ Atom* consify_atom( Atom* atm ){
 
 Atom* find_terminus( Atom* list ){
     // Iterate to the ending cons of the list and return a pointer to it
-    cout << "\t\t\tFunction `find_terminus`" << endl;
+    // cout << "\t\t\tFunction `find_terminus`" << endl;
     Atom* ptr = list;
     if( list->typ == CONS ){
         while( !p_Null( ptr->cdr ) ){  
-            cout << "\t\t\tcdr = " << ptr->cdr << endl;
+            // cout << "\t\t\tcdr = " << ptr->cdr << endl;
             ptr = ptr->cdr;  
         }
         return ptr;
@@ -148,35 +148,35 @@ Atom* find_terminus( Atom* list ){
 Atom* append( Atom* list, Atom* atom = nullptr ){
     // Append an atom to the end of a conslist, Create a conslist if none exists
 
-    cout << "\t\tFunction `append`" << endl;
+    // cout << "\t\tFunction `append`" << endl;
 
     Atom* rtnLst = list;
     Atom* endCns = nullptr;
 
     // If the given list is a cons list, it is either an empty cons or the head of a LISP list
     if( list->typ == CONS ){
-        cout << "\t\t Input was `cons`" << endl;
+        // cout << "\t\t Input was `cons`" << endl;
         if( atom ){
             if(  p_Null( list->car )  ){  
-                cout << "\t\t `set-car!`" << endl;
+                // cout << "\t\t `set-car!`" << endl;
                 set_car_B( list, atom );  
             }else{
-                cout << "\t\t Extend!" << endl;
+                // cout << "\t\t Extend!" << endl;
                 endCns = find_terminus( list );
-                cout << "\t\t Terminus located!" << endl;
+                // cout << "\t\t Terminus located!" << endl;
                 set_cdr_B( endCns, consify_atom( atom ) );
-                cout << "\t\t cdr set!" << endl;
+                // cout << "\t\t cdr set!" << endl;
             }
         }
 
     // Else we either have one or two non-cons atoms
     }else{
-        cout << "\t\t Input was literal" << endl;
+        // cout << "\t\t Input was literal" << endl;
         rtnLst = consify_atom( list ); // ----------------------- ( `list` , [X] )
         if( atom )  set_cdr_B( rtnLst, consify_atom( atom ) ); // ( `list` , ( `atom` , [X] ) )
     }
 
-    cout << "\t\tEnd `append`" << endl;
+    // cout << "\t\tEnd `append`" << endl;
     return rtnLst;
 }
 
@@ -280,87 +280,98 @@ bool p_null_string( const string& inputStr ){
 Atom* atomize_string( const string& token ){
     // Convert a string into a non-cons atom
     if(  p_float_string( token )  ){
-        cout << "\t Create float literal" << endl;
+        // cout << "\t Create float literal" << endl;
         return make_nmbr( stod( token ) ); 
     }  
     if(  p_null_string( token )   ){
-        cout << "\t Create Null literal" << endl;
+        // cout << "\t Create Null literal" << endl;
         return make_null();
     }  
     /* else assume it is string --*/
-    cout << "\t Create string literal" << endl;
+    // cout << "\t Create string literal" << endl;
     return make_strn( token.c_str() );
 }
 
 
-Atom* consify_tokens( const vector<string>& tokens, size_t bgnDex = 0, int depth = -1 ){
+Atom* consify_tokens( const vector<string>& tokens, size_t& i ){
     // Render tokens as a cons structure
     string token;
-    size_t len /**/ = tokens.size() - bgnDex;
+    size_t len /**/ = tokens.size();
     Atom*  rtnTree  = nullptr; // Cons structure to return
+
+    // cout << "consify_tokens" << endl;
+
     // If there are one or more strings to process, then attempt to construct a token tree
-    if( tokens.size() ){
+    if( (tokens.size()-i) > 1 ){
         
         // Start off by creating a cons list, if needed
-        cout << "create cons" << endl;
+        // cout << "create cons" << endl;
         rtnTree = make_cons();
-        cout << "created" << endl;
+        // cout << "created" << endl;
 
         // For each token in the vector
-        for( size_t i = bgnDex ; i < len ; ++i ){
+        // for( size_t i = bgnDex ; i < len ; ++i ){
+        while( i < len ){
             // Fetch token at this index
             token = tokens[i];
+            i++;
 
-            cout << "Iteration " << i << ", Token " << token << endl;
+            // cout << "Iteration " << i << ", Token " << token << ", Tree: " << str( rtnTree ) << endl;
 
             // Case: This is an Open Paren
             if(  find_reserved( token ) == "open_parn"  ){
-                cout << "\t Open Paren" << endl;
-                depth++;
+                // cout << "\t Open Paren" << endl;
                 // cout << "create cons" << endl;
                 // rtnTree = make_cons();
                 // cout << "created" << endl;
                 // If there is a new level of depth to the structure, recur
-                append(
-                    rtnTree ,
-                    consify_tokens( tokens, i+1, depth )
-                );
-                cout << "\tAppended!" << endl;
-            }else 
+                if(i>1)
+                    append(
+                        rtnTree ,
+                        consify_tokens( tokens, i )
+                    );
+                else
+                    rtnTree = consify_tokens( tokens, i );
+                // cout << "\tAppended!" << endl;
+            }else
 
             if(  find_reserved( token ) == "clos_parn"  ){
-                cout << "\t Close Paren" << endl;
+                // cout << "\t Close Paren" << endl;
                 // depth--;
+                // cout << "\t About to return the tree: " << str( rtnTree ) << endl;
                 return rtnTree;
             }else
 
             if(  p_null_string( token )  ){
-                cout << "\t Null" << endl;
+                // cout << "\t Null" << endl;
                 append(
                     rtnTree ,
                     make_null()
                 );
-                cout << "\tAppended!" << endl;
+                // cout << "\tAppended!" << endl;
             } 
 
             else{
-                cout << "\t Literal" << endl;
+                // cout << "\t Literal" << endl;
                 append(
                     rtnTree ,
                     atomize_string( token )
                 );
-                cout << "\tAppended!" << endl;
+                // cout << "\tAppended!" << endl;
             }
             
-        }
+            // cout << "\tEnd of Iteration" << i+1 << ": " << str( rtnTree ) << endl;
 
+        }
+        // return rtnTree;
     // else there were no tokens, return Null
     }else{
-        // rtnTree = make_null();
-        return make_null();
+        rtnTree = make_null();
+        // cout << "\t About to return the tree: " << str( rtnTree ) << endl;
+        return rtnTree;
     }
 
-    // return rtnTree;
+    return rtnTree;
 }
 
 /********** TESTING ******************************************************************************/
@@ -383,8 +394,11 @@ int main(){
     cout << l_expr << endl;
 
     /*** Test vector consification ***/
-    cout << "consify_tokens" << endl;
-    Atom* s_expr = consify_tokens( l_expr, 0, -1 );
+    
+    size_t counter = 0;
+    Atom* s_expr = consify_tokens( l_expr, counter );
 
+    cout << s_expr << endl;
+    cout << s_expr->typ << endl;
     cout << str( s_expr ) << endl;
 }
