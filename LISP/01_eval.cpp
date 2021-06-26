@@ -179,7 +179,7 @@ string str( Atom* item ){
         /* Null ---*/ case Null:  rtnStr = "\xE2\xA7\x84"; /*---------------------------*/ break; 
         /* Str/Sym */ case STRN:  rtnStr = item->str; /*--------------------------------*/ break;
         /* Num ----*/ case NMBR:  rtnStr = to_string( item->num ); /*-------------------*/ break;
-        /* Pair ---*/ case CONS:  rtnStr = "( "+str(item->car)+", "+str(item->cdr)+" ) ";  break;
+        /* Pair ---*/ case CONS:  rtnStr = "( "+str(item->car)+", "+str(item->cdr)+" )";   break;
         /* Nothing */ default: /*-------------------------------------------------------*/ break;
     }
     return rtnStr;
@@ -193,8 +193,8 @@ map<string, string> _RESERVED;
 string find_reserved( const string& token ){
     // Return the name of the reserved symbol, or an empty string if not found
     map<string,string>::iterator it = _RESERVED.find( token );
-    if( it == _RESERVED.end() ){  return "";  }
-    else{  return it->second;  }
+    if( it == _RESERVED.end() ){  return "";  } // If the search failed, return an empty string
+    else{  return it->second;  } // -------------- Else return the string name of the reserved name
 }
 
 vector<string> tokenize( string expStr, string sepChar = " " ){
@@ -306,12 +306,18 @@ Atom* consify_tokens( const vector<string>& tokens, size_t& i ){
         }
         // return rtnTree;
     // 9. else there were no tokens, return Null
-    }else{
-        rtnTree = make_null();
-        return rtnTree;
-    }
+    }else{  return make_null();  }
     return rtnTree;
 }
+
+
+Atom* expression_from_string( string expStr, string sepChar = " " ){
+    // Tokenize the `expStr`, express it as a conslist, and return
+    size_t i = 0;
+    vector<string> tokens = tokenize( expStr, sepChar );
+    return consify_tokens( tokens, i );
+}
+
 
 /********** TESTING ******************************************************************************/
 
@@ -339,5 +345,9 @@ int main(){
 
     cout << s_expr << endl;
     cout << s_expr->typ << endl;
+    cout << str( s_expr ) << endl;
+
+    /*** Test Text --to-> s-expression ***/
+    s_expr = expression_from_string( t_expr );
     cout << str( s_expr ) << endl;
 }
