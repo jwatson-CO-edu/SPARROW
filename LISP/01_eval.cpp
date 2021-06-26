@@ -318,6 +318,29 @@ Atom* expression_from_string( string expStr, string sepChar = " " ){
     return consify_tokens( tokens, i );
 }
 
+/********** ENVIRONMENT **************************************************************************/
+
+class Env{  public:
+// Environment for evaluation
+
+Env* /*--------*/ parent; // -- Pointer to the environment that contains this one
+vector<Atom*>     freeVars; //- Free  variables, without binding
+map<string,Atom*> boundVars; // Bound variables, have names given to them by statements
+
+// Return T if the binding exists in `boundVars`, otherwise return F
+bool p_binding_exists( const string& name ){  return ( boundVars.end() == boundVars.find( name ) );  }
+
+Atom* get_bound_atom( const string& name ){
+    // Return the name of the reserved symbol, or an empty string if not found
+    map<string,Atom*>::iterator it = boundVars.find( name );
+    if( it == boundVars.end() ){  return nullptr;  } // If the search failed, return a null pointer
+    else{  return it->second;  } // ------------------- Else return the requested atom
+}
+
+// Bind an `atom` to a `name` by adding it to the mapping, If the name already exists, it will be updated
+void bind_atom( const string& name, Atom* atom ){  boundVars[ name ] = atom;  }
+
+};
 
 /********** TESTING ******************************************************************************/
 

@@ -1,6 +1,22 @@
+# Design Principles
+* Parallel processing must be easy and intuitive
+* Choose efficiency over the Lambda Calculus
+* Optimization > Compilation
+    - Optimization should produce human-readable and human-tunable code
+    - The decisions that govern optimization should be tunable
+    - The syntax for un-optimized and optimized code should be the same, However
+    - Greater literacy unlocks finer control --> Optimized code does NOT have to be easy (for beginners) to read
+
 # Implementation
 ## Decisions
 * `Atom` struct contains members to support *all* primitive types, `(-)` Wastes space, `(+)` Makes prototyping easier
+* Free variables in a `std::vector`
+* Bound variables in a `std::map`
+* When there is no obvious return value, a form should return the `OKAY` Error
+* Truthiness
+    - `Null` is False
+    - `OKAY` error is True
+
 ## TODO
 * Free memory of all created atoms!
 
