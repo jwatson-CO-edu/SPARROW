@@ -372,5 +372,5 @@ int main(){
 
     /*** Test Text --to-> s-expression ***/
     s_expr = expression_from_string( t_expr );
-    cout << str( s_expr ) << endl;
+    // cout << str( s_expr ) << endl;
 }

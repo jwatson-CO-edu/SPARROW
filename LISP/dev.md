@@ -19,6 +19,16 @@
 
 ## TODO
 * Free memory of all created atoms!
+* "Interchangeable" Data Types
+    - `std`
+        - https://en.cppreference.com/w/cpp/utility/any
+        - https://en.cppreference.com/w/cpp/utility/variant
+    - Boost
+        - https://www.boost.org/doc/libs/1_64_0/doc/html/variant/misc.html#:~:text=Variant%20provides%20compile%2Dtime%20checked,Boost.
+        - https://www.boost.org/doc/libs/1_38_0/doc/html/variant.html
+        - https://www.boost.org/doc/libs/1_77_0/doc/html/boost/any.html
+* Reimplement `Atom` as the chosen variable type
+
 
 
 ## Ideas
