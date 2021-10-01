@@ -21,8 +21,15 @@
 * Free memory of all created atoms!
 * "Interchangeable" Data Types
     - `std`
-        - https://en.cppreference.com/w/cpp/utility/any
+        * https://en.cppreference.com/w/cpp/utility/any,  
+        https://www.cppstories.com/2018/06/any/,  
+        https://www.nextptr.com/tutorial/ta1571648512/stdany-comparison-with-void-and-motivating-examples,  
+        https://devblogs.microsoft.com/cppblog/stdany-how-when-and-why/
+            - https://en.cppreference.com/w/cpp/types/is_arithmetic
+            - https://stackoverflow.com/questions/55057937/find-an-element-in-stdvector-of-stdany
+            - https://stackoverflow.com/questions/3224915/how-to-print-boostany-to-a-stream
         - https://en.cppreference.com/w/cpp/utility/variant
+        
     - Boost
         - https://www.boost.org/doc/libs/1_64_0/doc/html/variant/misc.html#:~:text=Variant%20provides%20compile%2Dtime%20checked,Boost.
         - https://www.boost.org/doc/libs/1_38_0/doc/html/variant.html
