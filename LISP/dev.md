@@ -44,6 +44,7 @@
     - Each section contains a C array of length X
     - Cons another section onto list as needed `(+)`
     - `(-)` Lookup not constant, but `(+)` n/X lookup time
+* Random Variable Type: Whenever this varable is evaluated, sample from the variable
 
 # Concepts
 * Execution is a job-shop problem where interpreters are workers
