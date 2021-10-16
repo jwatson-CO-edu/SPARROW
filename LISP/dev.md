@@ -9,7 +9,14 @@
     - Choose freedom over security
     - Choose Optimization over Compilation
     
-* Parallel processing must be easy and intuitive
+
+
+* Petri Net defines execution
+    - Think about transforms instead of stacks
+    - Everything is global, unless explicitly nested
+    - Allow both flow and text programming paradigms,  
+    *but flow runs in the background*
+    - Parallel processing must be easy and intuitive
 
 * Optimization > Compilation
     - Optimization should produce human-readable and human-tunable code
@@ -37,13 +44,62 @@
     - `Null` is False
     - `OKAY` error is True
 
-## TODO
+# Dev Plan
+1. Follow L.I.S.P. book until satisfied
+1. Implement memory model
+1. Implement Petri model
+1. In*tra*-host parallelism
+1. In*ter*-host parallelism
+
+# Petri Concept
+* Instructions
+    - Token? `==` Fragment: An partial environment
+        * Some subset of the entire envioronment
+        * May create vars
+        * May act on vars
+    - Place?: An node between processes that evaluates fragments
+        * Fragment Requirements
+        * Un/met
+    - Process?: A node that transforms fragments
+        * Compute cost
+    - Places and processes can probably go in the Instruction Memory
+    - All programs begin at the origin node with an empty environment
+
+* Execution
+    - Where to analyze dependencies?
+    - Allow object contents to span fragments --> Execution structure may not mimic data structure
+    - Two fragments can occupy the same place?
+        * Satisfy conditions with any fragment combination
+
+* Optimization
+    - Examine cost of splitting places
+    - Examine cost of splitting processes
+    - Examine cost of splitting fragments
+    - Split
+        - If different subsequences operate on different names in the fragment, then it is a candidate for parallelization
+
+# Automated Parallelism
+* Fragment may not span workers
+* One worker per fragment?
+* May a worker carry more than one fragment?
+* What does it mean when interpreter resources are shared among workers?
+
+## Architecture
+* How to share state between intepreters?
+    - Can automated synchonization be created?
+    - Is resource modeling required?
+* How to manage intepreters on the same host?
+* How to manage intepreters across hosts?
+
+
+
+# TODO
 1. Free memory of all created atoms!
 1. Make `Atom` as small as possible using unions
 1. Drop `char*` and reimplement c-strings as LISP lists
+1. Investigate `std::thread` / `std::jthread` (C++11 or later)
 
-
-## Ideas
+# Ideas
 * Atoms
     - Cons --> Pair: For ergonomics
     - Word Union
@@ -52,6 +108,7 @@
         - Integer
         - Float
         - Character(s)
+    - Fragment assignment?
 * Array type
 * Dynamic Array Type
     - Each section contains a C array of length X
@@ -77,12 +134,6 @@
         - nr:0 , so:1 , es:2 , we:3
         - Can I use alignment to alias an array of pointers to the above names?
     - `>N` pointers in a dynamic array
-
-* Instruction Node: Unit of currency for Petri-Net AST
-    - `N` pointers by default, tunable
-    - `>N` pointers in a dynamic array
-    - Stored in instruction memory
-    - How to handle the case when the number of instructions exceeds inst memory?
 
 * DIY Memory Management
     - Begin interpreter by allocating a massive memory block
@@ -118,6 +169,7 @@
     - Allow ASM-flavored memory calcs
     - Tracked processes with scheduling
     - Instruction pointer: Points to the current Node in the AST currently executed
+    - Petri guarantees are invalidated where instructions access the FM registers
 
 # Concepts
 * Execution is a job-shop problem where interpreters are workers
@@ -131,6 +183,9 @@
     - Learn to recognize efficiencies
     - Parameter search on scalar settings
     - Graph learning on syntax
+
+# Questions
+* Can a variable belong to more than one fragment?
 
 # Future
 * Transpile to C/++
@@ -155,3 +210,10 @@
         - https://www.boost.org/doc/libs/1_38_0/doc/html/variant.html
         - https://www.boost.org/doc/libs/1_77_0/doc/html/boost/any.html
 * Reimplement `Atom` as the chosen variable type
+* Instruction Node: Unit of currency for Petri-Net AST
+    - Operation
+    - Operands
+        - `N` pointers by default, tunable
+        - `>N` pointers in a dynamic array
+    - Stored in instruction memory
+    - How to handle the case when the number of instructions exceeds inst memory?
