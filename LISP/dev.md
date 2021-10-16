@@ -44,12 +44,23 @@
     - `Null` is False
     - `OKAY` error is True
 
+# TODO
+1. Free memory of all created atoms!
+1. Make `Atom` as small as possible using unions
+1. Drop `char*` and reimplement c-strings as LISP lists
+1. Investigate `std::thread` / `std::jthread` (C++11 or later)
+
 # Dev Plan
 1. Follow L.I.S.P. book until satisfied
 1. Implement memory model
 1. Implement Petri model
 1. In*tra*-host parallelism
 1. In*ter*-host parallelism
+1. Send It
+
+## Guidelines
+* Test as you go
+* Benchmark as you go, especially after you leave LISP
 
 # Petri Concept
 * Instructions
@@ -60,6 +71,11 @@
     - Place?: An node between processes that evaluates fragments
         * Fragment Requirements
         * Un/met
+        * Can well allow multiple fragment sets to accumulate? --> If so, need something like a structure to keep bundles of satisfactory fragments together?
+            - How can the programmer violate bundle requirments?
+            - Should the place be allowed to resolve?
+            - Is there a way to implement per-bundle synchronization?, When is this necessary?
+                * Literature should have something to say about bottlenecks
     - Process?: A node that transforms fragments
         * Compute cost
     - Places and processes can probably go in the Instruction Memory
@@ -93,11 +109,7 @@
 
 
 
-# TODO
-1. Free memory of all created atoms!
-1. Make `Atom` as small as possible using unions
-1. Drop `char*` and reimplement c-strings as LISP lists
-1. Investigate `std::thread` / `std::jthread` (C++11 or later)
+
 
 # Ideas
 * Atoms
