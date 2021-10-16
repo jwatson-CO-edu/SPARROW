@@ -1,11 +1,25 @@
 # Design Principles
+
+* The Partial Order: FINCHes Fly Freely
+    - Choose fun over efficiency
+    - Choose ergonomics over safety
+    - Choose capability over safety
+    - Choose efficiency over formalism
+    - Choose speed efficiency over space efficiency; Assume enough RAM, but don't be Greedy
+    - Choose freedom over security
+    - Choose Optimization over Compilation
+    
 * Parallel processing must be easy and intuitive
-* Choose efficiency over the Lambda Calculus
+
 * Optimization > Compilation
     - Optimization should produce human-readable and human-tunable code
     - The decisions that govern optimization should be tunable
     - The syntax for un-optimized and optimized code should be the same, However
     - Greater literacy unlocks finer control --> Optimized code does NOT have to be easy (for beginners) to read
+* Target Intel i5-XXXX by default, but make the environment tunable
+    - Cache Page Size <-- Stack must fit on one page
+        * Unlimited heap?
+    - Max simultaneous processes
 
 # Implementation
 ## Decisions
@@ -45,6 +59,49 @@
     - Cons another section onto list as needed `(+)`
     - `(-)` Lookup not constant, but `(+)` n/X lookup time
 * Random Variable Type: Whenever this varable is evaluated, sample from the distribution specified at var creation time
+* Prototype Classes
+    - Instances are thin copies of an original prototype
+* Hash Objects: Each object is just an environment with a name lookup
+    - Interface YES
+    - Inheritance NO
+* Interface typing > Inheritance: Make promises instead of structures
+
+* Node: Extended Cons, Possible basis for objects?
+    - N pointers by default
+        - dat:0, nxt:1, prv:2
+        - car:0, cdr:1
+        - up:0 , dn:1 , lf:2 , rt:3
+        - nr:0 , so:1 , es:2 , we:3
+    - Can I use alignment to alias an array of pointers to the above names?
+
+* DIY Memory Management
+    - Begin interpreter by allocating a massive memory block
+    - Use "placement new" to write objects directly to a memory address
+        - https://stackoverflow.com/a/1554808
+        - https://isocpp.org/wiki/faq/dtors#placement-new
+    - You are now able to control where things are placed
+    - Memory Cells
+        * Remember cells from Comp Sys Malloc Lab
+            - length
+            - ptr to next cell
+            - ptr to last cell
+            - live/dead flag
+            - contents --> beginning address of cell contents is returned by a malloc
+    - Separate variable storage for quick access
+        - Atom Store
+            * Choose an alignment length --> Do not allow access in between alignment width
+        - Node and/or Object Store
+
+    - GC is tunable
+        * Control options: Time? Bytes?
+
+* Fanciful Machine: A virtual machine, but more fun
+    - Scratch Registers: Split the difference between ASM and interpreted language
+        * Named variables that are always available in all parts of every program
+        * Interpreters can write to registers of other interpreters
+    - Keywords that allow the user to de/allocate memory on their own
+    - Allow ASM-flavored memory calcs
+    - Tracked processes with scheduling
 
 # Concepts
 * Execution is a job-shop problem where interpreters are workers
@@ -63,3 +120,4 @@
 * Transpile to C/++
 * Compile to bytecode
 * Treat remote jobs the same as local jobs
+* Shared memory between interpreter units

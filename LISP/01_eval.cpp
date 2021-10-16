@@ -37,7 +37,7 @@ string str_to_upper( const string& inputStr ){
 
 /********** ATOMS ********************************************************************************/
 
-enum Type{
+enum F_Type{
     // This micro-language has the following types, all packaged into the every Atom
     CONS = 10, // Cons pair
     STRN = 20, // String/Symbol
@@ -53,7 +53,7 @@ enum F_Error{
 
 struct Atom{
     // The most basic and interchangeable unit of this LISP
-    Type    typ; // Type of atom data
+    F_Type  typ; // Type of atom data
     Atom*   car; // Pair left
     Atom*   cdr; // Pair right
     char*   str; // String data
