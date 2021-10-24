@@ -78,6 +78,7 @@
                 * Literature should have something to say about bottlenecks
     - Process?: A node that transforms fragments
         * Compute cost
+        * How to write portable code: https://stackoverflow.com/a/3105762
     - Places and processes can probably go in the Instruction Memory
     - All programs begin at the origin node with an empty environment
 
@@ -150,6 +151,7 @@
 * DIY Memory Management
     - Begin interpreter by allocating a massive memory block
     - Use "placement new" to write objects directly to a memory address
+        - **Is this feature portable?**
         - https://stackoverflow.com/a/1554808
         - https://isocpp.org/wiki/faq/dtors#placement-new
     - You are now able to control where things are placed
@@ -167,11 +169,12 @@
         - Object Store
     - Instruction Memory
         * Instruction Nodes belong here
-
-
     - GC is tunable
         * Control options: Time? Bytes?
         * GC can be disabled
+
+* C++ GOTO
+    - C++ Rvalue Reference: http://thbecker.net/articles/rvalue_references/section_01.html
 
 * Fanciful Machine: A virtual machine, but more fun
     - Scratch Registers: Split the difference between ASM and interpreted language
