@@ -5,6 +5,9 @@ finch
 ## LISP ##
 LISP/eval
 
+## NIM ##
+NIM/exec
+
 # Prerequisites
 *.d
 
