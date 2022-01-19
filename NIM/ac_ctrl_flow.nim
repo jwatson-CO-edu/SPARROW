@@ -7,10 +7,10 @@
 from std/strutils import parseInt  # Import parsing string to integer from string utils lib
 
 # Read text from standard input and solidify into variable
+echo "Enter Name 1"
 let name = readLine( stdin )
 
 # If-Elif-Else #
-echo "Enter Name 1"
 if name == "":
     echo "Poor soul, you lost your name?"
 elif name == "name":
@@ -32,6 +32,7 @@ case nam2
         echo "Hi, ", name, "!"
 
 # Case with Number Ranges #
+echo "Enter an integer"
 let n = parseInt( readLine( stdin ) )
 case n # When doing a case with number var, all possible values must be covered by cases
     of 0..2, 4..7: # Integer ranges
@@ -51,4 +52,83 @@ while a == "":
 
 
 ## For Loop ##
-var # FIXME START HERE
+# With `countup` #
+echo "`countup` is `range`"
+for i in countup( 1, 10): # Unlike range
+    stdout.write( i )
+    stdout.write( ", " )
+echo ""
+# With range operator `..` #
+for i in 1..10:
+    stdout.write( i )
+    stdout.write( ", " )
+echo ""
+# Exactly like `range` #
+for i in 0 ..< 10:
+    stdout.write( i )
+    stdout.write( ", " )
+echo ""
+# String Index Iteration #
+var s = "some string"
+for i in 0 ..< s.len:
+    stdout.write( i )
+    stdout.write( ", " )
+echo ""
+
+# Enumerate #
+for i, c in s[0 .. ^1]:
+    stdout.write( i )
+    stdout.write( ":" )
+    stdout.write( c )
+    stdout.write( ", " )
+echo ""
+
+
+## Blocks ##
+
+# Declare block
+block myBlock:  # Block label is optional
+    var x = "hi"
+    echo x
+# echo x  # ERROR: Out of scope
+
+# Break #
+block blok1:
+    echo "Entering block ..."
+    while true:
+        echo "\tLooping ..."
+        break  # Leaves the loop, but not the block
+    echo "... Still in the block"
+echo "Outside of the block"
+
+block bloc2:
+    echo "Entering block ..."
+    while true:
+        echo "\tLooping ..."
+        break bloc2 # Leaves the loop, but not the block
+    echo "... Still in the block"  # Not printed!
+echo "Outside of the block"
+
+
+## Continue ##
+for i in 1..5:
+    if i <= 3:  
+        continue
+    echo i # Only prints when i > 3
+
+
+## When ##
+# + Good for platform-specific code
+#[ The `when` statement is almost identical to the `if` statement, but with these differences:
+    * Each condition must be a constant expression since it is evaluated by the compiler.
+    * The statements within a branch do not open a new scope.
+    * The compiler checks the semantics and produces code only for 
+      the statements that belong to the first condition that evaluates to true. ]#
+when system.hostOS == "windows":
+  echo "running on Windows!"
+elif system.hostOS == "linux":
+  echo "running on Linux!"
+elif system.hostOS == "macosx":
+  echo "running on Mac OS X!"
+else:
+  echo "unknown operating system"
