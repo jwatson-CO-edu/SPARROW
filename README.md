@@ -12,5 +12,14 @@
 * [B]asic [O]operation [D]ispatch for [F]lexible [A]gent [B]ehaviors
     - AI focus  
 
+## `DEV PLAN`
+```
+[ ] Finish Nim tuts
+[ ] Translate first evaluator to Nim
+[ ] Parse "Easy S-Expressions" instead: 
+    Implicit open paren, `;` is close paren
+    <funcName> <arg1> ... <argN>;
+```
+
 ## Future Applications
 * [Flow-Based Programming For Machine Learning](https://assets.researchsquare.com/files/rs-707294/v1_covered.pdf), 2021 Mahapatra
