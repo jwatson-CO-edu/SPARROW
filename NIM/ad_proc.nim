@@ -54,7 +54,7 @@ echo helloWorld()
 #[ Parameters are immutable in the procedure body. If a mutable variable is needed 
    inside the procedure, it has to be declared with var in the procedure body. ]#
 proc printSeq( s:seq, nPrinted:int = -1 ) = # void return type
-    # hadowing the parameter name is possible
+    # shadowing the parameter name is possible
     var nPrinted = if nPrinted == -1: s.len else: min( nPrinted, s.len ) # Ternary
     for i in 0 ..< nPrinted:
         echo s[i]
@@ -88,5 +88,62 @@ proc p( x,y:int ): int {.discardable.} =
 p(3,4) # No error, return value vanishes
 
 
-##### Named Arguments ##### 
-# FIXME: https://nim-lang.org/docs/tut1.html#procedures-named-arguments
+##### Named Arguments #####
+proc createWindow1( x, y, width, height: int; title: string; show: bool ): int =
+    echo title
+    return 1
+
+var w = createWindow1( 0, 0, title = "My Application", height = 600, width = 800, true )
+
+
+##### Default Argument Values #####
+proc createWindow2(x = 0, y = 0, width = 500, height = 700, title = "unknown", show = true): int =
+    echo title
+    return 1
+
+var a = createWindow2( 0, 0, title = "Your Application" )
+
+
+##### Procedure Overloading, and Ternary Operator #####
+proc toString(x: int): string =
+  result =
+    if x < 0: "negative"
+    elif x > 0: "positive"
+    else: "zero"
+
+proc toString(x: bool): string =
+  result =
+    if x: "yep"
+    else: "nope"
+
+assert toString(13) == "positive" # calls the toString(x: int) proc
+assert toString(true) == "yep"    # calls the toString(x: bool) proc
+
+
+##### Operator Overloading #####
+# proc `$` (x: myDataType): string = ...
+# now the $ operator also works with myDataType, overloading resolution
+# ensures that $ works for built-in types just like before
+
+## Call operator w/ backtick ##
+if `==`( `+`(3, 4), 7): echo "true"
+
+
+##### Forward Declaration #####
+proc even(n: int): bool # Signature only
+
+proc odd(n: int): bool =
+  assert(n >= 0) # makes sure we don't run into negative recursion
+  if n == 0: false
+  else:
+    n == 1 or even(n-1)
+
+proc even(n: int): bool =
+  assert(n >= 0) # makes sure we don't run into negative recursion
+  if n == 1: false
+  else:
+    n == 0 or odd(n-1)
+
+
+##### Iterators #####
+# https://nim-lang.org/docs/tut1.html#iterators
