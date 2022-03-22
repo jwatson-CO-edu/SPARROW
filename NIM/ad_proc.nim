@@ -146,4 +146,16 @@ proc even(n: int): bool =
 
 
 ##### Iterators #####
-# https://nim-lang.org/docs/tut1.html#iterators
+echo "Counting to ten: "
+for i in countup(1, 10):
+    echo i
+
+### `yield` ###
+iterator count_alt(a, b: int): int =
+    var res = a
+    while res <= b:
+        yield res
+        inc( res )
+
+for i in count_alt(1, 10):
+    echo i
