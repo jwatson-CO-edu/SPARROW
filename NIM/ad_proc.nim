@@ -145,6 +145,18 @@ proc even(n: int): bool =
     n == 0 or odd(n-1)
 
 
+##### VarArgs #####
+
+proc myWriteln(f: File, a: varargs[string]) =
+  for s in items(a):
+    write(f, s)
+  write(f, "\n")
+
+myWriteln(stdout, "abc", "def", "xyz")
+# is transformed by the compiler to:
+myWriteln(stdout, ["abc", "def", "xyz"])
+
+
 ##### Iterators #####
 echo "Counting to ten: "
 for i in countup(1, 10):
