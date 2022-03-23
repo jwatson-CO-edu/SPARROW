@@ -24,4 +24,18 @@ echo n.data
 # no need to write n[].data; in fact n[].data is highly discouraged!
 
 
-# FIXME: https://nim-lang.org/docs/tut1.html#advanced-types-procedural-type
+#[### Procedure Pointer ##### 
+    A procedural type is a pointer to a procedure. `nil` is an allowed value for a variable of a procedural type. 
+]#
+
+proc greet(name: string): string =
+  "Hello, " & name & "!"
+
+proc bye(name: string): string =
+  "Goodbye, " & name & "."
+
+proc communicate(greeting: proc (x: string): string, name: string) =
+  echo greeting(name)
+
+communicate(greet, "John")
+communicate(bye, "Mary")
