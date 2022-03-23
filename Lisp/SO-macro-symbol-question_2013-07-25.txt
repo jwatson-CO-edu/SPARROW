@@ -1,0 +1,23 @@
+(defmacro generate-accessor (key-symbol prefix)
+  (let ((mac-name 
+	 (intern (string-upcase (concatenate 'string
+					     prefix "-"
+					     (string key-symbol))))))
+    `(defmacro ,mac-name (alis) `(assoc ,',key-symbol ,alis))))
+
+CL-USER> (generate-accessor 'a "alist")
+; ERROR> 'A cannot be coerced to a string.
+CL-USER> (string 'a)
+; RESULT> "A"
+
+(defmacro generate-accessor (key-symbol prefix)
+  (let ((mac-name 
+	 (intern (string-upcase (concatenate 'string
+					     prefix "-"
+					     (symbol-name key-symbol))))))
+    `(defmacro ,mac-name (alis) `(assoc ,',key-symbol ,alis))))
+
+CL-USER> (generate-accessor 'a "alist")
+; ERROR> The value 'A is not of type SYMBOL.
+CL-USER> (symbol-name 'a)
+; RESULT>"A"

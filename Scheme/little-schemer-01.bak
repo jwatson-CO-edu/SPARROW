@@ -1,0 +1,494 @@
+#|
+little-schemer.scm
+James Watson, 2013 August
+Working through the exercises in "The Little Schemer" by Friedman and Felleisen
+|#
+
+; -- Prerequisite Function --
+(define atom?
+  (lambda (x)
+    (and (not (pair? x)) (not (null? x)))))
+
+(define displayln
+  (lambda (exp) (display exp) (newline)))
+; -- End Prereq --
+
+
+; == Chapter 1 : Toys ==
+(displayln "Chapter 1")
+
+(displayln ; Is it true that this is an atom?
+ (atom? 'atom) ; Yes, atom is a tring of characters beginning with the letter a
+) 
+
+(displayln ; Is it true that this is an atom?
+ (atom? 'turkey) ; Yes
+ )
+
+(displayln ; Is it true that this is an atom?
+ (atom? 1492) ; Yes, 1492 is a number
+ )
+
+(displayln ; Is it true that this is an atom?
+ (atom? 'u) ; Yes, u is a string of one character
+ )
+
+(displayln ; Is it true that this is an atom?
+ (atom? '*abc$) ; Yes
+ )
+
+(displayln ; Is it true that this is a list?
+ (list? '(atom)) ; Yes, it is an atom enclosed in parentheses
+ )
+
+(displayln ; Is it true that this is a list?
+ (list? '(atom turkey or)) ; Yes, it is a collection of atoms enclosed in parentheses
+ )
+
+(displayln ; What is the 'car' of ...
+ (car '(((hotdogs)) (and) (pickle) relish)) ; ((hotdogs))
+ ) ; The list of the list of hotdogs is the first member of the list
+
+(displayln ; What is the (car (car exp))?
+ (car (car '(((hotdogs)) (and)) )) ; (hotdogs)
+ )
+
+(displayln ; What is the cdr of ...
+ (cdr '(a b c)) ; (b c)
+ )
+
+(displayln ; What is the cdr of ...
+ (cdr '((a b c) x y z) ) ; (x y z)
+ )
+
+(displayln ; What is the cdr of ...
+ (cdr '((x) t r) ) ; (t r)
+ )
+
+(displayln ; What is the cdr of ...
+ ; (cdr 'hotdogs) ; ERROR
+ "You cannot ask for the cdr of an atom"
+ )
+
+(displayln ; What is the cdr of ... 
+ ;(cdr () ) ; ERROR
+ "You cannot ask for the cdr of a null list"
+ )
+
+#| ** The Law of cdr ** 
+The function cdr is defined only for non-empty lists.  The cdr of any 
+non-empty list is always another list. |#
+
+(displayln ; What is the (car (cdr exp))
+ (car (cdr '((b) (x y) ((c))) )) ; (x y)
+ )
+
+(displayln ; What is the (cdr (cdr exp))
+ (cdr (cdr '((b) (x y) ((c))) )) ; (((c)))
+ )
+
+(displayln ; What is the (cdr (car exp))
+ ;(cdr (car '(a (b (c)) d) )) ; ERROR
+ "(cdr (car '(a (b (c)) d) )), Error, (car ...) returns atom 'a"
+ )
+
+(displayln ; What is the cons of
+ (cons 'peanut '(butter and jelly) ) ; List: (peanut butter and jelly)
+ ) ; Atom 'peanut has been consed onto list '(butter and jelly)
+
+(displayln ; What is the cons of 
+ (cons '(banana and) '(peanut butter and jelly) ) 
+ ) ; ((banana and) peanut butter and jelly)
+
+(displayln ; What is the cons of
+ (cons '((help) this) '(is very ((hard) to learn)) )
+ ) ; (((help) this) is very ((hard) to learn))
+
+(displayln ; What is the cons of
+ (cons '(a b (c)) '() ) ; ((a b (c)))
+ )
+
+(displayln ; What is the cons of
+ (cons 'a '() ) ; (a)
+ )
+ 
+(displayln ; What is the cons of
+ (cons '((a b c)) 'b ) ; (((a b c)) . b)
+ )
+
+(displayln ; What is the cons of 
+ (cons 'a 'b) ; (a . b)
+ )
+
+#| ** The Law of cons ** 
+The function cons takes two arguments. The second argument must be a list.
+(This is not a requirement of Scheme or most Lisps, see above.) The result 
+is a list. (In Lisps the result is a cons cell, which may or may not qualify 
+as a list depending on what arguments are given.) |#
+
+(displayln ; What is (cons op1 (car op2))
+ (cons 'a (car '((b) c d) ) ) ; (a b), result of (car 'a '(b))
+ )
+
+(displayln ; What is (cons op1 (cdr op2))
+ (cons 'a (cdr '((b) c d) ) ) ; (a c d), result of (car 'a '(c d))
+ )
+
+(displayln ; Is it true that '() is the null list?
+ (null? '()) ; Yes, () is a list of zero S-expressions
+ )
+
+(displayln ; What is the result of ...
+ (null? (quote ())) ; True, '() is syntactic sugar for (quote ())
+ )
+
+(displayln ; Is it true that exp is null?
+ (null? '(a b c) ) ; False, (a b c) is a non-empty list
+ )
+
+(displayln ; What is null? of an atom?
+ (null? 'a) ; False, null? is false for everything except the empty list
+ )
+
+#| ** The Law of null? ** 
+The function null? is defined only for lists. (In practice, null? is defined
+for all datatypes.) |#
+
+(displayln ; Is it true or false that 'Harry is an atom?
+ (atom? 'Harry) ; True
+ )
+
+(displayln ; Is (atom? exp) true or false?
+ (atom? '(Harry had a heap of apples) ) ; False, exp is a list
+ ) ; atom? takes one argument, any S-expression
+
+(displayln ; Is (atom? (car exp) ) true or false?
+ (atom? (car '(Harry had a heap of apples)) ) ; True, 'Harry is an atom
+ )
+
+(displayln ; Is (atom? (cdr exp) ) true or false?
+ (atom? (cdr '(Harry had a heap of apples)) ) ; False
+ ) ; '(had a heap of apples) is not an atom
+
+(displayln ; True or false?
+ (atom? (cdr '(Harry)) ) ; False, '() is not an atom
+ )
+
+(displayln ; True or false?
+ (atom? (car (cdr '(swing low sweet cherry oat) ))) ; True, 'low is an atom
+ )
+
+(displayln ; True or false?
+ (atom? (car (cdr '(swing (low sweet) cherry oat) ))) ; False
+ ) ; '(low sweet) is not an atom
+
+(displayln ; Are these two atoms equal?
+ (eq? 'Harry 'Harry) ; Yes
+ )
+
+(displayln ; Are these two atoms equal?
+ (eq? 'margarine 'butter) ; No
+ )
+
+(displayln ; True or false?
+ (eq? '() '(strawberry) ) ; False
+ )
+
+(displayln ; Tue or false?
+ (eq? 6 7) ; False
+ )
+
+#| ** The Law of eq? **  
+The function eq? takes two arguments. Each must be a non-numeric atom.
+(In practice arguments may be any atom including numbers, as well as lists.)
+|#
+
+(displayln ; True or false?
+ (eq? (car '(Mary had a little lamb chop)) 'Mary ) ; True
+ ) ; 'Mary / 'Mary same atom
+
+(displayln ; True or false?
+ (eq? (cdr '(soured milk)) 'milk) ; False
+ )
+
+(let ((l '(beans beans we need jelly beans)))
+  (displayln ; True or false
+   (eq? (car l) (car (cdr l)) ) ; True
+   ))
+
+; == Chapter 1 : Do It, Do It Again, and Again, and Again ==
+
+(define lat?
+  (lambda (l)
+    (cond ((null? l) #t) ; Return true if the argument is empty list '()
+          ; Meaning either the previous items were atoms, or argument was '()
+          ((atom? (car l)) (lat? (cdr l))) ; If item is atom, inspect next
+          ; This is a recursive call on each successive sub-list until list
+          ;terminator '() is reached
+          (else #f)))) ; First non-atom encountered, return false
+          ; else, as a condition, is always true, it is the default case
+
+; A lat is a [L]ist of [AT]oms
+
+(displayln ; True or false?
+ (lat? '(Jack sprat could eat no chicken fat) ) ; True
+ ) ; Each expression in the list is an atom
+
+(displayln ; True or false?
+ (lat? '((Jack) Sprat could eat no chicken fat) ) ; False
+ ) ; (car exp) is a list '(Jack), not an atom
+
+(displayln ; True or false?
+ (lat? '(Jack (Sprat could) eat no chicken fat) ) ; False, not all atoms
+ )
+
+(displayln ; True or false?
+ (lat? '() ) ; True, because it does not contain a list
+ ) ; See definition of lat?
+
+(displayln ; True or false
+ (or (null? '(a b c)) (null? '()) ) ; True, second expression in or true
+ )
+
+(displayln ; True or false
+ (or (null? '(a b c)) (null? '(atom)) ) ; False, neither or exp is true
+ )
+
+(define member?
+  (lambda (a lat)
+    (cond ((null? lat) #f) ; argument null or list ended without hit, return false
+          (else (or (eq? (car lat) a) ; Is a equal to the first item?
+                    (member? a (cdr lat))))))) ; Or is it a member of the sub-list?
+
+(displayln ; Is it true that 'tea is a member of the list?
+ (member? 'tea '(coffee tea or milk)) ; True
+ )
+
+(displayln ; Is it true that 'poached is a member of the list?
+ (member? 'poached '(fried eggs and scrambled eggs)) ; False
+ )
+
+#| ** The First Commandment ** 
+Always ask null? as the first question in expressing any function. |#
+
+(define rember1 ; First attempt
+  (lambda (a lat)
+    (cond ((null? lat) (quote ()))
+          (else (cond ((eq? (car lat ) a) (cdr lat))
+                      (else (rember1 a (cdr lat))))))))
+; rember is [r]emove m[ember]
+
+(displayln ; What is the result?
+ (rember1 'bacon '(bacon lettuce and tomato)) ; (lettuce and tomato)
+ ) ; 'bacon was removed, and remaining sublist returned
+
+(displayln ; What is the result?
+ (rember1 'and '(bacon lettuce and tomato)) ; (tomato)
+ ) ; This is not correct, only the sublist after occurrence was returned
+
+#| ** The Second Commandment ** 
+Use cons to build lists. |#
+
+(define rember2 ; Second attempt
+  (lambda (a lat)
+    (cond ((null? lat) (quote ()))
+          (else (cond ((eq? (car lat) a) (cdr lat))
+                      (else (cons (car lat) (rember2 a (cdr lat)))))))))
+
+(displayln ; What is the result?
+ (rember2 'and '(bacon lettuce and tomato)) ; (bacon lettuce tomato)
+ ) ; Produces the correct result for this case
+                  
+(define rember ; Reduce unnecessarily nested conds
+  (lambda (a lat)
+    (cond ((null? lat) (quote ()))
+          ((eq? (car lat) a) (cdr lat))
+          (else (cons (car lat) (rember a (cdr lat)))))))
+
+(displayln ; What is the result?
+ (rember 'and '(bacon lettuce and tomato)) ; (bacon lettuce tomato)
+ ) ; Produces the correct result for this case
+
+(displayln ; What is the result?
+ (rember 'sauce '(soy sauce and tomato sauce)) ; (soy and tomato sauce)
+ )
+
+(define firsts
+  (lambda (l)
+    (cond ((null? l) (quote ()))
+          (else (cons (car (car l)) (firsts (cdr l)))))))
+
+#| ** The Third Commandment ** 
+When building a list, describe the first typical element, and then cons it
+onto the natural recursion.|#
+
+(displayln ; What is the result?
+ (firsts '((apple peach pumpkin) 
+           (plum pear cherry) 
+           (grape raisin pea)
+           (bean carrot eggplant))) ; (apple plum grape bean)
+ )
+
+(displayln ; What is the result?
+ (firsts '((a b) (c d) (e f))) ; (a c e)
+ )
+
+(displayln ; What is the result?
+ (firsts '()) ; ()
+ )
+
+(displayln ; What is the result?
+ (firsts '((five plums) (four) (eleven green oranges))) ; (five four eleven)
+ )
+
+; insertRA/B/C my own attempts before working through book attempts
+
+(define insertRA ; Replaced instead of inserted
+  (lambda (new old lat)
+    (cond ((null? lat) (quote ()))
+          ((eq? (car lat) old) (cons new (cdr lat)))
+          (else (cons (car lat) (insertRA new old (cdr lat)))))))
+
+(displayln
+ (insertRA 'topping 'fudge '(ice cream with fudge for dessert))
+ ) ; (ice cream with topping for dessert)
+
+(define insertRB ; Inserted to left instead of right
+  (lambda (new old lat)
+    (cond ((null? lat) (quote ()))
+          ((eq? (car lat) old) (cons new lat))
+          (else (cons (car lat) (insertRB new old (cdr lat)))))))
+
+(displayln
+ (insertRB 'topping 'fudge '(ice cream with fudge for dessert))
+ ) ; (ice cream with topping fudge for dessert)
+
+(define insertRC ; Works as intended
+  (lambda (new old lat)
+    (cond ((null? lat) (quote ()))
+          ((eq? (car lat) old) (cons (car lat) (cons new (cdr lat))))
+          (else (cons (car lat) (insertRC new old (cdr lat)))))))
+
+(displayln
+ (insertRC 'topping 'fudge '(ice cream with fudge for dessert))
+ ) ; (ice cream with fudge topping for dessert)
+
+(define insertR1 ; First book attempt
+  (lambda (new old lat)
+    (cond ((null? lat) (quote ()))
+          (else (cond ((eq? (car lat) old) (cdr lat)) ; skipped old here!
+                      (else (cons (car lat)
+                                  (insertR1 new old (cdr lat)))))))))
+
+(displayln
+ (insertR1 'topping 'fudge '(ice cream with fudge for dessert))
+ ) ; (ice cream with for dessert), removed old!
+
+(define insertR2
+  (lambda (new old lat)
+    (cond ((null? lat) (quote ()))
+          (else (cond ((eq? (car lat) old) (cons new (cdr lat)))
+                      ; old skipped again, this time new in its place
+                      (else (cons (car lat) 
+                                  (insertR2 new old (cdr lat)))))))))
+
+(displayln
+ (insertR2 'topping 'fudge '(ice cream with fudge for dessert))
+ ) ; (ice cream with topping for dessert)
+
+(define insertR ; My insertRC is similar, but with only one cond!
+  (lambda (new old lat)
+    (cond ((null? lat) (quote ()))
+          (else (cond ((eq? (car lat) old) (cons old 
+                                                 (cons new (cdr lat))))
+                      (else (cons (car lat) 
+                                  (insertR new old (cdr lat)))))))))
+
+(displayln
+ (insertR 'topping 'fudge '(ice cream with fudge for dessert))
+ ) ; (ice cream with fudge topping for dessert)
+
+(define insertL
+  (lambda (new old lat)
+    (cond ((null? lat) (quote ()))
+          (else (cond ((eq? (car lat) old) (cons new (cons old (cdr lat))))
+                      ; Could also ...     (cons new lat)))
+                      (else (cons (car lat) 
+                                  (insertL new old (cdr lat)))))))))
+
+(define subst
+  (lambda (new old lat)
+    (cond ((null? lat) (quote ()))
+          (else (cond ((eq? (car lat) old) (cons new (cdr lat)));replace old
+                      (else (cons (car lat) 
+                                  (insertR2 new old (cdr lat)))))))))
+
+(displayln ; What is the result?
+ (subst 'topping 'fudge '(ice cream with fudge for dessert))
+ ) ; (ice cream with topping for dessert)
+
+(define subst2 ; Replaces first occurrence of o1 or o2 with new
+  (lambda (new o1 o2 lat)
+    (cond ((null? lat) (quote ()))
+          (else (cond ((eq? (car lat) o1) (cons new (cdr lat)))
+                      ((eq? (car lat) o2) (cons new (cdr lat)))
+      ; Alternatively ((or (eq? (car lat) o1) (eq? (car lat) o2))
+                      ; ((cons new (cdr lat)))
+                      (else (cons (car lat) 
+                                  (subst2 new o1 o2 (cdr lat))))))))) 
+
+(displayln ; What is the result?
+ (subst2 'vanilla 'chocolate 'banana 
+         '(banana ice cream with chocolate topping))
+ ) ; (vanilla ice cream with chocolate topping)
+
+(define multirember ; Remove all instances of a from lat
+  (lambda (a lat)
+    (cond ((null? lat) (quote ()))
+          (else (cond ((eq? (car lat) a) (multirember a (cdr lat)))
+                      ; found match, recurse on sublist skipping match
+                      (else (cons (car lat) (multirember a (cdr lat)))))))))
+                      ; no match, cons current onto result of recurse
+
+(displayln ; What is the result
+ (multirember 'cup '(coffee cup tea cup and hick cup))
+ ) ; (coffee tea and hick)
+
+(define multiinsertR
+  (lambda (new old lat)
+    (cond ((null? lat) (quote ()))
+          (else (cond ((eq? (car lat) old) 
+                       (cons (car lat) 
+                             (cons new (multiinsertR new old (cdr lat)))))
+                      (else (cons (car lat) 
+                                  (multiinsertR new old (cdr lat)))))))))
+
+(define multiinsertL
+  (lambda (new old lat)
+    (cond ((null? lat) (quote ()))
+          (else (cond ((eq? (car lat) old) (cons new
+                                                 ; infinite loop
+                                                 ;(cons old (multiinsertL new old lat))))
+                                                 (cons old 
+                                                       (multiinsertL new old (cdr lat)))))
+                      (else (cons (car lat) (multiinsertL new old (cdr lat)))))))))
+
+(displayln ; What is the result?
+ (multiinsertL 'fried 'fish '(chips and fish or fish and fried))
+ )
+
+#| ** The Fourth Commandment ** 
+(preliminary)
+Always change at least one argument while recurring. It must be changed to be closer to
+termination. The changing argument must be tested in the termination condition. Ex:
+- When using cdr, test terminations with null? |#
+
+(define multisubst
+  (lambda (new old lat)
+    (cond ((null? lat) (quote  ()))
+          (else (cond ((eq? (car lat) old) (cons new (multisubst new old (cdr lat))))
+                      (else (cons (car lat) (multisubst new old (cdr lat)))))))))
+
+(displayln ; What is the result
+ (multisubst 'happy 'sad '(sad music for sad times))
+ ) ; (happy music for happy times)

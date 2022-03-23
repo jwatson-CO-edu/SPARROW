@@ -1,0 +1,72 @@
+#|
+little-schemer-05.scm
+James Watson, 2013 October 
+Chapter 10 of "The Little Schemer" by Friedman and Felleisen
+|#
+(load "little-schemer-04.scm") ; This will also load all previous
+
+(define new-entry build) ; new-entry now a name that calls the build function with same args
+
+(displayln ; What is the result?
+ (new-entry '(appetizer entree beverage) '(pate boeuf vin) )
+ )
+
+(displayln ; What is the result?
+ (new-entry '(appetizer entree beverage) '(beer beer beer) )
+ )
+
+(displayln ; What is the result?
+ (new-entry '(beverage dessert) '((food is) (number one with us)) )
+ )
+
+#| En entry is a pair of lists whose first list is a set. Also, the two lists must be of equal
+length.|#
+
+(define lookup-in-entry ; return value associated with name if entry, otherwise (entry-f name)
+  (lambda (name entry entry-f) 
+    ; unpack entry into appropriate args for a helper function
+    (lookup-in-entry-help name
+                          (first entry)
+                          (second entry)
+                          entry-f)))
+
+(define lookup-in-entry-help ; return value associated with name, by linear search,
+  (lambda (name names values entry-f); or eval (entry-f name)
+    (cond ((null? names) (entry-f name)) ; list of names entry, invoke the contingency func
+          ((eq? (car names) name) (car values)) ; item name match, return item value
+          ; else, recur on sublists
+          (else (lookup-in-entry-help name
+                                      (cdr names)
+                                      (cdr values)
+                                      entry-f)))))
+
+#| A table (also called an environment) is a list of entries. |#
+
+(define extend-table cons) #| Define extend-table as an alias for cons. Takes an entry and a
+table (possibly an empty one) and creates a new table by putting the new entry in the front
+of the old table. |#
+
+(define lookup-in-table ; return value associated with name in table, if name exists
+  (lambda (name table table-f)
+    (cond ((null? table) (table-f name)) ; table null, eval (table-f name)
+          ; else, lookup in first entry
+          (else (lookup-in-entry name
+                                 (car table)
+                                 ; if not found, recur on subtable (next entry)
+                                 (lambda (name)
+                                   (lookup-in-table name
+                                                    (cdr table)
+                                                    table-f))))))) ; pass on contingency func
+
+(displayln ; What is the result?
+ (lookup-in-table 'entree
+                  '(((entree dessert) (spaghetti spumoni))
+                    ((appetizer entree beverage) (food tastes good)))
+                  (lambda (name) #f))
+ ) ; spaghetti, 'entree appears twice as a name, but lookup-in-table returns the first (linear)
+
+(define expression-to-action
+  (lambda (e)
+    (cond ((atom? e) (atom-to-action e))
+          (else (list-to-action e)))))
+

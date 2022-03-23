@@ -1,6 +1,7 @@
 ## General ##
 .vscode/
 finch
+*/*.*~
 
 ## LISP ##
 LISP/eval

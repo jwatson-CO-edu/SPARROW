@@ -1,0 +1,52 @@
+#| callWcc_1.scm 
+James Watson 2014 December
+Learning about Call with Current Continuation, Part 1 
+URL: http://community.schemewiki.org/?call-with-current-continuation
+URL: http://en.wikipedia.org/wiki/Call-with-current-continuation
+|#
+(load "scheme-tools.scm")
+
+; First of all, this introduction uses an abbreviation for the long-winded name: call/cc
+(define call/cc call-with-current-continuation)
+
+#| Taking a function f as its only argument, call/cc takes the current continuation 
+(i.e., a "snapshot" of the current control context or control state of the program) 
+as an object and applies f to it. The continuation object is a first-class value and is 
+represented as a function, with function application as its only operation. When a continuation
+object is applied to an argument, the existing continuation is eliminated and the applied 
+continuation is restored in its place, so that the program flow will continue at the point at 
+which the continuation was captured and the argument of the continuation will become the 
+"return value" of the call/cc invocation. Continuations created with call/cc may be called more
+than once, and even from outside the dynamic extent of the call/cc application.
+
+Making this type of implicit program state visible as an object is known in computer science as
+reification. (Note that Scheme does not syntactically distinguish continuation application from
+function application.) 
+
+One of the simplest uses of call/cc is to provide a simple escape mechanism out of any 
+nested computation. In some languages, such as Java or C, this is known under names such as 
+'break', 'continue', and 'return'. 
+
+Now, how do we use 'call/cc'? The procedure gets as an argument another procedure, which is 
+then called with a single argument: The 'return' procedure. As soon as the return procedure is 
+called, the call to 'call/cc' returns. Specifically, 'call/cc' returns the argument passed to 
+the 'return' procedure. Note that we did not explicitly 'define' the 'return' procedure, but we
+can call on that name as an escape procedure to immediately assign its argument as the ultimate
+evaluation result of 'call/cc', as below: |#
+(define search (lambda (wanted? lst)
+                 ; 'call/cc' takes a func as an arg, func has one arg, the escape "procedure"
+                 (call/cc (lambda (return) ; make name 'return' an escape procedure
+                            (for-each
+                             (lambda (item) (if (wanted? item) 
+                                                (return item)))
+                             lst)
+                          #f))))
+
+(displayln 
+ (search (lambda (item) (eq? 'bats item)) '(frogs bats snakes)) 
+) ; bats
+
+(displayln 
+ (search (lambda (item) (eq? 'toads item)) '(frogs bats snakes)) 
+) ; #f
+
