@@ -132,3 +132,9 @@ elif system.hostOS == "macosx":
   echo "running on Mac OS X!"
 else:
   echo "unknown operating system"
+
+
+
+#[### Exceptions #####
+FIXME: https://nim-lang.org/docs/tut2.html#exceptions
+]#
