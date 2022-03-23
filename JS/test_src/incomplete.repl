@@ -1,0 +1,4 @@
+(define fact
+  (lambda (n)
+    (cond ((eq? n 1) 1) 
+          (#t (* n (fact (- n 1)))))))
