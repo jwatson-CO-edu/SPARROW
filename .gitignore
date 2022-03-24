@@ -4,10 +4,10 @@ finch
 */*.*~
 
 ## LISP ##
-LISP/eval
+Lisp/eval
 
 ## NIM ##
-NIM/exec
+Nim/exec
 
 # Prerequisites
 *.d
