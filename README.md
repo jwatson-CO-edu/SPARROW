@@ -3,10 +3,10 @@ An interpreted language written in [Nim](https://nim-lang.org/), with the goals 
 
 ## `DEV PLAN`
 ```
-[ ] Finish Nim tuts
+[Y] Finish Nim tuts, 2022-03-24
     [Y] Part 1: Basics, 2022-03-23
-    [ ] Part 2: Classes and Exceptions
-    [ ] Part 3: Metaprogramming and Macros
+    [Y] Part 2: Classes and Exceptions, 2022-03-24
+    [Y] Part 3: Metaprogramming and Macros, 2022-03-24
 [ ] Translate first evaluator to Nim
 [ ] Translate "The Little Javascripter" by Douglas Crockford
     https://www.crockford.com/little.html (See `JS` folder)

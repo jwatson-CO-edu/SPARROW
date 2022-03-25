@@ -114,3 +114,23 @@ template withFile(f: untyped, filename: string, mode: FileMode,
 withFile(txt, "ttempl3.txt", fmWrite):
   txt.writeLine("line 1")
   txt.writeLine("line 2")
+
+
+#[# Lifting Procedures ###
+Lift a proc taking one scalar parameter and returning a scalar value (eg `proc sssss[T](x: T): float`),
+to provide templated procs that can handle a single parameter of seq[T] or nested seq[seq[]] or the same type ]#
+
+import std/math
+
+template liftScalarProc(fname) =
+  ##  liftScalarProc(abs)
+  ##  # now abs(@[@[1,-2], @[-2,-3]]) == @[@[1,2], @[2,3]]
+  proc fname[T](x: openarray[T]): auto =
+    var temp: T
+    type outType = typeof(fname(temp))
+    result = newSeq[outType](x.len)
+    for i in 0..<x.len:
+      result[i] = fname(x[i])
+
+liftScalarProc(sqrt)   # make sqrt() work for sequences
+echo sqrt(@[4.0, 16.0, 25.0, 36.0])   # => @[2.0, 4.0, 5.0, 6.0]
