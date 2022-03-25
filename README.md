@@ -3,21 +3,41 @@ An interpreted language written in [Nim](https://nim-lang.org/), with the goals 
 
 ## `DEV PLAN`
 ```
+### Phase 0, Nim Language: COMPLETE! ###
 [Y] Finish Nim tuts, 2022-03-24
     [Y] Part 1: Basics, 2022-03-23
     [Y] Part 2: Classes and Exceptions, 2022-03-24
     [Y] Part 3: Metaprogramming and Macros, 2022-03-24
+
+### Phase 1, Basic Function ###
 [ ] Translate first evaluator to Nim
+    [ ] All Functions && All Tests
+    [ ] Q: How big is each `Atom`?
 [ ] Translate "The Little Javascripter" by Douglas Crockford
     https://www.crockford.com/little.html (See `JS` folder)
 [ ] Parse "Easy S-Expressions" instead: 
     Implicit open paren, `;` is close paren
     <funcName> <arg1> ... <argN>;
+    [ ] How to define nested expressions? Always blocks? `{}`
+    [ ] Allow infix math? Special math block instead?
 [ ] Experiment with memory models
-[ ] The Seasoned Schemer
-[ ] Practical Common Lisp
+    [ ] Read: How does Nim allocate memory?
+    [ ] Q: Can a block of "null pointer" memory be allocated?
+    [ ] Q: Can a large array of variant `Atoms` be allocated? What is the per-unit size in memory?
+    [ ] T: Which is faster; (Pre-allocated block -vs- Dynamic vars); Create 1000 vars and assign randomly for 10k steps
+[ ] Evaluate "The Seasoned Schemer" for useful features and structures (If yes, then expand this bullet with REQUIRED topics ONLY )
+[ ] Evaluate "Practical Common Lisp" (PCL) for useful features and structures (If yes, then expand this bullet with REQUIRED topics ONLY )
+
+### Phase 2, Features ###
+[ ] Collect flow programming requirments
+[ ] Q: What are ORC and ARC?
+[ ] Q: Does Nim target LLVM yet? Is there another intermediate representation instead?
+[ ] Arrays?
+[ ] Hashes?
+[ ] User-defined types? -and/or- Entity Component System (ECS) with interfaces?
 [ ] Concurrency Model & Scheduling
     [ ] Petri Representation?
+[ ] Q: How does the Nim type system work?
 ```
 
 ## (Possible) Names
