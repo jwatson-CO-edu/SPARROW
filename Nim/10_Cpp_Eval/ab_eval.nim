@@ -52,8 +52,9 @@ type
 
 proc empty_atom*(): Atom =
     # Allocate and return an a `NOVALUE` error
-    return Atom( kind: EROR, code: NOVALUE, info: "Atom was created without data" )
+    return Atom( kind: EROR, code: NOVALUE, info: "No Data" )
 
+# 2022-03-25: Compiles!
 
 # FIXME: Atom* make_null(){ , 
 
