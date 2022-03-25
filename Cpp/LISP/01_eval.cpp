@@ -104,7 +104,7 @@ Atom* make_string( const char* str_ ){
 }
 
 Atom* make_number( double nmbr_ ){
-    // Make a string
+    // Make a number
     Atom* rtnAtm = empty_atom();
     rtnAtm->typ  = NMBR;
     rtnAtm->err  = OKAY; // We are happy this has a value

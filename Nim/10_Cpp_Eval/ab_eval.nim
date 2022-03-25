@@ -36,8 +36,8 @@ type
     # The most basic and interchangeable unit of this LISP, Atom variants defined here
         case kind: F_Type # the `kind` field is the discriminator
         of CONS:
-            car : Atom # Pair left
-            cdr : Atom # Pair right
+            car : ptr Atom # Pair left
+            cdr : ptr Atom # Pair right
         of STRN:
             str : string # String data
         of NMBR:
@@ -48,13 +48,56 @@ type
             code : F_Error # Error code
             info : string #- Detailed error info
 
+type pt_Atom = ptr Atom
 
-
-proc empty_atom*(): Atom =
+proc empty_atom*(): pt_Atom =
     # Allocate and return an a `NOVALUE` error
-    return Atom( kind: EROR, code: NOVALUE, info: "No Data" )
+    result   = create Atom
+    result[] = Atom( kind: EROR, code: NOVALUE, info: "No Data" )
 
 # 2022-03-25: Compiles!
 
-# FIXME: Atom* make_null(){ , 
+proc make_null*(): pt_Atom =
+    # Make a NULL
+    result   = create Atom
+    result[] =  Atom( kind: NULL, nul: 0 )
 
+
+proc make_cons*( car: pt_Atom, cdr: pt_Atom ): pt_Atom =
+    # Make a pair
+    result   = create Atom
+    result[] = Atom( kind: CONS, car: car, cdr: cdr )
+
+
+proc make_string*( str: string ): pt_Atom =
+    # Make a string
+    result   = create Atom
+    result[] = Atom( kind: STRN, str: str )
+
+
+proc make_number*( nmbr: float ): pt_Atom =
+    # Make a number
+    result   = create Atom
+    result[] = Atom( kind: NMBR, num: nmbr )
+
+
+
+########## LIST PROCESSING ########################################################################
+
+
+##### Type Tests ################################
+
+proc p_Null*( op: pt_Atom ): bool =  return (op.kind == NULL) # Return T if this atom is `Null`, Otherwise return F
+proc p_cons*( op: pt_Atom ): bool =  return (op.kind == CONS) # Return T if this atom is a pair, Otherwise return F
+
+
+##### Accessing & Constructing ##################
+
+proc set_car_B*( cons: pt_Atom , valu: pt_Atom ): void =   cons.car = valu # Set the left  pair item
+proc set_cdr_B*( cons: pt_Atom , valu: pt_Atom ): void =   cons.cdr = valu # Set the right pair item
+
+proc consify_atom*( atm: pt_Atom ): pt_Atom = 
+    # Wrap the `atm` in a cons, with `atm` as 'car'
+    result = make_cons( atm, make_null() )
+
+# 2022-03-25: Compiles!
