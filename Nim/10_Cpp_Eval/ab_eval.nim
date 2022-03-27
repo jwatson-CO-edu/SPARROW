@@ -101,3 +101,75 @@ proc consify_atom*( atm: pt_Atom ): pt_Atom =
     result = make_cons( atm, make_null() )
 
 # 2022-03-25: Compiles!
+
+
+proc find_terminus*( list: pt_Atom ): pt_Atom = 
+    # Iterate to the ending cons of the list and return a pointer to it
+    # 0. Set the argument equal to our pointer
+    var curr = list
+    # 1. If this is a cons structure, then we must find the end of it
+    if list.kind == CONS:
+        # 2. Iterate pointer to next `cdr` until we reach a pair that contains the terminating null, return pair
+        while not p_Null( curr.cdr ):
+            curr = addr(curr.cdr[])
+        return curr
+    # Else atom was literal, it is its own terminus
+    else:
+        return list
+
+
+proc append*( list: pt_Atom, atom: pt_Atom = nil ): pt_Atom = 
+    # Append an atom to the end of a conslist, Create a conslist if none exists, return pointer to list head
+    var 
+        rtnLst = list
+        endCns: pt_Atom = nil
+    #  1. If the given list is a cons list, it is either an empty cons or the head of a LISP list
+    if list.kind == CONS:
+        # 2. If we were given an atom to append, it either belongs in the `car` of the empty cons,
+        #    or in the `car` of a new terminal cons
+        if atom != nil: 
+            if p_Null( list.car ):
+                set_car_B( list, atom )
+            else:
+                endCns = find_terminus( list )
+                set_cdr_B( endCns, consify_atom( atom ) )
+    # 3. Else we either have one or two non-cons atoms
+    else:
+        rtnLst = consify_atom( list ) # -------------------------- ( `list` , [X] )
+        if atom != nil:
+            set_cdr_B( rtnLst, consify_atom( atom ) ) # ( `list` , ( `atom` , [X] ) )
+    return rtnLst
+
+
+##### Printing ##################################
+
+proc str( item: pt_Atom ): string = 
+    # Return the string representation of the `item`
+    # Null Symbol: https://www.fileformat.info/info/unicode/char/29c4/index.htm
+    var rtnStr = ""
+    case item.kind:
+    #[Null   ]# of NULL:  rtnStr = "\xE2\xA7\x84"
+    #[Str/Sym]# of STRN:  rtnStr = item.str
+    #[Num    ]# of NMBR:  rtnStr = $item.num
+    #[Pair   ]# of CONS:  rtnStr = "( "&str(item.car)&", "&str(item.cdr)&" )"  
+    #[Error  ]# of EROR:  rtnStr = "( ERROR: " & $item.code & ", " & item.info & " )"
+    return rtnStr
+
+
+
+########## PARSING ################################################################################
+
+import std/tables
+let RESERVED* = {
+    "(": "open_parn", # Open  paren
+    ")": "clos_parn", # Close paren
+}.newTable
+
+
+proc find_reserved*( token: string ): string =
+    # Return the name of the reserved symbol, or an empty string if not found
+    if not RESERVED.hasKey( token ):  return ""  # If the search failed, return an empty string
+    else:  return RESERVED[ token ] # ------------ Else return the string name of the reserved name
+
+
+# 2022-03-26: Compiles!
