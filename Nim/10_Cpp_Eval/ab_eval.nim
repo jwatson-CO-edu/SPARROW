@@ -171,5 +171,51 @@ proc find_reserved*( token: string ): string =
     if not RESERVED.hasKey( token ):  return ""  # If the search failed, return an empty string
     else:  return RESERVED[ token ] # ------------ Else return the string name of the reserved name
 
-
 # 2022-03-26: Compiles!
+
+
+# vector<string> tokenize( string expStr, string sepChar = " " ){
+proc tokenize*( expStr: var string, sepChar: string = " "  ): seq[string] = 
+    # Parse an expression string into an s-expression
+    let 
+        expLen = expStr.len() # --- Length of the given string
+    var 
+        token  = "" # -------------- Current token in progress
+        c:char = ' ' # ------------- Current character
+        tokens: seq[string] = @[] # Vector of string tokens
+
+    proc stow_token(): void =
+        # LAMBDA: Add the current token to the vector and reset current token to empty
+        tokens.add( token )
+        token = ""
+
+    proc stow_char(): void = 
+        # LAMBDA: Add the current character to the vector and reset token to empty
+        tokens.add( $c )
+
+    proc cache_char(): void = 
+        # LAMBDA: Add the current character to the current token
+        token.add( c )
+
+    # 0. Apply the postfix hack
+    expStr.add( ' ' )
+    # 1. For every character in the string
+    for i in 0 .. (expLen-1):
+        # 2. Fetch character
+        c = expStr[i]
+        # 3. Either add char to present token or create a new one
+        
+        # Case Open Paren
+        if find_reserved( $c ) == "open_parn":  stow_char()
+        # Case Close Paren
+        elif find_reserved( $c ) == "clos_parn":
+            if token.len() > 0:  stow_token()
+            stow_char()
+        # Case separator
+        elif $c == sepChar:  stow_token()
+        # Case any other char
+        else:  cache_char()
+    # N. Return the vector of tokens
+    return tokens
+
+# 2022-03-27: Compiles!
