@@ -66,6 +66,9 @@ An interpreted language written in [Nim](https://nim-lang.org/), with the goals 
 [ ] Petri Rep for Parallel Test 1
 [ ] Auto parallelize Parallel Test 1
     [ ] Same Conclusion?
+    
+### Phase 4, Optimization ###
+[ ] Transpile back to Nim --> C --> Binary (See Daydream paper notes)
 ```
 
 ## (Possible) Names
@@ -86,6 +89,7 @@ An interpreted language written in [Nim](https://nim-lang.org/), with the goals 
 * DL auto-tuning of interpreter parameters
 * Constructivist simulation: Program flow follows fluid flow
 * Bond Graphs and Circuit Sim
+* FINCH-OS, an operating system with advanced task scheduling
 
 # Resources
 
