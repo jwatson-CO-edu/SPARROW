@@ -1,7 +1,7 @@
 #[ * Text:      [L]ISP [I]n [S]mall [P]ieces by Christian Quinnec 
    * Chapter:   1
    * Project:   SPARROW, [S]cheme [P]rogram [A]llowing [R]easonable [R]eckoning [O]f [W]ork
-   * Component: Micro-evaluator, written in C++ instead of Scheme 
+   * Component: Micro-evaluator, written in Nim instead of Scheme 
 
    nim c -d:release --hints:off --run -o:exec/ab_eval -r ab_eval.nim
    
@@ -9,10 +9,9 @@
    James Watson, 2022-03 ]#
 
 
-########## HELPER FUNCTIONS #######################################################################
+########## INIT ###################################################################################
 
-# string str_to_upper( const string& inputStr )
-# https://nim-lang.org/docs/strutils.html#capitalizeAscii%2Cstring
+import std/strutils # strip
 
 
 
@@ -219,3 +218,73 @@ proc tokenize*( expStr: var string, sepChar: string = " "  ): seq[string] =
     return tokens
 
 # 2022-03-27: Compiles!
+
+
+proc p_float_string*( inputStr: string ): bool = 
+    # Return T if the string is appropriate for float conversion, otherwise return F
+    # Adapted from Original Author: Bill the Lizard,  https://stackoverflow.com/a/447307
+    var slimStr = inputStr.strip()
+    try:
+        discard parseFloat( slimStr )
+        return true
+    except ValueError:
+        return false
+
+
+proc p_null_string*( inputStr: string ): bool =
+    # Return T if the string is appropriate for Null conversion, otherwise return F
+    return (toUpper( inputStr ) == "NULL") # 2022-03-28: For now, do not consider empty string null
+
+
+proc atomize_string*( token: string ): pt_Atom =
+    # Convert a string into a non-cons atom
+    if p_float_string( token ):  return make_number( parseFloat( token ) )
+    if p_null_string( token ) :  return make_null()
+   #[ else assume string -----]# return make_string( token )
+
+# 2022-03-28: Compiles!
+
+
+proc consify_tokens*( tokens: seq[string], i: int ): pt_Atom =
+    # Render tokens as a cons structure
+    var
+        token:   string # --------------- Current token from the vector
+        tkLen:   int     = tokens.len() # Number of tokens in the given vector
+        rtnTree: pt_Atom = nil # -------- Cons structure to return
+
+    # 1. If there are one or more strings to process, then attempt to construct a token tree
+
+    # FIXME: START HERE
+
+#     if( (tokens.size()-i) > 1 ){
+#         // 2. Start off by creating a cons list, if needed
+#         rtnTree = make_cons();
+
+#         // 3. For each token in the vector
+#         while( i < len ){
+#             // 4. Fetch token at this index
+#             token = tokens[i];
+#             i++;
+
+#             // 5. Case Open Paren
+#             if(  find_reserved( token ) == "open_parn"  ){
+#                 // If there is a new level of depth to the structure, recur
+#                 if(i>1)  append(  rtnTree , consify_tokens( tokens, i )  );
+#                 // else this is the first level
+#                 else     rtnTree = consify_tokens( tokens, i );
+#             }else
+
+#             // 6. Case Close Paren
+#             if(  find_reserved( token ) == "clos_parn"  ){  return rtnTree;  }else
+
+#             // 7. Case Null
+#             if(  p_null_string( token )  ){  append( rtnTree , make_null() ); } 
+
+#             // 8. Case Literal
+#             else{  append( rtnTree , atomize_string( token ) );  }
+#         }
+#         // return rtnTree;
+#     // 9. else there were no tokens, return Null
+#     }else{  return make_null();  }
+#     return rtnTree;
+# }
