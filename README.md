@@ -18,26 +18,54 @@ An interpreted language written in [Nim](https://nim-lang.org/), with the goals 
 [ ] Parse "Easy S-Expressions" instead: 
     Implicit open paren, `;` is close paren
     <funcName> <arg1> ... <argN>;
-    [ ] How to define nested expressions? Always blocks? `{}`
+    [ ] How to define nested expressions? Always blocks? `{}`? `()`?
+        [ ] Implement statement precedence with `()` and determine its relationship with nested expressions. (Identical to nested?)
+        [ ] Eval whether to allow "Classic S-Expressions": (<funcName> <arg1> ... <argN>)
     [ ] Allow infix math? Special math block instead?
+[ ] Line Continuation: `\+`    
+[ ] Evaluate "The Seasoned Schemer" for useful features and structures (If yes, then expand this bullet with REQUIRED topics ONLY )
 [ ] Experiment with memory models
     [ ] Read: How does Nim allocate memory?
     [ ] Q: Can a block of "null pointer" memory be allocated?
     [ ] Q: Can a large array of variant `Atoms` be allocated? What is the per-unit size in memory?
     [ ] T: Which is faster; (Pre-allocated block -vs- Dynamic vars); Create 1000 vars and assign randomly for 10k steps
-[ ] Evaluate "The Seasoned Schemer" for useful features and structures (If yes, then expand this bullet with REQUIRED topics ONLY )
 [ ] Evaluate "Practical Common Lisp" (PCL) for useful features and structures (If yes, then expand this bullet with REQUIRED topics ONLY )
 
-### Phase 2, Features ###
+### Phase 2, Feature Research ###
 [ ] Collect flow programming requirments
 [ ] Q: What are ORC and ARC?
 [ ] Q: Does Nim target LLVM yet? Is there another intermediate representation instead?
-[ ] Arrays?
-[ ] Hashes?
-[ ] User-defined types? -and/or- Entity Component System (ECS) with interfaces?
+[ ] Type System
+    [ ] Q: How does the Nim type system work?
+    [ ] User-defined types? -and/or- Entity Component System (ECS) with interfaces?
+        [ ] Evaluate Entity Component System ([Polymorph](https://github.com/rlipsc/polymorph))
+        [ ] Alternatives to ECS?
+        [ ] Alternatives to OOP?
+[ ] Composite Types
+    [ ] Arrays?
+    [ ] Hashes?
+    [ ] Dynamic Arrays?
+    [ ] Heterogeneous (Python) Arrays? (Unlikely for static typing focus)
 [ ] Concurrency Model & Scheduling
+    [ ] Nim Threads   in Linux and Windoes
+    [ ] Nim Processes in Linux and Windoes
+    [ ] READ: "Actors" by Gul Agha
     [ ] Petri Representation?
-[ ] Q: How does the Nim type system work?
+    
+### Phase 3, Expansion ###
+[ ] Abstract Source Graph Nodes
+[ ] Interpreter Program
+    [ ] Inter-process connections
+[ ] Parallel Test 1
+    [ ] Choose Task
+    [ ] Write and Test Task
+        [ ] Single process
+        [ ] Multi-Process
+    [ ] Run Comparison Test
+    [ ] Document Results
+[ ] Petri Rep for Parallel Test 1
+[ ] Auto parallelize Parallel Test 1
+    [ ] Same Conclusion?
 ```
 
 ## (Possible) Names
@@ -47,6 +75,17 @@ An interpreted language written in [Nim](https://nim-lang.org/), with the goals 
     - Possible extension to behavior trees
     - An execution model based on Petri Nets that seeks to support commonsense solutions to Job Shop Scheduling problems as they relate to computing
 * Interpreter: BOX? HOUSE? (Either a riff on BOXFAB or birds)
+
+
+# Daydreams
+* Automatic network compute discovery 
+* Automatic load balancing
+* Geometric Algebra
+* Deep Learning
+* Plug-and-Play learning appliances (Brain Book)
+* DL auto-tuning of interpreter parameters
+* Constructivist simulation: Program flow follows fluid flow
+* Bond Graphs and Circuit Sim
 
 # Resources
 
