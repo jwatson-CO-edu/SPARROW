@@ -81,6 +81,9 @@ An interpreted language written in [Nim](https://nim-lang.org/), with the goals 
 
 
 # Daydreams
+* Enhanced alternative to Behavior Trees
+    - How to retain reactivity in a Graph?
+    - Does  the introduction of cycles and loops create significant problems.
 * Automatic network compute discovery 
 * Automatic load balancing
 * Geometric Algebra
