@@ -62,7 +62,7 @@ proc make_null*(): pt_Atom =
     result[] =  Atom( kind: NULL, nul: 0 )
 
 
-proc make_cons*( car: pt_Atom, cdr: pt_Atom ): pt_Atom =
+proc make_cons*( car: pt_Atom = nil, cdr: pt_Atom = nil ): pt_Atom =
     # Make a pair
     result   = create Atom
     result[] = Atom( kind: CONS, car: car, cdr: cdr )
@@ -117,7 +117,7 @@ proc find_terminus*( list: pt_Atom ): pt_Atom =
         return list
 
 
-proc append*( list: pt_Atom, atom: pt_Atom = nil ): pt_Atom = 
+proc append*( list: pt_Atom, atom: pt_Atom = nil ): pt_Atom {.discardable.} = 
     # Append an atom to the end of a conslist, Create a conslist if none exists, return pointer to list head
     var 
         rtnLst = list
@@ -245,46 +245,64 @@ proc atomize_string*( token: string ): pt_Atom =
 # 2022-03-28: Compiles!
 
 
-proc consify_tokens*( tokens: seq[string], i: int ): pt_Atom =
+proc consify_tokens*( tokens: seq[string], i: var int ): pt_Atom =
     # Render tokens as a cons structure
     var
         token:   string # --------------- Current token from the vector
         tkLen:   int     = tokens.len() # Number of tokens in the given vector
         rtnTree: pt_Atom = nil # -------- Cons structure to return
 
-    # 1. If there are one or more strings to process, then attempt to construct a token tree
+    #  1. If there are one or more strings to process, then attempt to construct a token tree
+    if (tokens.len()-i) > 1:
+        #  2. Start off by creating a cons list, if needed
+        rtnTree = make_cons()
 
-    # FIXME: START HERE
+        #  3. For each token in the vector
+        while i < tkLen:
+            #  4. Fetch token at this index
+            token = tokens[i]
+            i += 1
 
-#     if( (tokens.size()-i) > 1 ){
-#         // 2. Start off by creating a cons list, if needed
-#         rtnTree = make_cons();
+            #  5. Case Open Paren
+            if find_reserved( token ) == "open_parn":
+                # If there is a new level of depth to the structure, recur
+                if i>1:  append(  rtnTree , consify_tokens( tokens, i )  )
+                # else this is the first level
+                else:    rtnTree = consify_tokens( tokens, i )
+            else:
+                #  6. Case Close Paren
+                if find_reserved( token ) == "clos_parn":  return rtnTree
+                #  7. Case Null
+                elif p_null_string( token ):  append( rtnTree , make_null() )
+                #  8. Case Literal
+                else:  append( rtnTree , atomize_string( token ) )
+        #  9. Return the constructed tree
+        return rtnTree
+    # 10. else there were no tokens, return Null
+    else:  return make_null()
 
-#         // 3. For each token in the vector
-#         while( i < len ){
-#             // 4. Fetch token at this index
-#             token = tokens[i];
-#             i++;
 
-#             // 5. Case Open Paren
-#             if(  find_reserved( token ) == "open_parn"  ){
-#                 // If there is a new level of depth to the structure, recur
-#                 if(i>1)  append(  rtnTree , consify_tokens( tokens, i )  );
-#                 // else this is the first level
-#                 else     rtnTree = consify_tokens( tokens, i );
-#             }else
+proc expression_from_string*( expStr: var string, sepChar: string = " " ): pt_Atom =
+    # Tokenize the `expStr`, express it as a conslist, and return
+    var
+        i:      int         = 0
+        tokens: seq[string] = tokenize( expStr, sepChar )
+    return consify_tokens( tokens, i )
 
-#             // 6. Case Close Paren
-#             if(  find_reserved( token ) == "clos_parn"  ){  return rtnTree;  }else
 
-#             // 7. Case Null
-#             if(  p_null_string( token )  ){  append( rtnTree , make_null() ); } 
 
-#             // 8. Case Literal
-#             else{  append( rtnTree , atomize_string( token ) );  }
-#         }
-#         // return rtnTree;
-#     // 9. else there were no tokens, return Null
-#     }else{  return make_null();  }
-#     return rtnTree;
-# }
+########## ENVIRONMENT ############################################################################
+
+type
+    Env* = ref object
+        parent:    ptr Env # -------------- Pointer to the environment that contains this one
+        freeVars:  seq[pt_Atom] # --------- Free  variables, without binding
+        boundVars: Table[string, pt_Atom] # Bound variables, have names given to them by statements
+    pt_Env* = ptr Env
+
+
+proc p_binding_exists*( env: Env, name: string ): bool =
+    # Return T if the binding exists in `boundVars`, otherwise return F
+    return env.boundVars.hasKey( name )
+
+# 2022-03-28: Compiles!

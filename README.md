@@ -77,22 +77,29 @@ An interpreted language written in [Nim](https://nim-lang.org/), with the goals 
 * Execution Model: [B]asic [O]peration e[X]change for [F]lows [A]agents and [B]ehaviors
     - Possible extension to behavior trees
     - An execution model based on Petri Nets that seeks to support commonsense solutions to Job Shop Scheduling problems as they relate to computing
-* Interpreter: BOX? HOUSE? (Either a riff on BOXFAB or birds)
+* Interpreter: BOX? HOUSE? PERCH? (Either a riff on BOXFAB or birds)
 
 
 # Daydreams
 * Enhanced alternative to Behavior Trees
     - How to retain reactivity in a Graph?
     - Does  the introduction of cycles and loops create significant problems.
-* Automatic network compute discovery 
-* Automatic load balancing
-* Geometric Algebra
-* Deep Learning
-* Plug-and-Play learning appliances (Brain Book)
-* DL auto-tuning of interpreter parameters
-* Constructivist simulation: Program flow follows fluid flow
-* Bond Graphs and Circuit Sim
-* FINCH-OS, an operating system with advanced task scheduling
+* Simulations
+    - "Tick" regulation across nodes
+    - Constructivist simulation: Program flow follows fluid flow
+    - Bond Graphs and Circuit Sim
+    - Can the mechanisms that regulate execution be used to regulate simulation
+* Execution System
+    - Automatic network compute discovery 
+    - Automatic load balancing
+    - FINCH-OS, an operating system with advanced task scheduling
+* Mathematics / Statistics
+    - Stochastic Programming
+    - Deep Learning
+    - Geometric Algebra
+* AI
+    - Plug-and-Play learning appliances (Brain Book)
+    - DL auto-tuning of interpreter parameters
 
 # Resources
 
