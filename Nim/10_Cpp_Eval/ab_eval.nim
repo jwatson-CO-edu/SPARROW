@@ -117,26 +117,34 @@ proc find_terminus*( list: pt_Atom ): pt_Atom =
         return list
 
 
-proc append*( list: pt_Atom, atom: pt_Atom = nil ): pt_Atom {.discardable.} = 
+proc append*( list: var pt_Atom, atom: pt_Atom = nil ): pt_Atom {.discardable.} = 
     # Append an atom to the end of a conslist, Create a conslist if none exists, return pointer to list head
+    echo "Entered `append`"
     var 
-        rtnLst = list
+        rtnLst: pt_Atom = list
         endCns: pt_Atom = nil
+    echo "Created vars!"
     #  1. If the given list is a cons list, it is either an empty cons or the head of a LISP list
     if list.kind == CONS:
+        echo "Input was CONS!"
         # 2. If we were given an atom to append, it either belongs in the `car` of the empty cons,
         #    or in the `car` of a new terminal cons
         if atom != nil: 
+            echo "Atom not `nil`!"
             if p_Null( list.car ):
-                set_car_B( list, atom )
+                echo "Atom was list terminator!"
+                list = nil
+                list = make_cons( atom, make_null() )
             else:
                 endCns = find_terminus( list )
                 set_cdr_B( endCns, consify_atom( atom ) )
     # 3. Else we either have one or two non-cons atoms
     else:
+        echo "Input NOT cons!"
         rtnLst = consify_atom( list ) # -------------------------- ( `list` , [X] )
         if atom != nil:
             set_cdr_B( rtnLst, consify_atom( atom ) ) # ( `list` , ( `atom` , [X] ) )
+    echo "Exited `append`"
     return rtnLst
 
 
@@ -255,6 +263,7 @@ proc consify_tokens*( tokens: seq[string], i: var int ): pt_Atom =
     #  1. If there are one or more strings to process, then attempt to construct a token tree
     if (tokens.len()-i) > 1:
         #  2. Start off by creating a cons list, if needed
+        echo "Got a sequence of ", tokens.len(), " tokens, at index ", i
         rtnTree = make_cons()
 
         #  3. For each token in the vector
@@ -275,7 +284,11 @@ proc consify_tokens*( tokens: seq[string], i: var int ): pt_Atom =
                 #  7. Case Null
                 elif p_null_string( token ):  append( rtnTree , make_null() )
                 #  8. Case Literal
-                else:  append( rtnTree , atomize_string( token ) )
+                else:  
+                    echo "About to append \"", token, "\""
+                    append( rtnTree , atomize_string( token ) )
+
+        echo "Tree ready!"
         #  9. Return the constructed tree
         return rtnTree
     # 10. else there were no tokens, return Null
@@ -306,3 +319,36 @@ proc p_binding_exists*( env: Env, name: string ): bool =
     return env.boundVars.hasKey( name )
 
 # 2022-03-28: Compiles!
+
+
+proc get_bound_atom*( env: Env, name: string ): pt_Atom =
+    #  Return the atom bound to `name`, if it exists, Otherwise return `nil`
+    if p_binding_exists( env, name ):
+        return env.boundVars[ name ]
+    return nil
+
+
+proc bind_atom*( env: Env, name: string, atom: pt_Atom ): void =
+    # Bind an `atom` to a `name` by adding it to the mapping, If the name already exists, it will be updated
+    env.boundVars[ name ] = atom
+    
+
+
+########## TESTING #################################################################################
+
+
+### Test expression tokenization ###
+var
+    t_expr: string      = "(cons a b)"
+    l_expr: seq[string] = tokenize( t_expr )
+echo l_expr
+
+
+### Test vector consification ###
+
+var
+    counter: int     = 0
+    s_expr : pt_Atom = consify_tokens( l_expr, counter ) 
+
+
+echo repr( addr( s_expr ) )
