@@ -1,5 +1,8 @@
 #[
+    Singly Linked List
     https://rosettacode.org/wiki/Singly-linked_list/Element_removal#Nim
+
+    nim c -d:release --hints:off --run -o:exec/SLL -r SLL.nim
 ]# 
 
 import strutils

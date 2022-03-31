@@ -11,7 +11,14 @@ An interpreted language written in [Nim](https://nim-lang.org/), with the goals 
 
 ### Phase 1, Basic Function ###
 [ ] Translate first evaluator to Nim
-    [ ] All Functions && All Tests
+    [Y] All Functions Implemented, 2022-03-30, However there is a segfault in `append` that has 
+        revealed some misunderstandings with pointers, see below.
+    [ ] All Tests, Pointer Learning
+        [ ] DLL Heap and Stress Tests (Concepts folder)
+        [ ] Bin Tree Heap and Stress Tests (Concepts folder)
+        [ ] SWALLOW debugging
+            [ ] Refactor?
+        [ ] T: All tests pass
     [ ] Q: How big is each `Atom`?
 [ ] Translate "The Little Javascripter" by Douglas Crockford
     https://www.crockford.com/little.html (See `JS` folder)
