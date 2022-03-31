@@ -89,12 +89,16 @@ An interpreted language written in [Nim](https://nim-lang.org/), with the goals 
 
 # Daydreams
 * Enhanced alternative to Behavior Trees
-    - How to retain reactivity in a Graph?
-    - Does  the introduction of cycles and loops create significant problems.
+    - Q: How to retain reactivity in a Graph?
+        - Q: Is there a PN flavor that has a conditional similar to a BT::Selector node? 
+    - Q: Does the introduction of cycles and loops create significant problems.
+    - Enhanced representation of state with Colored and/or Object Petri Nets
+    - Q: State operations like {GPS, BT::HashedExpression}?
 * Simulations
     - "Tick" regulation across nodes
     - Constructivist simulation: Program flow follows fluid flow
-    - Bond Graphs and Circuit Sim
+    - Bond Graphs, Circuit Sim, Pipe Flow
+        - Source, Sink, Resistance, Power, Energy Conversions
     - Can the mechanisms that regulate execution be used to regulate simulation
 * Execution System
     - Automatic network compute discovery 
