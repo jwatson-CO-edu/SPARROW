@@ -81,6 +81,12 @@ proc len[T](l: var DL_List[T]): int =
     # Return the number of elements in the list
     return l.length 
 
+proc `$`[T](n: var Node[T]): string =
+    # String representation of the Node
+    result = "N["
+    result.add($n.data)
+    result.add("]")
+
 proc `$`[T](l: var DL_List[T]): string =
     # String representation of the DLL
     result = ""
@@ -96,6 +102,13 @@ iterator traverseForward[T](l: DL_List[T]): T =
     while n != nil:
         yield n.data
         n = n.next
+
+iterator iterNodes*[T](l: DL_List[T]): Node[T] =
+    # Iterator from head to tail
+    var n = l.head
+    while n != nil:
+        yield n
+        n = n.next
  
 iterator traverseBackward[T](l: DL_List[T]): T =
     # Iterator from tail to head
@@ -104,23 +117,29 @@ iterator traverseBackward[T](l: DL_List[T]): T =
         yield n.data
         n = n.prev
 
-proc get_node_by_index*[T]( l: DL_List[T], idx: int ): Node[T] =
+proc get_node_by_index*[T]( l: var DL_List[T], idx: int ): Node[T] =
     # Get the element at position `idx`, if it exists, otherwise return `nil`, O(n)
-    if idx > -1 and idx < l.len():
-        for i, elem in traverseForward( l ):
+    var i: int = 0
+    if idx > -1 and idx < len(l):
+        for elem in iterNodes( l ):
             if i == idx:
                 return elem
+            else:
+                i += 1
     return nil
 
-proc get_value_by_index*[T]( l: DL_List[T], idx: int ): T =
+proc get_value_by_index*[T]( l: var DL_List[T], idx: int ): T =
     # Get the element at position `idx`, if it exists, otherwise return `nil`, O(n)
-    if idx > -1 and idx < l.len():
-        for i, elem in traverseForward( l ):
+    var i: int = 0
+    if idx > -1 and idx < len(l):
+        for elem in iterNodes( l ):
             if i == idx:
                 return elem.data
-    return nil
+            else:
+                i += 1
+    return -500
 
-proc insert_node_after_index*[T]( l: DL_List[T], idx: int, n: Node[T] ): bool =
+proc insert_node_after_index*[T]( l: var DL_List[T], idx: int, n: Node[T] ): bool {.discardable.} =
     # Find the node at `idx` and insert the given `n`ode after it, If successful, return true, else if DNE, return false
     var r = get_node_by_index[T]( l, idx )
     if r != nil:
@@ -128,7 +147,7 @@ proc insert_node_after_index*[T]( l: DL_List[T], idx: int, n: Node[T] ): bool =
         return true
     return false
 
-proc remove_node_by_index*[T]( l: DL_List[T], idx: int ): bool =
+proc remove_node_by_index*[T]( l: var DL_List[T], idx: int ): bool {.discardable.} =
     # Find the node at `idx` and remove it, If successful, return true, else if DNE, return false
     var n = get_node_by_index[T]( l, idx )
     if n != nil:
@@ -136,20 +155,21 @@ proc remove_node_by_index*[T]( l: DL_List[T], idx: int ): bool =
         return true
     return false
 
-proc choose_random_node*[T]( l: DL_List[T] ): Node[T] =
+proc choose_random_node*[T]( l: var DL_List[T] ): Node[T] =
     # Return a random node in the list
-    return get_node_by_index( l, rand( l.len() ) )
+    return get_node_by_index( l, rand( l.len()-1 ) )
 
-proc remove_random_node*[T]( l: DL_List[T] ): void =
+proc remove_random_node*[T]( l: var DL_List[T] ): void =
     # Return a random node in the list
-    remove_node_by_index( l, rand( l.len() ) )
+    remove_node_by_index( l, rand( l.len()-1 ) )
 
-
-# FIXME:
-    # REMOVE RANDOM
 
 ########## BASIC TESTS #############################################################################
  
+##### Original Tests #####
+
+echo "Original Tests\n"
+
 var dll = initDLL[int]()
 var n = newNode(12)
 var m = newNode(13)
@@ -167,12 +187,39 @@ for i in dll.traverseForward(): # CONCEPT: Looping over an iterator
 for i in dll.traverseBackward():
     echo "< ", i
 
+##### New Tests #####
+echo "\nNew Tests\n"
+
+var N = dll.get_node_by_index(2)
+var D = dll.get_value_by_index(2)
+echo "dll _______ = ", $dll
+echo "dll[2] ____ = ", $N
+echo "dll[2].data = ", $D
+echo "Insert 13 after index 1 ..."
+dll.insert_node_after_index( 1, newNode(13) )
+echo "dll = ", $dll
+echo "Delete node at index 3 ..."
+dll.remove_node_by_index(3)
+echo "dll = ", $dll
+N = dll.choose_random_node()
+echo "Random Node: ", $N
+echo "Delete node at random index ..."
+dll.remove_random_node()
+echo "dll = ", $dll
 
 ########## HEAP TESTS ##############################################################################
 
-# FIXME: ADD NODES WITHOUT NAMING THEM
+let topNum:int = 5000
 
+echo "Prepend numbers from the heap ..."
+for i in 0..4:
+    dll.prepend( newNode( rand(topNum) ) )
+echo "dll = ", $dll
 
+echo "Append numbers from the heap ..."
+for i in 0..4:
+    dll.append( newNode( rand(topNum) ) )
+echo "dll = ", $dll
 ########## STRESS TESTS ##############################################################################
 
 # FIXME:
