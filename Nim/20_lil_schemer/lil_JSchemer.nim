@@ -5,8 +5,8 @@
 
    nim c -d:release --hints:off --run -o:exec/lil_JSchemer -r lil_JSchemer.nim
    
-   https://github.com/jwatson-CO-edu/FINCH/blob/main/Cpp/LISP/01_eval.cpp
-   James Watson, 2022-03 ]#
+   https://github.com/jwatson-CO-edu/FINCH/blob/main/JS/JS_Scheme_f_rename.js
+   James Watson, 2022-04 ]#
 
 
 ########## INIT ###################################################################################
@@ -108,8 +108,12 @@ proc p_cons*( op: Atom ): bool =  return (op.kind == CONS) # Return T if this at
 
 
 ##### Accessing & Constructing ##################
+proc get_car*( cons: Atom ): Atom =  return cons.car # --------------- Get the left  pair item
+proc get_cdr*( cons: Atom ): Atom =  return cons.car # --------------- Get the right pair item
 proc set_car_B*( cons: Atom , valu: Atom ): void =   cons.car = valu # Set the left  pair item
 proc set_cdr_B*( cons: Atom , valu: Atom ): void =   cons.cdr = valu # Set the right pair item
+# FIXME: START HERE, rename: `build_cons`
+# function build(s1, s2){ return cons(s1, cons(s2, null)); } // return a two-item list with 's1' as the first item and 's2' as the second item
 
 
 proc consify_atom*( atm: Atom ): Atom = 

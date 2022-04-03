@@ -116,12 +116,12 @@ Based on "The Little JavaScripter" by Douglas Crockford, with a good deal of mod
 
 // = cons Structures =
 function cons(a, d){ return [a, d]; } // Contruct a cons as a two-item JS list (a . d) --> [a,d]
-function car(s){ return s[0]; }
-function cdr(s){ return s[1]; }
+function get_car(s){ return s[0]; }
+function get_cdr(s){ return s[1]; }
 function build(s1, s2){ return cons(s1, cons(s2, null)); } // return a two-item list with 's1' as the first item and 's2' as the second item
 var first = car; // 'first' alias for 'car', return the first item of an LS pair
-function second(l){ return car(cdr(l)); } // Return the second item in a list, (cadr l)
-function third(l){ return car(cdr(cdr(l))); } // return the third item of 'l', (caddr l)
+function second(l){ return get_car(get_cdr(l)); } // Return the second item in a list, (cadr l)
+function third(l){ return get_car(get_cdr(get_cdr(l))); } // return the third item of 'l', (caddr l)
 // = End Structures =
 
 // = Type and Equivalency Predicates =
@@ -198,8 +198,8 @@ var newEntry = build; // 'newEntry' an alias for 'build'
 
 function lookupInEntryHelp(name, names, values, entryF){ // return value associated with name, by linear search, or eval (entry-f name)
 	return isNull(names) ? entryF(name) : // list of names null, invoke the contingency func
-		isEq(car(names), name) ? car(values) : // item name match, return item value
-			lookupInEntryHelp(names, cdr(names), cdr(values), entryF); // else, recur on sublists
+		isEq(get_car(names), name) ? get_car(values) : // item name match, return item value
+			lookupInEntryHelp(names, get_cdr(names), get_cdr(values), entryF); // else, recur on sublists
 }
 
 function lookupInEntry(name, entry, entryF){ // return value associated with name if entry, otherwise (entry-f name)
@@ -214,8 +214,8 @@ function lookupInTable(name, table, tableF){ // return value associated with nam
 	return isNull(table) ? tableF(name) : // table null, eval (table-f name)
 		lookupInEntry( // else, lookup in first entry
 			name,
-			car(table),
-			function(name){ return lookupInTable(name, cdr(table), tableF); } // if not found, recur on subtable (next entry)
+			get_car(table),
+			function(name){ return lookupInTable(name, get_cdr(table), tableF); } // if not found, recur on subtable (next entry)
 		);
 }
 
@@ -223,17 +223,17 @@ function lookupInTable(name, table, tableF){ // return value associated with nam
 function lookupInContext(name, context){
 	var temp;
 	return isNull(context) ? undefined : // if context is null, not possible to find, it is undefined
-		!isUndefined(temp = car(context)[name]) ? temp: // context exists, attempt to assign lookup result to 'temp', if lookup succeeds, return 'temp'
-			lookupInContext(name, cdr(context)); // lookup failed, recur on the next containing namespace
+		!isUndefined(temp = get_car(context)[name]) ? temp: // context exists, attempt to assign lookup result to 'temp', if lookup succeeds, return 'temp'
+			lookupInContext(name, get_cdr(context)); // lookup failed, recur on the next containing namespace
 }
 
 /* function newContext(names, vals, oldContext){
 	var c = oldContext ? oldContext.begetObject() : {}; // if 'oldContext' exists, assign a copy to 'c', otherwise assign empty object
 	//for(var i = 0; i < names.length; i += 1){ c[names[i]] = vals[i]; }
 	while(!isNull(names)){
-		c[car(names)] = car(vals);
-		names = cdr(names);
-		vals = cdr(vals);
+		c[get_car(names)] = get_car(vals);
+		names = get_cdr(names);
+		vals = get_cdr(vals);
 	}
 	return c;
 } */
@@ -241,9 +241,9 @@ function lookupInContext(name, context){
 function newContext(names, vals, oldContext){ // create a new context of name-value pairs consed onto the 'oldContext'
 	var c = {}; // 'c' is an object (associative array) to hold the new name-value pairs
 	while(!isNull(names)){
-		c[car(names)] = car(vals);
-		names = cdr(names);
-		vals = cdr(vals);
+		c[get_car(names)] = get_car(vals);
+		names = get_cdr(names);
+		vals = get_cdr(vals);
 	}
 	return cons(
 		c,
@@ -273,9 +273,9 @@ function isElse(x){ return isAtom(x) && isEq(x, 'else'); } // is the arg an 'els
 // -- end cond --
 
 function evcon(lines, context){ // evaluate cond form by form, this is the guts of cond
-	return isElse(questionOf(car(lines))) ? meaning(answerOf(car(lines)), context) : // item question is 'else, eval item answer
-		meaning(questionOf(car(lines)), context) ? meaning(answerOf(car(lines)), context) : //eval item question -> is true, eval item answer
-			evcon(cdr(lines), context); // else, recur on sublist lines and table
+	return isElse(questionOf(get_car(lines))) ? meaning(answerOf(get_car(lines)), context) : // item question is 'else, eval item answer
+		meaning(questionOf(get_car(lines)), context) ? meaning(answerOf(get_car(lines)), context) : //eval item question -> is true, eval item answer
+			evcon(get_cdr(lines), context); // else, recur on sublist lines and table
 } // note there was no action for the 'null?' case, one of the above conditions better be true!
 
 var $global = [ // a one-item list that contains the global context
@@ -312,8 +312,8 @@ then '#t' is returned. */
 
 function $and(e, context){ // the recursive portion of the evaluation of 'and', case that args list non-null
 	var current; // var to hold meaning of current arg, '$and' assumes there is at least one
-	return !(current = meaning(car(e), context)) ? current : // fetch first item 'meaning', if false, return
-		isNull(cdr(e)) ? current : $and(cdr(e), context); // else if list end, return 'current', else recur sublist
+	return !(current = meaning(get_car(e), context)) ? current : // fetch first item 'meaning', if false, return
+		isNull(get_cdr(e)) ? current : $and(get_cdr(e), context); // else if list end, return 'current', else recur sublist
 }
 
 /* ~ 'or' , R5RS (PDF), pg 11 ~
@@ -323,19 +323,19 @@ then #f is returned. */
 
 function  $or(e, context){
 	var current; // var to hold meaning of current arg, '$and' assumes there is at least one
-	return (current = meaning(car(e), context)) ? current : // fetch first item 'meaning', if true, return
-		isNull(cdr(e)) ? current : $or(cdr(e), context); // else if list end, return 'current', else recur sublist
+	return (current = meaning(get_car(e), context)) ? current : // fetch first item 'meaning', if true, return
+		isNull(get_cdr(e)) ? current : $or(get_cdr(e), context); // else if list end, return 'current', else recur sublist
 }
 
 // - End Logical Helpers -
 
 var $specialform = { // associative array of special form names with associated actions
 	quote:  function (e, context){ return textOf(e); },
-	lambda: function (e, context){ return build('nonPrimitive', cons(context, cdr(e))); },
+	lambda: function (e, context){ return build('nonPrimitive', cons(context, get_cdr(e))); },
 	cond:   function (e, context){ return evcon(condLinesOf(e), context); },
-	define: function (e, context){ return (car(context)[second(e)] = meaning(third(e), context)); },
-	and:    function (e, context){ return isNull(cdr(e)) ? true: $and(cdr(e), context); }, // handle null case or recur
-	or:	    function (e, context){ return isNull(cdr(e)) ? false: $or(cdr(e), context); }, // handle null case or recur
+	define: function (e, context){ return (get_car(context)[second(e)] = meaning(third(e), context)); },
+	and:    function (e, context){ return isNull(get_cdr(e)) ? true: $and(get_cdr(e), context); }, // handle null case or recur
+	or:	    function (e, context){ return isNull(get_cdr(e)) ? false: $or(get_cdr(e), context); }, // handle null case or recur
 	load:   function (e, context){ return load_by_lines_from_cur_dir( textOf(e), context ); }
 };
 
@@ -347,8 +347,8 @@ function flatten(l) { // funcName.apply() is the magic that allows us access to 
 	// push Lisp list items onto a JS array to be used by 'fun.apply', passed to 'fun'
 	var a = [];
 	while( !isNull(l) ){
-		a.push(car(l));
-		l = cdr(l);
+		a.push(get_car(l));
+		l = get_cdr(l);
 	}
 	return a;
 }
@@ -375,12 +375,12 @@ var functionOf = car, // alias, the function name is the first item
 
 function evlis(args, context){ // take list of representations of expressions and return list of meanings
 	return isNull(args) ? null : // list end or list null, return null
-		cons(meaning(car(args), context), evlis(cdr(args), context)); //else, cons the meaning of the args item onto recur sublist args and table
+		cons(meaning(get_car(args), context), evlis(get_cdr(args), context)); //else, cons the meaning of the args item onto recur sublist args and table
 }
 
 function listToAction(e){ // Return one of ...
 	//     special form action  OR a function that returns the result of applying the form assuming the first item is a func name
-	return $specialform[car(e)] || function (e, context){ return apply(meaning(functionOf(e), context), evlis(argumentsOf(e), context)); };
+	return $specialform[get_car(e)] || function (e, context){ return apply(meaning(functionOf(e), context), evlis(argumentsOf(e), context)); };
 }
 
 function expressionToAction(e){ // attempt to assign appropriate action to the given expression 'e'
@@ -535,12 +535,12 @@ function p(x){ // Produce a printable presentation of an s-expression
 	if( isList(x) ){ // If x is a list
 		r = '('; // opening paren
 		do{
-			r += p(car(x)) + ' '; // call p() on first item, add a space, and append the whole thing to the return string
-			x = cdr(x);           // set x to the next sublist
+			r += p(get_car(x)) + ' '; // call p() on first item, add a space, and append the whole thing to the return string
+			x = get_cdr(x);           // set x to the next sublist
 		}while( isList(x) ); // If sublist is also list, then repeat
 
 		if( r.charAt(r.length - 1) === ' ' ){ r = r.substr(0, r.length - 1); } // Remove trailing space if present
-		if( isAtom(x) ){ r += ' . ' + x; } // Inside a cons, but cdr(x) was atom, not list, therefore inside plain cons, print as such
+		if( isAtom(x) ){ r += ' . ' + x; } // Inside a cons, but get_cdr(x) was atom, not list, therefore inside plain cons, print as such
 		return r + ')'; // closing paren
 	}
 	if( isNull(x) ){ return '()'; } // Else if x is null, return an empty list
