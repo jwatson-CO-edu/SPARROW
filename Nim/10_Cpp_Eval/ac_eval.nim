@@ -162,30 +162,223 @@ echo "What is the terminus of", $A02, "? --> ", $find_terminus( A02 )
 
 proc append*( list: var Atom, atom: Atom = nil ): Atom {.discardable.} = 
     # Append an atom to the end of a conslist, Create a conslist if none exists, return pointer to list head
-    echo "Entered `append`"
     result = list
     var endCns: Atom
-    echo "Created vars!"
     #  1. If the given list is a cons list, it is either an empty cons or the head of a LISP list
     if list.kind == CONS:
-        echo "Input was CONS!"
         # 2. If we were given an atom to append, it either belongs in the `car` of the empty cons,
         #    or in the `car` of a new terminal cons
         if atom != nil: 
-            echo "Atom not `nil`!"
-            if p_Null( list ):
-                echo "Atom was list terminator!"
+            if p_Null( list.car ):
                 list = make_cons( atom, make_null() )
             else:
                 endCns = find_terminus( list )
                 set_cdr_B( endCns, consify_atom( atom ) )
     # 3. Else we either have one or two non-cons atoms
     else:
-        echo "Input NOT cons!"
         result = consify_atom( list ) # -------------------------- ( `list` , [X] )
         if atom != nil:
             set_cdr_B( result, consify_atom( atom ) ) # ( `list` , ( `atom` , [X] ) )
-    echo "Exited `append`"
 
 append( A02, make_number(4) )
+append( A02, make_number(5) )
 echo "append: ", A02
+
+
+
+########## PARSING ################################################################################
+
+import std/tables
+let RESERVED* = {
+    "(": "open_parn", # Open  paren
+    ")": "clos_parn", # Close paren
+}.newTable
+
+
+proc find_reserved*( token: string ): string =
+    # Return the name of the reserved symbol, or an empty string if not found
+    if not RESERVED.hasKey( token ):  return ""  # If the search failed, return an empty string
+    else:  return RESERVED[ token ] # ------------ Else return the string name of the reserved name
+
+
+proc tokenize*( expStr: var string, sepChar: string = " "  ): seq[string] = 
+    # Parse an expression string into an s-expression
+    let 
+        expLen = expStr.len() # --- Length of the given string
+    var 
+        token  = "" # -------------- Current token in progress
+        c:char = ' ' # ------------- Current character
+        tokens: seq[string] = @[] # Vector of string tokens
+
+    proc stow_token(): void =
+        # LAMBDA: Add the current token to the vector and reset current token to empty
+        tokens.add( token )
+        token = ""
+
+    proc stow_char(): void = 
+        # LAMBDA: Add the current character to the vector and reset token to empty
+        tokens.add( $c )
+
+    proc cache_char(): void = 
+        # LAMBDA: Add the current character to the current token
+        token.add( c )
+
+    # 0. Apply the postfix hack
+    expStr.add( ' ' )
+    # 1. For every character in the string
+    for i in 0 .. (expLen-1):
+        # 2. Fetch character
+        c = expStr[i]
+        # 3. Either add char to present token or create a new one
+        
+        # Case Open Paren
+        if find_reserved( $c ) == "open_parn":  stow_char()
+        # Case Close Paren
+        elif find_reserved( $c ) == "clos_parn":
+            if token.len() > 0:  stow_token()
+            stow_char()
+        # Case separator
+        elif $c == sepChar:  stow_token()
+        # Case any other char
+        else:  cache_char()
+    # N. Return the vector of tokens
+    return tokens
+
+
+proc p_float_string*( inputStr: string ): bool = 
+    # Return T if the string is appropriate for float conversion, otherwise return F
+    # Adapted from Original Author: Bill the Lizard,  https://stackoverflow.com/a/447307
+    var slimStr = inputStr.strip()
+    try:
+        discard parseFloat( slimStr )
+        return true
+    except ValueError:
+        return false
+
+
+proc p_null_string*( inputStr: string ): bool =
+    # Return T if the string is appropriate for Null conversion, otherwise return F
+    return (toUpper( inputStr ) == "NULL") # 2022-03-28: For now, do not consider empty string null
+
+
+proc atomize_string*( token: string ): Atom =
+    # Convert a string into a non-cons atom
+    if p_float_string( token ):  return make_number( parseFloat( token ) )
+    if p_null_string( token ) :  return make_null()
+   #[ else assume string -----]# return make_string( token )
+
+echo atomize_string( "42" )
+echo atomize_string( "Null" )
+echo atomize_string( "Hello World!" )
+
+
+
+proc consify_tokens*( tokens: seq[string], i: var int ): Atom =
+    # Render tokens as a cons structure
+    var
+        token:   string # --------------- Current token from the vector
+        tkLen:   int     = tokens.len() # Number of tokens in the given vector
+        rtnTree: Atom  # -------- Cons structure to return
+
+    #  1. If there are one or more strings to process, then attempt to construct a token tree
+    if (tokens.len()-i) > 1:
+        #  2. Start off by creating a cons list, if needed
+        rtnTree = make_cons()
+
+        #  3. For each token in the vector
+        while i < tkLen:
+            #  4. Fetch token at this index
+            token = tokens[i]
+            i += 1
+
+            #  5. Case Open Paren
+            if find_reserved( token ) == "open_parn":
+                # If there is a new level of depth to the structure, recur
+                if i>1:  append(  rtnTree , consify_tokens( tokens, i )  )
+                # else this is the first level
+                else:    rtnTree = consify_tokens( tokens, i )
+            else:
+                #  6. Case Close Paren
+                if find_reserved( token ) == "clos_parn":  return rtnTree
+                #  7. Case Null
+                elif p_null_string( token ):  append( rtnTree , make_null() )
+                #  8. Case Literal
+                else:  
+                    append( rtnTree , atomize_string( token ) )
+
+        #  9. Return the constructed tree
+        return rtnTree
+    # 10. else there were no tokens, return Null
+    else:  return make_null()
+
+
+proc expression_from_string*( expStr: var string, sepChar: string = " " ): Atom =
+    # Tokenize the `expStr`, express it as a conslist, and return
+    var
+        i:      int         = 0
+        tokens: seq[string] = tokenize( expStr, sepChar )
+    return consify_tokens( tokens, i )
+
+
+### Test expression tokenization ###
+var
+    t_expr: string      = "(cons a b)"
+    l_expr: seq[string] = tokenize( t_expr )
+echo l_expr
+
+### Test vector consification ###
+var
+    counter: int     = 0
+    s_expr : Atom = consify_tokens( l_expr, counter ) 
+
+
+echo s_expr
+
+
+########## ENVIRONMENT ############################################################################
+
+type
+    Env* = ref object
+        parent:    Env # --------------- Pointer to the environment that contains this one
+        freeVars:  seq[Atom] # --------- Free  variables, without binding
+        boundVars: Table[string, Atom] # Bound variables, have names given to them by statements
+
+
+proc newEnv(): Env =
+    # Create a new, empty environment
+    new(result)
+    result.parent    = nil
+    result.freeVars  = @[]
+    result.boundVars = initTable[string, Atom]()
+
+
+proc p_binding_exists*( env: Env, name: string ): bool =
+    # Return T if the binding exists in `boundVars`, otherwise return F
+    return env.boundVars.hasKey( name )
+
+
+proc get_bound_atom*( env: Env, name: string ): Atom =
+    #  Return the atom bound to `name`, if it exists, Otherwise return `nil`
+    if p_binding_exists( env, name ):
+        return env.boundVars[ name ]
+    return nil
+
+
+proc bind_atom*( env: Env, name: string, atom: Atom ): void =
+    # Bind an `atom` to a `name` by adding it to the mapping, If the name already exists, it will be updated
+    env.boundVars[ name ] = atom
+
+var env = newEnv()
+
+env.bind_atom( "ans", make_number(42) )
+echo "Is there an answer?: ", env.p_binding_exists( "ans" )
+echo "What is the answer?: ", env.get_bound_atom( "ans" )
+
+
+# 2022-04-02: All tests pass!
+
+echo "Size of a number: ", sizeof( make_number(4) )
+echo "Size of a NULL: ", sizeof( make_null() )
+echo "Size of a String: ", sizeof( make_string( "This is a very long string" ) )
+echo "Size of a cons: ", sizeof( make_cons() )
+echo "Size of an error: ", sizeof( empty_atom() )

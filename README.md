@@ -10,16 +10,22 @@ An interpreted language written in [Nim](https://nim-lang.org/), with the goals 
     [Y] Part 3: Metaprogramming and Macros, 2022-03-24
 
 ### Phase 1, Basic Function ###
-[ ] Translate first evaluator to Nim
+[ ] Translate first evaluator to Nim, 2022-03-30, Great Success!
     [Y] All Functions Implemented, 2022-03-30, However there is a segfault in `append` that has 
         revealed some misunderstandings with pointers, see below.
-    [ ] All Tests, Pointer Learning
-        [ ] DLL Heap and Stress Tests (Concepts folder)
-        [ ] Bin Tree Heap and Stress Tests (Concepts folder)
-        [ ] SWALLOW debugging
-            [ ] Refactor?
-        [ ] T: All tests pass
-    [ ] Q: How big is each `Atom`?
+    [Y] All Tests, Pointer Learning, 2022-03-30, Dropped pointers, ref objects instead
+        [Y] DLL Heap and Stress Tests (Concepts folder), 2022-04-02,
+        [Y] SWALLOW debugging, 2022-03-30, Now using smart refs instead of pointers
+            [N] Refactor?, 2022-03-30, Not Needed, However need to learn when to use a `ref object`
+        [Y] T: All tests pass, 2022-03-30, Added tests for untested functions in Cpp
+    [Y] Q: How big is each `Atom`?, 2022-03-30, Answer seems wrong
+            Size of a number: 8, Is this because they are all references?
+            Size of a NULL: 8
+            Size of a String: 8
+            Size of a cons: 8
+            Size of an error: 8
+[ ] When to use object -vs- ref object?
+    [ ] D: Evaluate plain object refactor
 [ ] Translate "The Little Javascripter" by Douglas Crockford
     https://www.crockford.com/little.html (See `JS` folder)
 [ ] Parse "Easy S-Expressions" instead: 

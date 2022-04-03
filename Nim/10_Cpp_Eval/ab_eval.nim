@@ -181,7 +181,6 @@ proc find_reserved*( token: string ): string =
 # 2022-03-26: Compiles!
 
 
-# vector<string> tokenize( string expStr, string sepChar = " " ){
 proc tokenize*( expStr: var string, sepChar: string = " "  ): seq[string] = 
     # Parse an expression string into an s-expression
     let 
