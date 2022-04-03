@@ -9,6 +9,7 @@
 ########## INIT ####################################################################################
 
 import std/random # https://nim-lang.org/docs/random.html
+import times, os, strutils # https://stackoverflow.com/a/36580495
 # Call randomize() once to initialize the default random number generator.
 # If this is not called, the same results will occur every time these
 # examples are run.
@@ -209,6 +210,8 @@ echo "dll = ", $dll
 
 ########## HEAP TESTS ##############################################################################
 
+echo "\nNew Tests\n"
+
 let topNum:int = 5000
 
 echo "Prepend numbers from the heap ..."
@@ -222,9 +225,33 @@ for i in 0..4:
 echo "dll = ", $dll
 ########## STRESS TESTS ##############################################################################
 
-# FIXME:
-    # NEW LIST
-    # APPEND  500 RANDOM NUMBERS
-    # PREPEND 500 RANDOM NUMBERS
-    # REMOVE RANDOMLY UNTIL EMPTY
-    # TIME ALL THREE OPERATIONS TOTAL AND AVERAGE
+##### Helper Functions #####
+
+template benchmark(benchmarkName: string, code: untyped) =
+  block:
+    let t0 = epochTime()
+    code
+    let elapsed = epochTime() - t0
+    let elapsedStr = elapsed.formatFloat(format = ffDecimal, precision = 3)
+    echo "CPU Time [", benchmarkName, "] ", elapsedStr, "s"
+
+
+##### Tests #####
+var 
+    dlList = initDLL[int]()
+    Ntst   = 50000
+
+
+benchmark "Prepend " & $Ntst & " random elements":
+    for i in 1..Ntst:
+        dlList.prepend( newNode( rand(topNum) ) )
+
+benchmark "Append " & $Ntst & " random elements":
+    for i in 1..Ntst:
+        dlList.prepend( newNode( rand(topNum) ) )
+
+var totLen = dlList.len()
+
+benchmark "Randomly remove elements from list with length " & $totLen & " until empty":
+    while dlList.len() > 0:
+        dlList.remove_random_node()
