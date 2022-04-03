@@ -10,7 +10,7 @@ An interpreted language written in [Nim](https://nim-lang.org/), with the goals 
     [Y] Part 3: Metaprogramming and Macros, 2022-03-24
 
 ### Phase 1, Basic Function ###
-[ ] Translate first evaluator to Nim, 2022-03-30, Great Success!
+[Y] Translate first evaluator to Nim, 2022-03-30, Great Success!
     [Y] All Functions Implemented, 2022-03-30, However there is a segfault in `append` that has 
         revealed some misunderstandings with pointers, see below.
     [Y] All Tests, Pointer Learning, 2022-03-30, Dropped pointers, ref objects instead
@@ -19,13 +19,22 @@ An interpreted language written in [Nim](https://nim-lang.org/), with the goals 
             [N] Refactor?, 2022-03-30, Not Needed, However need to learn when to use a `ref object`
         [Y] T: All tests pass, 2022-03-30, Added tests for untested functions in Cpp
     [Y] Q: How big is each `Atom`?, 2022-03-30, Answer seems wrong
-            Size of a number: 8, Is this because they are all references?
-            Size of a NULL: 8
+            Size of a number: 8
+            Size of a NULL:   8
             Size of a String: 8
-            Size of a cons: 8
-            Size of an error: 8
-[ ] When to use object -vs- ref object?
-    [ ] D: Evaluate plain object refactor
+            Size of a cons:   8
+            Size of an error: 8, Is this because they are all references? 64bit address?
+[Y] When to use object -vs- ref object?, 2022-04-03, Listened to some helpful YouTube tutorials
+    * User-Defined Types
+        - Tuple:  Stack collection of unnamed fields in which only type and order matter, Copy by value    , Can be accessed by index
+        - Object: Stack collection of named   fields that must be accessed by name      , Copy by value    , Thread safe
+        - Ref Obj: Heap collection of named   fields that must be accessed by name      , Copy by reference, NOT thread safe (v1.6.4)
+    * Tuts:
+        - Objects: _____ https://www.youtube.com/watch?v=aME-tyPCPvE
+        - Ref Objects: _ https://www.youtube.com/watch?v=kkSAVKKIoVc
+        - Obj. Variants: https://www.youtube.com/watch?v=fi7UasgzFhQ
+    [N] D: Evaluate plain object refactor, 2022-04-03,  Atoms and variables will be stored in the `Env` and accessed/used elsewhere, 
+           so it would not be efficient to copy by value
 [ ] Translate "The Little Javascripter" by Douglas Crockford
     https://www.crockford.com/little.html (See `JS` folder)
 [ ] Parse "Easy S-Expressions" instead: 
