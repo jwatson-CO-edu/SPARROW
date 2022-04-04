@@ -115,10 +115,10 @@ Based on "The Little JavaScripter" by Douglas Crockford, with a good deal of mod
 // == Primitives ==
 
 // = cons Structures =
-function cons(a, d){ return [a, d]; } // Contruct a cons as a two-item JS list (a . d) --> [a,d]
+function make_cons(a, d){ return [a, d]; } // Contruct a cons as a two-item JS list (a . d) --> [a,d]
 function get_car(s){ return s[0]; }
 function get_cdr(s){ return s[1]; }
-function build(s1, s2){ return cons(s1, cons(s2, null)); } // return a two-item list with 's1' as the first item and 's2' as the second item
+function make_list_of_2(s1, s2){ return make_cons(s1, make_cons(s2, null)); } // return a two-item list with 's1' as the first item and 's2' as the second item
 var first = car; // 'first' alias for 'car', return the first item of an LS pair
 function second(l){ return get_car(get_cdr(l)); } // Return the second item in a list, (cadr l)
 function third(l){ return get_car(get_cdr(get_cdr(l))); } // return the third item of 'l', (caddr l)
@@ -126,14 +126,14 @@ function third(l){ return get_car(get_cdr(get_cdr(l))); } // return the third it
 
 // = Type and Equivalency Predicates =
 function isAtom(a){ return typeof a === 'string' || typeof a === 'number' || typeof a === 'boolean'; } // 'a' is any of String, Number, or Boolean
-function isNull(a){ return typeof a === 'undefined' || (typeof a === 'object' && !a); } // is undefined or a false-like object
+function p_Null(a){ return typeof a === 'undefined' || (typeof a === 'object' && !a); } // is undefined or a false-like object
 function isEq(s, t){ return s === t; } // Args are strictly equivalent
 function isNumber(a){ return isFinite(a); } // URL: http://www.w3schools.com/jsref/jsref_isfinite.asp
 function isBoolean(a){ return typeof a === 'boolean'; }
 function isUndefined(a){ return typeof a === 'undefined'; }
 function isFunction(a){ return typeof a === 'function'; } // Arg is a JS function
 function isZero(s){ return s === 0; } // Arg is strictly equivalent to 0
-function isList(a){ return a && typeof a === 'object' && a.constructor === Array; }
+function p_cons(a){ return a && typeof a === 'object' && a.constructor === Array; }
 // = End Predicates =
 
 // = Mathematics =
@@ -197,7 +197,7 @@ var ge = make_list_comparator(ge_help); // list comparator for ">=" Greater Than
 var newEntry = build; // 'newEntry' an alias for 'build'
 
 function lookupInEntryHelp(name, names, values, entryF){ // return value associated with name, by linear search, or eval (entry-f name)
-	return isNull(names) ? entryF(name) : // list of names null, invoke the contingency func
+	return p_Null(names) ? entryF(name) : // list of names null, invoke the contingency func
 		isEq(get_car(names), name) ? get_car(values) : // item name match, return item value
 			lookupInEntryHelp(names, get_cdr(names), get_cdr(values), entryF); // else, recur on sublists
 }
@@ -211,7 +211,7 @@ var extendTable = cons; /* Define extend-table as an alias for cons. Takes an en
 by putting the new entry in the front of the old table. */
 
 function lookupInTable(name, table, tableF){ // return value associated with name in table, if name exists
-	return isNull(table) ? tableF(name) : // table null, eval (table-f name)
+	return p_Null(table) ? tableF(name) : // table null, eval (table-f name)
 		lookupInEntry( // else, lookup in first entry
 			name,
 			get_car(table),
@@ -222,7 +222,7 @@ function lookupInTable(name, table, tableF){ // return value associated with nam
 //function lookupInContext(name, context){ return context[name]; } // return the value belonging to key 'name' in assoc array 'context'
 function lookupInContext(name, context){
 	var temp;
-	return isNull(context) ? undefined : // if context is null, not possible to find, it is undefined
+	return p_Null(context) ? undefined : // if context is null, not possible to find, it is undefined
 		!isUndefined(temp = get_car(context)[name]) ? temp: // context exists, attempt to assign lookup result to 'temp', if lookup succeeds, return 'temp'
 			lookupInContext(name, get_cdr(context)); // lookup failed, recur on the next containing namespace
 }
@@ -230,7 +230,7 @@ function lookupInContext(name, context){
 /* function newContext(names, vals, oldContext){
 	var c = oldContext ? oldContext.begetObject() : {}; // if 'oldContext' exists, assign a copy to 'c', otherwise assign empty object
 	//for(var i = 0; i < names.length; i += 1){ c[names[i]] = vals[i]; }
-	while(!isNull(names)){
+	while(!p_Null(names)){
 		c[get_car(names)] = get_car(vals);
 		names = get_cdr(names);
 		vals = get_cdr(vals);
@@ -240,12 +240,12 @@ function lookupInContext(name, context){
 
 function newContext(names, vals, oldContext){ // create a new context of name-value pairs consed onto the 'oldContext'
 	var c = {}; // 'c' is an object (associative array) to hold the new name-value pairs
-	while(!isNull(names)){
+	while(!p_Null(names)){
 		c[get_car(names)] = get_car(vals);
 		names = get_cdr(names);
 		vals = get_cdr(vals);
 	}
-	return cons(
+	return make_cons(
 		c,
 		( oldContext ? oldContext : null ) // If 'oldContext' exists, then store a reference to it in the cdr, else null cdr
 	);
@@ -284,21 +284,21 @@ var $global = [ // a one-item list that contains the global context
 	'false':   false,
 	'#t':      true,
 	'#f':      false,
-	'atom?':   build('primitive', isAtom),
-	'eq?':     build('primitive', isEq),
-	'null?':   build('primitive', isNull),
-	'zero?':   build('primitive', isZero),
-	'number?': build('primitive', isNumber),
-	'+':       build('primitive', plus),
-	'-':       build('primitive', minus),
-	'*':       build('primitive', multiply),
-	'/':       build('primitive', divide),
-	'1+':      build('primitive', add1),
-	'1-':      build('primitive', sub1),
-	'<':       build('primitive', lt),
-	'>':       build('primitive', gt),
-	'<=':      build('primitive', le),
-	'>=':      build('primitive', ge)
+	'atom?':   make_list_of_2('primitive', isAtom),
+	'eq?':     make_list_of_2('primitive', isEq),
+	'null?':   make_list_of_2('primitive', isNull),
+	'zero?':   make_list_of_2('primitive', isZero),
+	'number?': make_list_of_2('primitive', isNumber),
+	'+':       make_list_of_2('primitive', plus),
+	'-':       make_list_of_2('primitive', minus),
+	'*':       make_list_of_2('primitive', multiply),
+	'/':       make_list_of_2('primitive', divide),
+	'1+':      make_list_of_2('primitive', add1),
+	'1-':      make_list_of_2('primitive', sub1),
+	'<':       make_list_of_2('primitive', lt),
+	'>':       make_list_of_2('primitive', gt),
+	'<=':      make_list_of_2('primitive', le),
+	'>=':      make_list_of_2('primitive', ge)
 	},
 	null
 ];
@@ -313,7 +313,7 @@ then '#t' is returned. */
 function $and(e, context){ // the recursive portion of the evaluation of 'and', case that args list non-null
 	var current; // var to hold meaning of current arg, '$and' assumes there is at least one
 	return !(current = meaning(get_car(e), context)) ? current : // fetch first item 'meaning', if false, return
-		isNull(get_cdr(e)) ? current : $and(get_cdr(e), context); // else if list end, return 'current', else recur sublist
+		p_Null(get_cdr(e)) ? current : $and(get_cdr(e), context); // else if list end, return 'current', else recur sublist
 }
 
 /* ~ 'or' , R5RS (PDF), pg 11 ~
@@ -324,18 +324,18 @@ then #f is returned. */
 function  $or(e, context){
 	var current; // var to hold meaning of current arg, '$and' assumes there is at least one
 	return (current = meaning(get_car(e), context)) ? current : // fetch first item 'meaning', if true, return
-		isNull(get_cdr(e)) ? current : $or(get_cdr(e), context); // else if list end, return 'current', else recur sublist
+		p_Null(get_cdr(e)) ? current : $or(get_cdr(e), context); // else if list end, return 'current', else recur sublist
 }
 
 // - End Logical Helpers -
 
 var $specialform = { // associative array of special form names with associated actions
 	quote:  function (e, context){ return textOf(e); },
-	lambda: function (e, context){ return build('nonPrimitive', cons(context, get_cdr(e))); },
+	lambda: function (e, context){ return make_list_of_2('nonPrimitive', make_cons(context, get_cdr(e))); },
 	cond:   function (e, context){ return evcon(condLinesOf(e), context); },
 	define: function (e, context){ return (get_car(context)[second(e)] = meaning(third(e), context)); },
-	and:    function (e, context){ return isNull(get_cdr(e)) ? true: $and(get_cdr(e), context); }, // handle null case or recur
-	or:	    function (e, context){ return isNull(get_cdr(e)) ? false: $or(get_cdr(e), context); }, // handle null case or recur
+	and:    function (e, context){ return p_Null(get_cdr(e)) ? true: $and(get_cdr(e), context); }, // handle null case or recur
+	or:	    function (e, context){ return p_Null(get_cdr(e)) ? false: $or(get_cdr(e), context); }, // handle null case or recur
 	load:   function (e, context){ return load_by_lines_from_cur_dir( textOf(e), context ); }
 };
 
@@ -346,7 +346,7 @@ var $specialform = { // associative array of special form names with associated 
 function flatten(l) { // funcName.apply() is the magic that allows us access to JS functions!
 	// push Lisp list items onto a JS array to be used by 'fun.apply', passed to 'fun'
 	var a = [];
-	while( !isNull(l) ){
+	while( !p_Null(l) ){
 		a.push(get_car(l));
 		l = get_cdr(l);
 	}
@@ -374,8 +374,8 @@ var functionOf = car, // alias, the function name is the first item
 // -- end application --
 
 function evlis(args, context){ // take list of representations of expressions and return list of meanings
-	return isNull(args) ? null : // list end or list null, return null
-		cons(meaning(get_car(args), context), evlis(get_cdr(args), context)); //else, cons the meaning of the args item onto recur sublist args and table
+	return p_Null(args) ? null : // list end or list null, return null
+		make_cons(meaning(get_car(args), context), evlis(get_cdr(args), context)); //else, cons the meaning of the args item onto recur sublist args and table
 }
 
 function listToAction(e){ // Return one of ...
@@ -389,10 +389,10 @@ function expressionToAction(e){ // attempt to assign appropriate action to the g
                 var i = lookupInContext(e, context); // else not number/boolean literal, attempt lookup of assumed symbol in reserved words
                 if( !isUndefined(i) ){ return i; } // if lookup succeeded, return result
                 i = global[e]; // else attempt lookup in defined JS names (global 'this')
-                if( isFunction(i) ){ return build('primitive', i); } // if lookup result is function, return LS pair with 'primitive' first item
-                return build('error', e); // else error, not recognized as literal, reserved word, defined symbol, or JS function
+                if( isFunction(i) ){ return make_list_of_2('primitive', i); } // if lookup result is function, return LS pair with 'primitive' first item
+                return make_list_of_2('error', e); // else error, not recognized as literal, reserved word, defined symbol, or JS function
 		} : // else 'e' not atom
-			isNull(e) ? null : // if 'e' is empty list, return null
+			p_Null(e) ? null : // if 'e' is empty list, return null
 				listToAction(e); // else return result of 'listToAction'
 } // Note that in the above, 'context' is not defined, but it is determined by the call to 'meaning' that called 'expressionToAction'
 
@@ -491,7 +491,7 @@ function rgx_next_match(texp){ // Fetch the next REGEX match in 'texp', if no ma
 }
 
 // Return a list that is 'L' with 'item' appended to the end.  If 'L' is null, return a list with only one 'item'
-function push_onto_L(L,item){ if( isNull(L) ){ return cons(item, null); }else{ L[1] = push_onto_L(L[1], item); return L; } }
+function push_onto_L(L,item){ if( p_Null(L) ){ return make_cons(item, null); }else{ L[1] = push_onto_L(L[1], item); return L; } }
 
 function attempt_num(canNum){ // Attempt to coerce type to number, return raw arg if unsuccessful
 	rtnNum = Number(canNum);
@@ -532,18 +532,18 @@ function p(x){ // Produce a printable presentation of an s-expression
 
 	var r; // Local var to hold printed list
 
-	if( isList(x) ){ // If x is a list
+	if( p_cons(x) ){ // If x is a list
 		r = '('; // opening paren
 		do{
 			r += p(get_car(x)) + ' '; // call p() on first item, add a space, and append the whole thing to the return string
 			x = get_cdr(x);           // set x to the next sublist
-		}while( isList(x) ); // If sublist is also list, then repeat
+		}while( p_cons(x) ); // If sublist is also list, then repeat
 
 		if( r.charAt(r.length - 1) === ' ' ){ r = r.substr(0, r.length - 1); } // Remove trailing space if present
 		if( isAtom(x) ){ r += ' . ' + x; } // Inside a cons, but get_cdr(x) was atom, not list, therefore inside plain cons, print as such
 		return r + ')'; // closing paren
 	}
-	if( isNull(x) ){ return '()'; } // Else if x is null, return an empty list
+	if( p_Null(x) ){ return '()'; } // Else if x is null, return an empty list
 	return x; // Else if x is neither list nor null, return the argument as-is
 }
 

@@ -298,7 +298,7 @@ type
         boundVars: Table[string, Atom] # Bound variables, have names given to them by statements
 
 
-proc newEnv(): Env =
+proc newEnv*(): Env =
     # Create a new, empty environment
     new(result)
     result.parent    = nil
