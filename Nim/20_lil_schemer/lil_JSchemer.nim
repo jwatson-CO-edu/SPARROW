@@ -323,5 +323,12 @@ proc bind_atom*( env: Env, name: string, atom: Atom ): void =
     env.boundVars[ name ] = atom
 
 
-# 2022-04-02: All tests pass!
 
+########## LITTLE JAVASCRIPTER #####################################################################
+
+proc make_list_of_2*( op1: Atom, op2: Atom ): Atom =
+    # return a two-item list with 's1' as the first item and 's2' as the second item
+    return make_cons( op1, make_cons( op2, make_null() ) )
+    
+
+# function make_list_of_2(s1, s2){ return make_cons(s1, make_cons(s2, null)); } // 
