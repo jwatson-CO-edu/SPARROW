@@ -12,6 +12,7 @@
 ########## INIT ###################################################################################
 
 import std/strutils # strip
+import std/tables # - hashes
 import std/math # --- classify
 
 
@@ -33,6 +34,7 @@ type
         BOOL, # Boolean
         NULL, # Null
         EROR, # Error object
+        FUNC, # Function
     Atom = ref object
     # The most basic and interchangeable unit of this LISP, Atom variants defined here
         case kind: F_Type # the `kind` field is the discriminator
@@ -50,6 +52,11 @@ type
         of EROR:
             code : F_Error # Error code
             info : string #- Detailed error info
+        of FUNC:
+            name: string # --------------------- Function name
+            args: OrderedTable[string, F_Type] # Input  arguments and types
+            rtns: OrderedTable[string, F_Type] # Output returns   and types
+            sorc: Atom # ----------------------- Actual code of the function
 
 
 ##### Printing ##################################
@@ -64,6 +71,8 @@ proc `$`( item: Atom ): string =
     #[Bool   ]# of BOOL:  result = $item.bul
     #[Pair   ]# of CONS:  result = "(" & $item.car & ", " & $item.cdr & ")"  
     #[Error  ]# of EROR:  result = "(ERROR: " & $item.code & ", Code: " & item.info & ")"
+    #[Func   ]# of FUNC:  result = "(" & $item.name & ")"  # FIXME: LIST ALL KEYS INPUT # FIXME: LIST ALL KEYS OUTPUT
+
 
 
 ##### Constructors ###############################
@@ -176,7 +185,7 @@ proc append*( list: var Atom, atom: Atom = nil ): Atom {.discardable.} =
 
 ########## PARSING ################################################################################
 
-import std/tables
+
 let RESERVED* = {
     "(": "open_parn", # Open  paren
     ")": "clos_parn", # Close paren
@@ -326,6 +335,11 @@ proc p_binding_exists*( env: Env, name: string ): bool =
     return env.boundVars.hasKey( name )
 
 
+proc p_binding_missing*( env: Env, name: string ): bool =
+    # Return F if the binding exists in `boundVars`, otherwise return T
+    return not p_binding_exists( env, name )
+
+
 proc get_bound_atom*( env: Env, name: string ): Atom =
     #  Return the atom bound to `name`, if it exists, Otherwise return `nil`
     if p_binding_exists( env, name ):
@@ -376,6 +390,7 @@ proc p_eq*( s: Atom, t: Atom ): bool =
     of BOOL:  return s.bul == t.bul # - Boolean values must be the same
     of EROR:  return (s.code == t.code) # -------------------------- Don't care if the message is the same
     of CONS:  return p_eq( s.car, t.car ) and p_eq( s.cdr, t.cdr ) # Recursively determine if a structure is equal
+    of FUNC:  return false # FIXME: COMPARE TABLES
 
 # TEST #
 var
@@ -419,4 +434,15 @@ proc p_boolean*( a: Atom ): bool =  return a.kind == BOOL  # Return true if `a` 
 # TEST #
 echo p_boolean( Anum1 ) , ' ' , p_boolean( Abul2 )
 
-# function p_boolean(a){ return typeof a === 'boolean'; }
+
+proc p_zero*( a: Atom ): bool =  
+    # `a` is strictly equivalent to 0.0
+    if a.kind != NMBR:
+        return false
+    else:
+        return a.num == 0.0
+
+    
+# TEST #
+var Anum5 = make_number( 0 )
+echo p_zero( Anum1 ), ' ' , p_zero( Anum3 ) , ' ' , p_zero( Anum4 ) , ' ' , p_zero( Anum5 )

@@ -71,7 +71,7 @@ Based on "The Little JavaScripter" by Douglas Crockford, with a good deal of mod
               'EXPPARSER', 'rgx_next_match', 'push_onto_L', 'attempt_num', 's_build', 's'
             * Passed evaluator tests! (Taken from "Chaper 10 Tests" of "little_UT.js"), test on 'rember' removed, 'rember' not in this implementation
 2013-11-16: Copied the following functions from "little.js": 'Object.prototype.begetObject', 'cons', 'car', 'cdr', 'p_literal', 'isNull', 'p_eq',
-            'p_number', 'p_boolean', 'isUndefined', 'isFunction'
+            'p_number', 'p_boolean', 'p_binding_missing', 'p_function'
 
 == TODO ==
 * Add the facility to parse a line as a partial form, indicating to the client code that the form is incomplete. The client code can send the form to the
@@ -125,15 +125,17 @@ function third(l){ return get_car(get_cdr(get_cdr(l))); } // return the third it
 // = End Structures =
 
 // = Type and Equivalency Predicates =
+function p_cons(a){ return a && typeof a === 'object' && a.constructor === Array; }
 function p_literal(a){ return typeof a === 'string' || typeof a === 'number' || typeof a === 'boolean'; } // 'a' is any of String, Number, or Boolean
 function p_Null(a){ return typeof a === 'undefined' || (typeof a === 'object' && !a); } // is undefined or a false-like object
 function p_eq(s, t){ return s === t; } // Args are strictly equivalent
 function p_number(a){ return isFinite(a); } // URL: http://www.w3schools.com/jsref/jsref_isfinite.asp
 function p_boolean(a){ return typeof a === 'boolean'; }
-function isUndefined(a){ return typeof a === 'undefined'; }
-function isFunction(a){ return typeof a === 'function'; } // Arg is a JS function
-function isZero(s){ return s === 0; } // Arg is strictly equivalent to 0
-function p_cons(a){ return a && typeof a === 'object' && a.constructor === Array; }
+function p_zero(s){ return s === 0; } // Arg is strictly equivalent to 0
+function p_binding_missing(a){ return typeof a === 'undefined'; }
+function p_function(a){ return typeof a === 'function'; } // Arg is a JS function
+
+
 // = End Predicates =
 
 // = Mathematics =
@@ -223,7 +225,7 @@ function lookupInTable(name, table, tableF){ // return value associated with nam
 function lookupInContext(name, context){
 	var temp;
 	return p_Null(context) ? undefined : // if context is null, not possible to find, it is undefined
-		!isUndefined(temp = get_car(context)[name]) ? temp: // context exists, attempt to assign lookup result to 'temp', if lookup succeeds, return 'temp'
+		!p_binding_missing(temp = get_car(context)[name]) ? temp: // context exists, attempt to assign lookup result to 'temp', if lookup succeeds, return 'temp'
 			lookupInContext(name, get_cdr(context)); // lookup failed, recur on the next containing namespace
 }
 
@@ -287,7 +289,7 @@ var $global = [ // a one-item list that contains the global context
 	'atom?':   make_list_of_2('primitive', p_literal),
 	'eq?':     make_list_of_2('primitive', p_eq),
 	'null?':   make_list_of_2('primitive', isNull),
-	'zero?':   make_list_of_2('primitive', isZero),
+	'zero?':   make_list_of_2('primitive', p_zero),
 	'number?': make_list_of_2('primitive', p_number),
 	'+':       make_list_of_2('primitive', plus),
 	'-':       make_list_of_2('primitive', minus),
@@ -387,9 +389,9 @@ function expressionToAction(e){ // attempt to assign appropriate action to the g
 	return p_literal(e) ? function $identifier(e, context) { // if 'e' is atom, return the inline '$identifier' function
 		if( p_number(e) || p_boolean(e) ){ return e; } // if 'e' number or boolean, return 'e'
                 var i = lookupInContext(e, context); // else not number/boolean literal, attempt lookup of assumed symbol in reserved words
-                if( !isUndefined(i) ){ return i; } // if lookup succeeded, return result
+                if( !p_binding_missing(i) ){ return i; } // if lookup succeeded, return result
                 i = global[e]; // else attempt lookup in defined JS names (global 'this')
-                if( isFunction(i) ){ return make_list_of_2('primitive', i); } // if lookup result is function, return LS pair with 'primitive' first item
+                if( p_function(i) ){ return make_list_of_2('primitive', i); } // if lookup result is function, return LS pair with 'primitive' first item
                 return make_list_of_2('error', e); // else error, not recognized as literal, reserved word, defined symbol, or JS function
 		} : // else 'e' not atom
 			p_Null(e) ? null : // if 'e' is empty list, return null
