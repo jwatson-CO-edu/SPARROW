@@ -412,3 +412,11 @@ var
 echo p_number( Anum1 ) , ' ' , p_number( Anum2 ) , ' ' , p_number( Anum3 ) , ' ' , p_number( Anum4 )
 
 # 2022-04-06: All tests pass!
+
+
+proc p_boolean*( a: Atom ): bool =  return a.kind == BOOL  # Return true if `a` is a BOOL atom
+
+# TEST #
+echo p_boolean( Anum1 ) , ' ' , p_boolean( Abul2 )
+
+# function p_boolean(a){ return typeof a === 'boolean'; }
