@@ -70,7 +70,7 @@ Based on "The Little JavaScripter" by Douglas Crockford, with a good deal of mod
               'formalsOf', 'bodyOf', 'textOf', 'questionOf', 'answerOf', 'bodyOf', 'isElse', 'evcon', 'evlis', 'functionOf', 'argumentsOf',
               'EXPPARSER', 'rgx_next_match', 'push_onto_L', 'attempt_num', 's_build', 's'
             * Passed evaluator tests! (Taken from "Chaper 10 Tests" of "little_UT.js"), test on 'rember' removed, 'rember' not in this implementation
-2013-11-16: Copied the following functions from "little.js": 'Object.prototype.begetObject', 'cons', 'car', 'cdr', 'isAtom', 'isNull', 'isEq',
+2013-11-16: Copied the following functions from "little.js": 'Object.prototype.begetObject', 'cons', 'car', 'cdr', 'p_literal', 'isNull', 'p_eq',
             'isNumber', 'isBoolean', 'isUndefined', 'isFunction'
 
 == TODO ==
@@ -125,9 +125,9 @@ function third(l){ return get_car(get_cdr(get_cdr(l))); } // return the third it
 // = End Structures =
 
 // = Type and Equivalency Predicates =
-function isAtom(a){ return typeof a === 'string' || typeof a === 'number' || typeof a === 'boolean'; } // 'a' is any of String, Number, or Boolean
+function p_literal(a){ return typeof a === 'string' || typeof a === 'number' || typeof a === 'boolean'; } // 'a' is any of String, Number, or Boolean
 function p_Null(a){ return typeof a === 'undefined' || (typeof a === 'object' && !a); } // is undefined or a false-like object
-function isEq(s, t){ return s === t; } // Args are strictly equivalent
+function p_eq(s, t){ return s === t; } // Args are strictly equivalent
 function isNumber(a){ return isFinite(a); } // URL: http://www.w3schools.com/jsref/jsref_isfinite.asp
 function isBoolean(a){ return typeof a === 'boolean'; }
 function isUndefined(a){ return typeof a === 'undefined'; }
@@ -198,7 +198,7 @@ var newEntry = build; // 'newEntry' an alias for 'build'
 
 function lookupInEntryHelp(name, names, values, entryF){ // return value associated with name, by linear search, or eval (entry-f name)
 	return p_Null(names) ? entryF(name) : // list of names null, invoke the contingency func
-		isEq(get_car(names), name) ? get_car(values) : // item name match, return item value
+		p_eq(get_car(names), name) ? get_car(values) : // item name match, return item value
 			lookupInEntryHelp(names, get_cdr(names), get_cdr(values), entryF); // else, recur on sublists
 }
 
@@ -269,7 +269,7 @@ var tableOf = first, // -- alias, table is the first item
 var questionOf = first, // alias, question - condition to eval is the first item
     answerOf = second, // alias, answer - action to take is the second item
     condLinesOf = cdr; // alias, lines - cond lines are in the sublist following func name
-function isElse(x){ return isAtom(x) && isEq(x, 'else'); } // is the arg an 'else symbol?
+function isElse(x){ return p_literal(x) && p_eq(x, 'else'); } // is the arg an 'else symbol?
 // -- end cond --
 
 function evcon(lines, context){ // evaluate cond form by form, this is the guts of cond
@@ -284,8 +284,8 @@ var $global = [ // a one-item list that contains the global context
 	'false':   false,
 	'#t':      true,
 	'#f':      false,
-	'atom?':   make_list_of_2('primitive', isAtom),
-	'eq?':     make_list_of_2('primitive', isEq),
+	'atom?':   make_list_of_2('primitive', p_literal),
+	'eq?':     make_list_of_2('primitive', p_eq),
 	'null?':   make_list_of_2('primitive', isNull),
 	'zero?':   make_list_of_2('primitive', isZero),
 	'number?': make_list_of_2('primitive', isNumber),
@@ -362,9 +362,9 @@ function applyPrimitive(fun, vals){ // takes function name and array of values, 
 function applyClosure(closure, vals){ return meaning(bodyOf(closure), newContext(formalsOf(closure), vals, tableOf(closure))); }
 
 function apply(fun, vals){ // evaluate primitives and closures (non-primitive functions)
-	return isAtom(fun) ? fun :
-		isEq(first(fun), 'primitive') ? applyPrimitive(second(fun), vals) :
-			isEq(first(fun), 'nonPrimitive') ? applyClosure(second(fun), vals) :
+	return p_literal(fun) ? fun :
+		p_eq(first(fun), 'primitive') ? applyPrimitive(second(fun), vals) :
+			p_eq(first(fun), 'nonPrimitive') ? applyClosure(second(fun), vals) :
 				fun;
 }
 
@@ -384,7 +384,7 @@ function listToAction(e){ // Return one of ...
 }
 
 function expressionToAction(e){ // attempt to assign appropriate action to the given expression 'e'
-	return isAtom(e) ? function $identifier(e, context) { // if 'e' is atom, return the inline '$identifier' function
+	return p_literal(e) ? function $identifier(e, context) { // if 'e' is atom, return the inline '$identifier' function
 		if( isNumber(e) || isBoolean(e) ){ return e; } // if 'e' number or boolean, return 'e'
                 var i = lookupInContext(e, context); // else not number/boolean literal, attempt lookup of assumed symbol in reserved words
                 if( !isUndefined(i) ){ return i; } // if lookup succeeded, return result
@@ -540,7 +540,7 @@ function p(x){ // Produce a printable presentation of an s-expression
 		}while( p_cons(x) ); // If sublist is also list, then repeat
 
 		if( r.charAt(r.length - 1) === ' ' ){ r = r.substr(0, r.length - 1); } // Remove trailing space if present
-		if( isAtom(x) ){ r += ' . ' + x; } // Inside a cons, but get_cdr(x) was atom, not list, therefore inside plain cons, print as such
+		if( p_literal(x) ){ r += ' . ' + x; } // Inside a cons, but get_cdr(x) was atom, not list, therefore inside plain cons, print as such
 		return r + ')'; // closing paren
 	}
 	if( p_Null(x) ){ return '()'; } // Else if x is null, return an empty list

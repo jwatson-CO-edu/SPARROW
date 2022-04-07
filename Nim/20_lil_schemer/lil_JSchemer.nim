@@ -29,6 +29,7 @@ type
         CONS, # Cons pair
         STRN, # String/Symbol
         NMBR, # Number
+        BOOL, # Boolean
         NULL, # Null
         EROR, # Error object
     Atom = ref object
@@ -41,6 +42,8 @@ type
             str : string # String data
         of NMBR:
             num : float # Numeric data: All Nim floats are "double" 64bit precision
+        of BOOL:
+            bul : bool  # True or False
         of NULL:
             nul : byte # ??? Cannot leave this empty ???
         of EROR:
@@ -57,6 +60,7 @@ proc `$`( item: Atom ): string =
     #[Null   ]# of NULL:  result = "\xE2\xA7\x84"
     #[Str/Sym]# of STRN:  result = "\"" & item.str & "\""
     #[Num    ]# of NMBR:  result = $item.num
+    #[Bool   ]# of BOOL:  result = $item.bul
     #[Pair   ]# of CONS:  result = "(" & $item.car & ", " & $item.cdr & ")"  
     #[Error  ]# of EROR:  result = "(ERROR: " & $item.code & ", Code: " & item.info & ")"
 
@@ -97,6 +101,16 @@ proc make_number*( nmbr: float ): Atom =
     return Atom( kind: NMBR, num: nmbr )
 
 
+proc make_bool*( buul: bool ): Atom =
+    # Make a boolean
+    return Atom( kind: BOOL, bul: buul )
+
+
+proc make_error*( errCode: F_Error, errInfo: string ): Atom =
+    # Allocate and return an error
+    return Atom( kind: EROR, code: errCode, info: errInfo )
+
+
 
 ########## LIST PROCESSING ########################################################################
 
@@ -109,7 +123,7 @@ proc p_cons*( op: Atom ): bool =  return (op.kind == CONS) # Return T if this at
 
 ##### Accessing & Constructing ##################
 proc get_car*( cons: Atom ): Atom =  return cons.car # --------------- Get the left  pair item
-proc get_cdr*( cons: Atom ): Atom =  return cons.car # --------------- Get the right pair item
+proc get_cdr*( cons: Atom ): Atom =  return cons.cdr # --------------- Get the right pair item
 proc set_car_B*( cons: Atom , valu: Atom ): void =   cons.car = valu # Set the left  pair item
 proc set_cdr_B*( cons: Atom , valu: Atom ): void =   cons.cdr = valu # Set the right pair item
 # FIXME: START HERE, rename: `build_cons`
@@ -326,9 +340,56 @@ proc bind_atom*( env: Env, name: string, atom: Atom ): void =
 
 ########## LITTLE JAVASCRIPTER #####################################################################
 
+##### Construction #####
 proc make_list_of_2*( op1: Atom, op2: Atom ): Atom =
     # return a two-item list with 's1' as the first item and 's2' as the second item
     return make_cons( op1, make_cons( op2, make_null() ) )
     
+# TEST #
+var A00: Atom = make_list_of_2( make_number(1), make_number(2) ) 
+append( A00, make_number(3) )
+echo A00
 
-# function make_list_of_2(s1, s2){ return make_cons(s1, make_cons(s2, null)); } // 
+##### Access #####
+proc second*( l: Atom ): Atom =  return get_car(get_cdr(l)) # -------- Return the second item in a list, (cadr l)
+proc third*( l: Atom ): Atom  =  return get_car(get_cdr(get_cdr(l))) # return the third item of 'l', (caddr l)
+
+# TEST #
+echo second( A00 )
+echo third( A00 )
+
+##### Predicates #####
+proc p_literal*( a: Atom ): bool =  return (a.kind == STRN) or (a.kind == NMBR) or (a.kind == BOOL) # 'a' is any of String, Number, or Boolean
+
+# TEST #
+var A01: Atom = make_number(42)
+echo p_literal( A01 )
+
+proc p_eq*( s: Atom, t: Atom ): bool =
+    if s.kind != t.kind: # If not the same kind, then don't bother checking values
+        return false
+    case s.kind: # - Otherwise, there is more work to do ...
+    of NULL:  return true # - Two Nulls are always the same
+    of STRN:  return s.str == t.str # - Rely on Nim string comparison
+    of NMBR:  return s.num == t.num # - Numbers must be exactly the same
+    of BOOL:  return s.bul == t.bul # - Boolean values must be the same
+    of EROR:  return (s.code == t.code) # -------------------------- Don't care if the message is the same
+    of CONS:  return p_eq( s.car, t.car ) and p_eq( s.cdr, t.cdr ) # Recursively determine if a structure is equal
+
+# TEST #
+var
+    Astr1 = make_string("foo")
+    Astr2 = make_string("foo")
+    Anum1 = make_number( 2 )
+    Anum2 = make_number( 3 )
+    Abul1 = make_bool( true )
+    Abul2 = make_bool( true )
+    Aerr1 = make_error( NOVALUE, "This message does not matter" )
+    Aerr2 = make_error( NOVALUE, "Neither does this one"        )
+    Acns1 = make_cons( make_cons( make_number( 1 ), make_number( 2 ) ), make_cons( make_number( 3 ), make_number( 4 ) ) )
+    Acns2 = make_cons( make_cons( make_number( 1 ), make_number( 2 ) ), make_cons( make_number( 3 ), make_number( 4 ) ) )
+    Acns3 = make_cons( make_cons( make_number( 1 ), make_number( 2 ) ), make_cons( make_number( 3 ), make_number( 5 ) ) )
+echo p_eq( Astr1, Astr2 ) , ' ' , p_eq( Astr1, Anum2 ) , ' ' , p_eq( Anum1, Anum2 ) , ' ' , p_eq( Abul1, Abul2 )
+echo p_eq( Aerr1, Aerr2 ) , ' ' , p_eq( Acns1, Acns2 ) , ' ' , p_eq( Acns1, Acns3 ) , ' ' , p_eq( Acns2, Acns3 )
+
+# 2022-04-06: All tests pass!
