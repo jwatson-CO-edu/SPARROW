@@ -12,6 +12,7 @@
 ########## INIT ###################################################################################
 
 import std/strutils # strip
+import std/math # --- classify
 
 
 
@@ -391,5 +392,23 @@ var
     Acns3 = make_cons( make_cons( make_number( 1 ), make_number( 2 ) ), make_cons( make_number( 3 ), make_number( 5 ) ) )
 echo p_eq( Astr1, Astr2 ) , ' ' , p_eq( Astr1, Anum2 ) , ' ' , p_eq( Anum1, Anum2 ) , ' ' , p_eq( Abul1, Abul2 )
 echo p_eq( Aerr1, Aerr2 ) , ' ' , p_eq( Acns1, Acns2 ) , ' ' , p_eq( Acns1, Acns3 ) , ' ' , p_eq( Acns2, Acns3 )
+
+# 2022-04-06: All tests pass!
+
+
+proc p_number*( a: Atom ): bool =
+    # Return true only if the value held by `a` is a `NMBR`, is not infinite, and is not NaN
+    # Based on work by Alex Craft, https://stackoverflow.com/a/66063769
+    if a.kind != NMBR:
+        return false
+    else:
+        let ntype = a.num.classify()
+        return (ntype == fc_normal) or (ntype == fc_zero) or (ntype == fc_neg_zero)
+
+# TEST #
+var
+    Anum3 = make_number( Nan )
+    Anum4 = make_number( Inf )
+echo p_number( Anum1 ) , ' ' , p_number( Anum2 ) , ' ' , p_number( Anum3 ) , ' ' , p_number( Anum4 )
 
 # 2022-04-06: All tests pass!

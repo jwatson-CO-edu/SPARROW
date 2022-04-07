@@ -24,7 +24,7 @@ Based on "The Little JavaScripter" by Douglas Crockford, with a good deal of mod
                                  'undefined' if the end of the list is reached without a positive hit
             - 'Object.begetObject': Removed, 'newContext' was the sole user of this function. Due to the above, it is no longer needed.
 2014-01-23: * Added: - Reserved symbol "atom?" calls primitive 'asAtom' that returns true if the argument is a string, number, or boolean, otherwise false
-                     - Reserved symbol "number?" calls primitive 'isNumber' that returns the result of JS function 'isFinite' called on argument
+                     - Reserved symbol "number?" calls primitive 'p_number' that returns the result of JS function 'isFinite' called on argument
 2014-01-22: 'evcon' call to 'meaning' for the 'else' case was missing the second argument 'context'.  This error prevented access of this call to the
             defined environment and prevented recursion in some cases.  Corrected.
 2013-12-07: * Rewrote the 'and' special form handler to more closely conform to R5RS specification, which returns the
@@ -71,7 +71,7 @@ Based on "The Little JavaScripter" by Douglas Crockford, with a good deal of mod
               'EXPPARSER', 'rgx_next_match', 'push_onto_L', 'attempt_num', 's_build', 's'
             * Passed evaluator tests! (Taken from "Chaper 10 Tests" of "little_UT.js"), test on 'rember' removed, 'rember' not in this implementation
 2013-11-16: Copied the following functions from "little.js": 'Object.prototype.begetObject', 'cons', 'car', 'cdr', 'p_literal', 'isNull', 'p_eq',
-            'isNumber', 'isBoolean', 'isUndefined', 'isFunction'
+            'p_number', 'p_boolean', 'isUndefined', 'isFunction'
 
 == TODO ==
 * Add the facility to parse a line as a partial form, indicating to the client code that the form is incomplete. The client code can send the form to the
@@ -128,8 +128,8 @@ function third(l){ return get_car(get_cdr(get_cdr(l))); } // return the third it
 function p_literal(a){ return typeof a === 'string' || typeof a === 'number' || typeof a === 'boolean'; } // 'a' is any of String, Number, or Boolean
 function p_Null(a){ return typeof a === 'undefined' || (typeof a === 'object' && !a); } // is undefined or a false-like object
 function p_eq(s, t){ return s === t; } // Args are strictly equivalent
-function isNumber(a){ return isFinite(a); } // URL: http://www.w3schools.com/jsref/jsref_isfinite.asp
-function isBoolean(a){ return typeof a === 'boolean'; }
+function p_number(a){ return isFinite(a); } // URL: http://www.w3schools.com/jsref/jsref_isfinite.asp
+function p_boolean(a){ return typeof a === 'boolean'; }
 function isUndefined(a){ return typeof a === 'undefined'; }
 function isFunction(a){ return typeof a === 'function'; } // Arg is a JS function
 function isZero(s){ return s === 0; } // Arg is strictly equivalent to 0
@@ -288,7 +288,7 @@ var $global = [ // a one-item list that contains the global context
 	'eq?':     make_list_of_2('primitive', p_eq),
 	'null?':   make_list_of_2('primitive', isNull),
 	'zero?':   make_list_of_2('primitive', isZero),
-	'number?': make_list_of_2('primitive', isNumber),
+	'number?': make_list_of_2('primitive', p_number),
 	'+':       make_list_of_2('primitive', plus),
 	'-':       make_list_of_2('primitive', minus),
 	'*':       make_list_of_2('primitive', multiply),
@@ -385,7 +385,7 @@ function listToAction(e){ // Return one of ...
 
 function expressionToAction(e){ // attempt to assign appropriate action to the given expression 'e'
 	return p_literal(e) ? function $identifier(e, context) { // if 'e' is atom, return the inline '$identifier' function
-		if( isNumber(e) || isBoolean(e) ){ return e; } // if 'e' number or boolean, return 'e'
+		if( p_number(e) || p_boolean(e) ){ return e; } // if 'e' number or boolean, return 'e'
                 var i = lookupInContext(e, context); // else not number/boolean literal, attempt lookup of assumed symbol in reserved words
                 if( !isUndefined(i) ){ return i; } // if lookup succeeded, return result
                 i = global[e]; // else attempt lookup in defined JS names (global 'this')
