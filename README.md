@@ -36,12 +36,15 @@ An interpreted language written in [Nim](https://nim-lang.org/), with the goals 
     [N] D: Evaluate plain object refactor, 2022-04-03,  Atoms and variables will be stored in the `Env` and accessed/used elsewhere, 
            so it would not be efficient to copy by value
 [ ] Translate "The Little Javascripter" by Douglas Crockford
-    https://www.crockford.com/little.html (See `JS` folder)
+    https://www.crockford.com/little.html (See `JS` folder for reference implementation)
+    [ ] Adapt JS file to match names used in Nim file
+    [ ] Make changes to reference implementation when necessary and/or convenient, That is use Nim advantages when they present themselves
 [ ] Parse "Easy S-Expressions" instead: 
     Implicit open paren, `;` is close paren
     <funcName> <arg1> ... <argN>;
-    [ ] How to define nested expressions? Always blocks? `{}`? `()`?
+    [ ] How to define nested expressions? Always blocks? `{}`? `()`? - A: BOTH
         [ ] Implement statement precedence with `()` and determine its relationship with nested expressions. (Identical to nested?)
+            This should already be covered by the evaluator, which alre
         [ ] Eval whether to allow "Classic S-Expressions": (<funcName> <arg1> ... <argN>)
     [ ] Allow infix math? Special math block instead?
 [ ] Line Continuation: `\+`    
@@ -55,6 +58,7 @@ An interpreted language written in [Nim](https://nim-lang.org/), with the goals 
 
 ### Phase 2, Feature Research ###
 [ ] Collect flow programming requirments
+    [ ] Petri Reading Program: Read selected papers in the FINCH collection while digging into available flow programming systems
 [ ] Q: What are ORC and ARC?
 [ ] Q: Does Nim target LLVM yet? Is there another intermediate representation instead?
 [ ] Type System
@@ -64,7 +68,7 @@ An interpreted language written in [Nim](https://nim-lang.org/), with the goals 
         [ ] Alternatives to ECS?
         [ ] Alternatives to OOP?
 [ ] Composite Types
-    [ ] Arrays?
+    [ ] Arrays? - Access block evaluates to an index
     [ ] Hashes?
     [ ] Dynamic Arrays?
     [ ] Heterogeneous (Python) Arrays? (Unlikely for static typing focus)
