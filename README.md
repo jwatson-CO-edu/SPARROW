@@ -79,6 +79,7 @@ An interpreted language written in [Nim](https://nim-lang.org/), with the goals 
     [ ] Nim Processes in Linux and Windows
     [ ] READ: "Actors" by Gul Agha
     [ ] Petri Representation? (Value Dependency/History Graph)
+[ ] Pharo (SmallTalk) Mooc (Listen only)
 
 ### Phase 3, Parallel Concepts ###
 [ ] Types of Sync
