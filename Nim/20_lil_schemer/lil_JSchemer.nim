@@ -119,8 +119,22 @@ proc make_bool*( buul: bool ): Atom =
 proc make_error*( errCode: F_Error, errInfo: string ): Atom =
     # Allocate and return an error
     return Atom( kind: EROR, code: errCode, info: errInfo )
+        
 
+proc make_function*( fName: string, fArgs: OrderedTable[string, F_Type], fReturnVals: OrderedTable[string, F_Type], source: Atom ): Atom =
+    # Allocate and return a function
+    return Atom( kind: FUNC, name: fName, args: fArgs, rtns: fReturnVals, sorc: source  )
+    
 
+proc empty_function*( funcName: string ): Atom =
+    # Return a Function in Name Only
+    new(result)
+    result = make_function(
+        funcName,
+        initOrderedTable[string, F_Type](),
+        initOrderedTable[string, F_Type](),
+        empty_atom()
+    )
 
 ########## LIST PROCESSING ########################################################################
 
@@ -317,7 +331,7 @@ proc expression_from_string*( expStr: var string, sepChar: string = " " ): Atom 
 
 type
     Env* = ref object
-        parent:    Env # --------------- Pointer to the environment that contains this one
+        parent:    Env # --------------- Smart pointer to the environment that contains this one
         freeVars:  seq[Atom] # --------- Free  variables, without binding
         boundVars: Table[string, Atom] # Bound variables, have names given to them by statements
 
@@ -446,3 +460,13 @@ proc p_zero*( a: Atom ): bool =
 # TEST #
 var Anum5 = make_number( 0 )
 echo p_zero( Anum1 ), ' ' , p_zero( Anum3 ) , ' ' , p_zero( Anum4 ) , ' ' , p_zero( Anum5 )
+
+
+proc p_function*( a: Atom ): bool = return a.kind == FUNC  # Return true if `a` is a FUNC atom
+    
+# TEST #
+var Afnc1: Atom 
+Afnc1 = empty_function( "NoName" )
+echo "Function Test: ", p_function( Anum1 ), ' ' , p_function( Afnc1 )
+
+# 2022-04-08: All tests pass!

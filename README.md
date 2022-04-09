@@ -57,8 +57,10 @@ An interpreted language written in [Nim](https://nim-lang.org/), with the goals 
 [ ] Evaluate "Practical Common Lisp" (PCL) for useful features and structures (If yes, then expand this bullet with REQUIRED topics ONLY )
 
 ### Phase 2, Feature Research ###
+[ ] What are the use cases?
 [ ] Collect flow programming requirments
     [ ] Petri Reading Program: Read selected papers in the FINCH collection while digging into available flow programming systems
+    [ ] What are Node Red's capabilities?
 [ ] Q: What are ORC and ARC?
 [ ] Q: Does Nim target LLVM yet? Is there another intermediate representation instead?
 [ ] Type System
@@ -73,13 +75,23 @@ An interpreted language written in [Nim](https://nim-lang.org/), with the goals 
     [ ] Dynamic Arrays?
     [ ] Heterogeneous (Python) Arrays? (Unlikely for static typing focus)
 [ ] Concurrency Model & Scheduling
-    [ ] Nim Threads   in Linux and Windoes
-    [ ] Nim Processes in Linux and Windoes
+    [ ] Nim Threads   in Linux and Windows
+    [ ] Nim Processes in Linux and Windows
     [ ] READ: "Actors" by Gul Agha
-    [ ] Petri Representation?
+    [ ] Petri Representation? (Value Dependency/History Graph)
+
+### Phase 3, Parallel Concepts ###
+[ ] Types of Sync
+    [ ] Hard Sync: Must wait for an updated value
+    [ ] Soft Sync: Retrieves the current value as soon as the mutex allows, regardless of whether or not it is ``fresh''
+[ ] Publisher/Subscriber
+    [ ] Push Model w Callbacks
+    [ ] Pull Model
+[ ] Tick/Lockstep
+[ ] How much of ROS do I need?
     
-### Phase 3, Expansion ###
-[ ] Abstract Source Graph Nodes
+### Phase 4, Expansion ###
+[ ] Value Dependency Graph
 [ ] Interpreter Program
     [ ] Inter-process connections
 [ ] Parallel Test 1
@@ -119,17 +131,23 @@ An interpreted language written in [Nim](https://nim-lang.org/), with the goals 
     - Bond Graphs, Circuit Sim, Pipe Flow
         - Source, Sink, Resistance, Power, Energy Conversions
     - Can the mechanisms that regulate execution be used to regulate simulation
+* Compilation
+    - Target LLVM
 * Execution System
     - Automatic network compute discovery 
     - Automatic load balancing
-    - FINCH-OS, an operating system with advanced task scheduling
+    - FINCH-OS, a (realtime?) operating system with advanced task scheduling
+    - Node Red capabilities
 * Mathematics / Statistics
     - Stochastic Programming
     - Deep Learning
     - Geometric Algebra
 * AI
     - Plug-and-Play learning appliances (Brain Book)
+        - Reason over domain structures in order to re-use capabilities or suggest the structure of new capabilities
     - DL auto-tuning of interpreter parameters
+* Hardware
+    - Home/Life automation
 
 # Resources
 
