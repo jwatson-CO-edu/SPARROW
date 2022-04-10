@@ -7,6 +7,7 @@ Task Key:
 * `Q:` Question to Answer
     - `A:` Answer to a Question
 * `E:` Evaluation to Consider  
+
 Completion Key:
 * `[Y]` Done
 * `[N]` Will NOT Be Done
