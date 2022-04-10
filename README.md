@@ -50,6 +50,11 @@ An interpreted language written in [Nim](https://nim-lang.org/), with the goals 
 [ ] Line Continuation: `\+`    
 [ ] Evaluate "The Seasoned Schemer" for useful features and structures (If yes, then expand this bullet with REQUIRED topics ONLY )
 [ ] Experiment with memory models
+    [ ] Q: Which is faster? `object` -or- `ref object`
+        [ ] T: Copy -vs- Reference Simple Test in folder 05
+        [ ] T: Attempt simple conversion of SPARROW to copy mode
+    [ ] Q: Is selective compilation possible in Nim?
+        [ ] T: If so, test a program that needs it to be compatible w/ Windows
     [ ] Read: How does Nim allocate memory?
     [ ] Q: Can a block of "null pointer" memory be allocated?
     [ ] Q: Can a large array of variant `Atoms` be allocated? What is the per-unit size in memory?
@@ -57,7 +62,12 @@ An interpreted language written in [Nim](https://nim-lang.org/), with the goals 
 [ ] Evaluate "Practical Common Lisp" (PCL) for useful features and structures (If yes, then expand this bullet with REQUIRED topics ONLY )
 
 ### Phase 2, Feature Research ###
-[ ] What are the use cases?
+[ ] Q: What are the use cases?
+    A: Standing up a small network of devices and automatically and cleanly giving them their own processes
+        - R: Must be able to talk to Python
+            * Q: Does it make sense for FINCH to do data plumbing for Python
+    A: Offloading multiprocessing work from Python
+[ ] Q: Where do I introduce type checking?
 [ ] Collect flow programming requirments
     [ ] Petri Reading Program: Read selected papers in the FINCH collection while digging into available flow programming systems
     [ ] What are Node Red's capabilities?

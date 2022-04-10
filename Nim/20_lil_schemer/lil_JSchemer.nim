@@ -129,12 +129,8 @@ proc make_function*( fName: string, fArgs: OrderedTable[string, F_Type], fReturn
 proc empty_function*( funcName: string ): Atom =
     # Return a Function in Name Only
     new(result)
-    result = make_function(
-        funcName,
-        initOrderedTable[string, F_Type](),
-        initOrderedTable[string, F_Type](),
-        empty_atom()
-    )
+    result = Atom( kind: FUNC )
+    result.name = funcName
 
 ########## LIST PROCESSING ########################################################################
 
@@ -470,3 +466,40 @@ Afnc1 = empty_function( "NoName" )
 echo "Function Test: ", p_function( Anum1 ), ' ' , p_function( Afnc1 )
 
 # 2022-04-08: All tests pass!
+
+
+
+##### Mathematics #####
+# 2022-04-10: For now following Little JavaScripter convention of base math functions working in `float`s instead of `Atom`s
+
+proc add1*( n: float = NaN ): float =
+    # Return the first argument plus  1, returns  1 if no argument given
+    if isNaN( n ):
+        return 1
+    else:
+        return n + 1
+
+
+proc sub1*( n: float = NaN ): float =
+    # Return the first argument minus 1, returns -1 if no argument given
+    if isNaN( n ):
+        return -1
+    else:
+        return n - 1
+
+# TEST #
+echo Anum1.num, ' ', add1( Anum1.num ) 
+echo Anum2.num, ' ', sub1( Anum2.num ) 
+
+
+proc plus*( ops: varargs[float] ): float =
+    # Sums an arbitrary number of arguments, returns 0 if no args given
+    var sum = 0.0
+    for op in ops:
+        sum += op
+    return sum
+
+# TEST #
+echo Anum1.num, " + ", Anum2.num, " + ", Anum5.num, " = ", plus( Anum1.num, Anum2.num , Anum5.num )
+
+# 2022-04-10: All tests pass!
