@@ -9,6 +9,7 @@ Task Key:
 * `E:` Evaluation to Consider  
 
 Completion Key:
+* `[>]` In Progress
 * `[Y]` Done
 * `[N]` Will NOT Be Done
 * `[~]` Partially Done and/or Skipped for Now
@@ -45,10 +46,10 @@ Completion Key:
         - Obj. Variants: https://www.youtube.com/watch?v=fi7UasgzFhQ
     [N] D: Evaluate plain object refactor, 2022-04-03,  Atoms and variables will be stored in the `Env` and accessed/used elsewhere, 
            so it would not be efficient to copy by value
-[ ] Translate "The Little Javascripter" by Douglas Crockford
+[>] Translate "The Little Javascripter" by Douglas Crockford
     https://www.crockford.com/little.html (See `JS` folder for reference implementation)
-    [ ] Adapt JS file to match names used in Nim file
-    [ ] Make changes to reference implementation when necessary and/or convenient, That is use Nim advantages when they present themselves
+    [>] Adapt JS file to match names used in Nim file
+    [>] Make changes to reference implementation when necessary and/or convenient, That is use Nim advantages when they present themselves
 [ ] Parse "Easy S-Expressions" instead: 
     [ ] Implicit open paren, `;` is close paren
     [ ] <funcName> <arg1> ... <argN>;
