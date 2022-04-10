@@ -129,7 +129,7 @@ proc make_function*( fName: string, fArgs: OrderedTable[string, F_Type], fReturn
 proc empty_function*( funcName: string ): Atom =
     # Return a Function in Name Only
     new(result)
-    result = Atom( kind: FUNC )
+    result = Atom( kind: FUNC ) # Partial instantiation: https://forum.nim-lang.org/t/9093#59260
     result.name = funcName
 
 ########## LIST PROCESSING ########################################################################
