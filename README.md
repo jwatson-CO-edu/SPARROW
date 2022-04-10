@@ -133,6 +133,7 @@ An interpreted language written in [Nim](https://nim-lang.org/), with the goals 
 * Enhanced alternative to Behavior Trees
     - Q: How to retain reactivity in a Graph?
         - Q: Is there a PN flavor that has a conditional similar to a BT::Selector node? 
+          A: 2022-04-10: Yes, there is an option transition.  Needs more investigation
     - Q: Does the introduction of cycles and loops create significant problems.
     - Enhanced representation of state with Colored and/or Object Petri Nets
     - Q: State operations like {GPS, BT::HashedExpression}?
@@ -159,6 +160,15 @@ An interpreted language written in [Nim](https://nim-lang.org/), with the goals 
     - DL auto-tuning of interpreter parameters
 * Hardware
     - Home/Life automation
+    - Hardware Emulation
+        - CHIP8, Fantasy CPU
+        - Zilog 80A, RadioShack TRS-80 / Sinclair ZX Spectrum
+        - Ricoh 5A22, SNES CPU
+        - Super FX Chip, SNES Cartridge Coprocessor
+           - SNES 3D Art
+        - The ability to use instantiate Finch nodes while using the message passing bus as a data bus, thus acheiving full system emulation
+        - The ability to compile the graph of chip emulators down into a full system emulator using the normal compression and compilation pipeline
+            - Emulate SNES from a ROM!
 
 # Resources
 
