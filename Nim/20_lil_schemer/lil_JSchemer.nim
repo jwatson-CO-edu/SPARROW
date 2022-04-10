@@ -128,7 +128,6 @@ proc make_function*( fName: string, fArgs: OrderedTable[string, F_Type], fReturn
 
 proc empty_function*( funcName: string ): Atom =
     # Return a Function in Name Only
-    new(result)
     result = Atom( kind: FUNC ) # Partial instantiation: https://forum.nim-lang.org/t/9093#59260
     result.name = funcName
 
@@ -494,12 +493,49 @@ echo Anum2.num, ' ', sub1( Anum2.num )
 
 proc plus*( ops: varargs[float] ): float =
     # Sums an arbitrary number of arguments, returns 0 if no args given
-    var sum = 0.0
+    result = 0.0
     for op in ops:
-        sum += op
-    return sum
+        result += op
 
 # TEST #
 echo Anum1.num, " + ", Anum2.num, " + ", Anum5.num, " = ", plus( Anum1.num, Anum2.num , Anum5.num )
 
 # 2022-04-10: All tests pass!
+
+proc minus*( ops: varargs[float] ): float =
+    # Return the difference between the first arg and all subsequent args, returns 0 if no args given
+    if ops.len() == 0:
+        result = 0.0
+    else:
+        result = ops[0]
+    for op in ops[1..ops.len-1]:
+        result = result - op
+
+# TEST #
+echo Anum2.num, " - ", Anum1.num, " - ", Anum1.num, " = ", minus( Anum2.num, Anum1.num , Anum1.num )
+
+
+proc multiply*( ops: varargs[float] ): float =
+    # Returns the product of an arbitrary number of arguments, returns 1 if no args given
+    result = 1.0
+    for op in ops:
+        result *= op
+
+# TEST #
+echo Anum2.num, " * ", Anum1.num, " * ", Anum1.num, " = ", multiply( Anum2.num, Anum1.num , Anum1.num )
+
+
+proc divide*( ops: varargs[float] ): float =
+    # Return the difference between the first arg and all subsequent args, returns 0 if no args given
+    if ops.len() == 0:
+        result = 1.0
+    else:
+        result = ops[0]
+    for op in ops[1..ops.len-1]:
+        result = result / op
+
+# TEST #
+echo Anum2.num, " / ", Anum1.num, " / ", Anum1.num, " = ", divide( Anum2.num, Anum1.num , Anum1.num )
+
+
+# FIXME: make_list_comparator
