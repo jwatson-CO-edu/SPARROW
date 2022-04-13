@@ -77,6 +77,11 @@ Completion Key:
         - R: Must be able to talk to Python
             * Q: Does it make sense for FINCH to do data plumbing for Python
     A: Offloading multiprocessing work from Python
+[ ] Language Review of Competing Projects Based on Nim
+    [ ] Gene, Lisp, https://github.com/gcao/gene.nim
+    [ ] Min, Stack Based, https://min-lang.org/
+    [ ] NimScript, Interpreted Nim, https://nim-lang.org/docs/nims.html
+    [ ] Nim VM, https://nim-lang.org/docs/compiler/vm.html
 [Y] Q: Where do I introduce type checking?, 2022-04-10, A: In the compile-time functions --> before a script is executed
 [ ] Collect flow programming requirments
     [ ] Petri Reading Program: Read selected papers in the FINCH collection while digging into available flow programming systems
