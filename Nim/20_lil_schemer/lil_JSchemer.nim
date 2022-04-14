@@ -14,6 +14,7 @@
 import std/strutils # strip
 import std/tables # - hashes
 import std/math # --- classify
+import std/sequtils # zip
 
 
 
@@ -71,7 +72,7 @@ proc `$`( item: Atom ): string =
     #[Num    ]# of NMBR:  result = $item.num
     #[Bool   ]# of BOOL:  result = $item.bul
     #[Pair   ]# of CONS:  result = "(" & $item.car & ", " & $item.cdr & ")"  
-    #[Error  ]# of EROR:  result = "(ERROR: " & $item.code & ", Code: " & item.info & ")"
+    #[Error  ]# of EROR:  result = "(Error Code: " & $item.code & ", Info: " & item.info & ")"
     #[Func   ]# of FUNC:  result = "(" & $item.name & ")"  # FIXME: LIST ALL KEYS INPUT # FIXME: LIST ALL KEYS OUTPUT
 
 
@@ -582,7 +583,7 @@ echo ge( 4.0, 3.0, 1.0, 2.0 )
 ##### Environment #####
 
 # FIXME: RENAME --> `lookupInContextHelp`
-proc lookupInEntryHelp*( env: Env, ident: string, DNEcallback: proc( en: Env, id: string ): Atom ): Atom =
+proc lookupInContextHelp*( env: Env, ident: string, DNEcallback: proc( en: Env, id: string ): Atom ): Atom =
     # Does the work of searching for a bound name in this and all containing contexts
     # 1: List of names null, invoke the contingency func
     if len( env.boundVars ) == 0:
@@ -592,14 +593,14 @@ proc lookupInEntryHelp*( env: Env, ident: string, DNEcallback: proc( en: Env, id
         return get_bound_atom( env, ident )
     # 3. Search in this Env failed, look at the containing context
     if env.parent != nil:
-        return lookupInEntryHelp( env, ident, DNEcallback )
+        return lookupInContextHelp( env.parent, ident, DNEcallback )
     else:
-        return make_error( UNBOUND, "lookupInEntryHelp: Could NOT create a binding for \"" & ident & "\"!" )
+        return DNEcallback( env, ident )
 
 # FIXME: RENAME --> `lookupInContext`
-proc lookupInEntry*(env: Env, ident: Atom, DNEcallback: proc( en: Env, id: string ): Atom ): Atom =
+proc lookupInContext*(env: Env, ident: Atom, DNEcallback: proc( en: Env, id: string ): Atom ): Atom =
     # Return value associated with name if entry, otherwise (entry-f name)
-    return lookupInEntryHelp( env, ident.str, DNEcallback )
+    return lookupInContextHelp( env, ident.str, DNEcallback )
     
 # TEST #
 var 
@@ -610,9 +611,35 @@ eAnonBlock.parent = eFunction
 eFunction.parent  = eBuiltin
 bind_atom( eBuiltin,  "foo", make_number(1.0) )
 bind_atom( eFunction, "bar", make_number(2.0) )
-bind_atom( eFunction, "baz", make_number(3.0) )
+bind_atom( eAnonBlock, "baz", make_number(3.0) )
 
 proc TEST_CALLBACK( en: Env, id: string ): Atom =
-    # FIXME, START HERE: BIND THE ATOM, ECHO IT, RETURN IT
+    bind_atom( en,  id, empty_atom() ) # Creating this binding is probably not the correct thing to do!
+    result = get_bound_atom( en,  id )
+    # echo result
 
-echo $1.0
+echo lookupInContext( eAnonBlock, make_string( "foo" ), TEST_CALLBACK )
+echo lookupInContext( eAnonBlock, make_string( "bar" ), TEST_CALLBACK )
+echo lookupInContext( eAnonBlock, make_string( "baz" ), TEST_CALLBACK )
+echo lookupInContext( eAnonBlock, make_string( "xur" ), TEST_CALLBACK )
+
+# 2022-04-14: All Tests Pass!
+
+
+proc newContext*( names: seq[string], vals: seq[Atom], oldContext: Env ): Env =
+
+
+
+# function newContext(names, vals, oldContext){ // create a new context of name-value pairs consed onto the 'oldContext'
+# 	var c = {}; // 'c' is an object (associative array) to hold the new name-value pairs
+# 	while(!p_Null(names)){
+# 		c[get_car(names)] = get_car(vals);
+# 		names = get_cdr(names);
+# 		vals = get_cdr(vals);
+# 	}
+# 	return make_cons(
+# 		c,
+# 		( oldContext ? oldContext : null ) // If 'oldContext' exists, then store a reference to it in the cdr, else null cdr
+# 	);
+# }
+    

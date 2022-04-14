@@ -68,6 +68,9 @@ Completion Key:
     [ ] Q: Can a large array of variant `Atoms` be allocated? What is the per-unit size in memory?
     [ ] T: Which is faster; (Pre-allocated block -vs- Dynamic vars); Create 1000 vars and assign randomly for 10k steps
 [ ] Evaluate "Practical Common Lisp" (PCL) for useful features and structures (If yes, then expand this bullet with REQUIRED topics ONLY )
+[ ] E: Identify Philosophical Differences
+    [ ] Identify Dynamic Typing, Where does the language burn time matching?
+    [ ] Identify where value history can be built
 
 ### Phase 2, Feature Research ###
 [ ] Q: What are the use cases? (Need more)
