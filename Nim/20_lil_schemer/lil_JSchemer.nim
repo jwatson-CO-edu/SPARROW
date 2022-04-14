@@ -24,6 +24,7 @@ type
     # All basic error codes
         OKAY    =  0, # No error code applicable
         NOVALUE = 10, # There is no value held in this atom
+        UNBOUND = 20, # Requested symbol is unbound, or a binding could not be made
 
 type
     F_Type = enum # https://nim-by-example.github.io/types/enums/
@@ -579,3 +580,39 @@ echo ge( 4.0, 3.0, 1.0, 2.0 )
 
 
 ##### Environment #####
+
+# FIXME: RENAME --> `lookupInContextHelp`
+proc lookupInEntryHelp*( env: Env, ident: string, DNEcallback: proc( en: Env, id: string ): Atom ): Atom =
+    # Does the work of searching for a bound name in this and all containing contexts
+    # 1: List of names null, invoke the contingency func
+    if len( env.boundVars ) == 0:
+        return DNEcallback( env, ident )
+    # 2. Item name match, return item value
+    if p_binding_exists( env, ident ):
+        return get_bound_atom( env, ident )
+    # 3. Search in this Env failed, look at the containing context
+    if env.parent != nil:
+        return lookupInEntryHelp( env, ident, DNEcallback )
+    else:
+        return make_error( UNBOUND, "lookupInEntryHelp: Could NOT create a binding for \"" & ident & "\"!" )
+
+# FIXME: RENAME --> `lookupInContext`
+proc lookupInEntry*(env: Env, ident: Atom, DNEcallback: proc( en: Env, id: string ): Atom ): Atom =
+    # Return value associated with name if entry, otherwise (entry-f name)
+    return lookupInEntryHelp( env, ident.str, DNEcallback )
+    
+# TEST #
+var 
+    eBuiltin  : Env = newEnv()
+    eFunction : Env = newEnv()
+    eAnonBlock: Env = newEnv()
+eAnonBlock.parent = eFunction
+eFunction.parent  = eBuiltin
+bind_atom( eBuiltin,  "foo", make_number(1.0) )
+bind_atom( eFunction, "bar", make_number(2.0) )
+bind_atom( eFunction, "baz", make_number(3.0) )
+
+proc TEST_CALLBACK( en: Env, id: string ): Atom =
+    # FIXME, START HERE: BIND THE ATOM, ECHO IT, RETURN IT
+
+echo $1.0

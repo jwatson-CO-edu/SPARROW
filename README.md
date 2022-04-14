@@ -55,8 +55,6 @@ Completion Key:
     [ ] <funcName> <arg1> ... <argN>;
     [ ] Program Blocks: All of `{}`, `()`, `[]` 
     [ ] Verify that statement precedence with block brackets already exists in evaluator, If not then Implement it! 
-    [ ] Special Blocks, _<prefix> immediately followed by block brackets
-        [] `_m{}`: Math block, infix operators are allowed
     [ ] Line Continuation: `\+`    
 [ ] Evaluate "The Seasoned Schemer" for useful features and structures (If yes, then expand this bullet with REQUIRED topics ONLY )
 [ ] Experiment with memory models
@@ -108,6 +106,12 @@ Completion Key:
     [ ] Evaluate save states
 
 ### Phase 3, Static Expansion ###
+[ ] Special Blocks, _<prefix> immediately followed by block brackets
+    [ ] `_math(...){...}` ________ : Math block, infix operators are allowed
+    [ ] `_name(<string>){...}`: Named block, can be used to copy portions of code only
+    [ ] Block Flags
+        [ ] Parens are optional for special blocks, if they are missing then assume no args or options
+        [ ] `_<bloc>(-v){...}`: Verbatim, do not wrap in its own context!, instead add to existing context
 [ ] Split Interpreter into Functional Areas
     [ ] Components:  Basic types that also compose AST
     [ ] Analyzer:    Run before interpretation
@@ -150,6 +154,7 @@ Completion Key:
     - Possible extension to behavior trees
     - An execution model based on Petri Nets that seeks to support commonsense solutions to Job Shop Scheduling problems as they relate to computing
 * Interpreter: BOX? HOUSE? PERCH? (Either a riff on BOXFAB or birds)
+    - [B]ase [I]nterpreter and [R]esource [D]ispatch
 
 
 # Daydreams
