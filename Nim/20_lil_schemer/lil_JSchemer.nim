@@ -538,4 +538,44 @@ proc divide*( ops: varargs[float] ): float =
 echo Anum2.num, " / ", Anum1.num, " / ", Anum1.num, " = ", divide( Anum2.num, Anum1.num , Anum1.num )
 
 
-# FIXME: make_list_comparator
+proc make_list_comparator*( pairCompare: proc(op1: float, op2:float):bool ): proc( ops: varargs[float] ): bool =
+    # Return a function that returns true only if the comparison of on arg to the next is true monotonically
+    let helper = pairCompare
+    return proc( ops: varargs[float] ): bool =
+        var 
+            opA = ops[0]
+        result = false # also returns false if less than two arguments given
+        if len( ops ) >= 2:
+            result = true
+            for opB in ops[1..(ops.len()-1)]:
+                if not helper( opA, opB ):
+                    result = false
+                else:
+                    opA = opB
+
+proc lt_help(op1: float, op2: float): bool =  return op1 <  op2  # Less    Than
+proc gt_help(op1: float, op2: float): bool =  return op1 >  op2  # Greater Than
+proc le_help(op1: float, op2: float): bool =  return op1 <= op2  # Less    Than or Equal To
+proc ge_help(op1: float, op2: float): bool =  return op1 >= op2  # Greater Than or Equal To
+            
+
+let lt* = make_list_comparator(lt_help)  # list comparator for "<" Less Than
+let gt* = make_list_comparator(gt_help)  # list comparator for ">" Greater Than
+let le* = make_list_comparator(le_help)  # list comparator for "<=" Less Than or Equal To
+let ge* = make_list_comparator(ge_help)  # list comparator for ">=" Greater Than or Equal To
+
+# TEST #
+echo lt( 1.0, 2.0, 3.0, 4.0 )
+echo lt( 1.0, 2.0, 4.0, 3.0 )
+echo gt( 4.0, 3.0, 2.0, 1.0 )
+echo gt( 4.0, 3.0, 1.0, 2.0 )
+echo le( 1.0, 2.0, 4.0, 4.0 )
+echo le( 1.0, 2.0, 4.0, 3.0 )
+echo ge( 4.0, 3.0, 2.0, 2.0 )
+echo ge( 4.0, 3.0, 1.0, 2.0 )
+
+# 2022-04-13: All tests pass!
+
+
+
+##### Environment #####

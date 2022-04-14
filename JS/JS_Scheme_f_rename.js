@@ -212,7 +212,7 @@ function lookupInEntry(name, entry, entryF){ // return value associated with nam
 var extendTable = cons; /* Define extend-table as an alias for cons. Takes an entry and a table (possibly an empty one) and creates a new table
 by putting the new entry in the front of the old table. */
 
-function lookupInTable(name, table, tableF){ // return value associated with name in table, if name exists
+function lookupInTable(name, table, tableF){ // return value associated with name in table, if name exists: PER DEPTH
 	return p_Null(table) ? tableF(name) : // table null, eval (table-f name)
 		lookupInEntry( // else, lookup in first entry
 			name,
@@ -221,24 +221,13 @@ function lookupInTable(name, table, tableF){ // return value associated with nam
 		);
 }
 
-//function lookupInContext(name, context){ return context[name]; } // return the value belonging to key 'name' in assoc array 'context'
+//function lookupInContext(name, context){ return context[name]; } // return the value belonging to key 'name' in assoc array 'context' : ACROSS DEPTHS
 function lookupInContext(name, context){
 	var temp;
 	return p_Null(context) ? undefined : // if context is null, not possible to find, it is undefined
 		!p_binding_missing(temp = get_car(context)[name]) ? temp: // context exists, attempt to assign lookup result to 'temp', if lookup succeeds, return 'temp'
 			lookupInContext(name, get_cdr(context)); // lookup failed, recur on the next containing namespace
 }
-
-/* function newContext(names, vals, oldContext){
-	var c = oldContext ? oldContext.begetObject() : {}; // if 'oldContext' exists, assign a copy to 'c', otherwise assign empty object
-	//for(var i = 0; i < names.length; i += 1){ c[names[i]] = vals[i]; }
-	while(!p_Null(names)){
-		c[get_car(names)] = get_car(vals);
-		names = get_cdr(names);
-		vals = get_cdr(vals);
-	}
-	return c;
-} */
 
 function newContext(names, vals, oldContext){ // create a new context of name-value pairs consed onto the 'oldContext'
 	var c = {}; // 'c' is an object (associative array) to hold the new name-value pairs
