@@ -55,6 +55,7 @@ type
             code : F_Error # Error code
             info : string #- Detailed error info
         of FUNC:
+            levl: int
             name: string # --------------------- Function name
             args: OrderedTable[string, F_Type] # Input  arguments and types
             rtns: OrderedTable[string, F_Type] # Output returns   and types
@@ -132,6 +133,7 @@ proc empty_function*( funcName: string ): Atom =
     # Return a Function in Name Only
     result = Atom( kind: FUNC ) # Partial instantiation: https://forum.nim-lang.org/t/9093#59260
     result.name = funcName
+
 
 ########## LIST PROCESSING ########################################################################
 
@@ -377,8 +379,19 @@ append( A00, make_number(3) )
 echo A00
 
 ##### Access #####
+# `first` and aliases #
+proc first*( l: Atom ): Atom =  return get_car(l) # -------- Return the second item in a list, (cadr l)
+proc tableOf*( l: Atom ): Atom = return first(l)
+proc questionOf*( l: Atom ): Atom = return first(l)
+# `second` and aliases #
 proc second*( l: Atom ): Atom =  return get_car(get_cdr(l)) # -------- Return the second item in a list, (cadr l)
+proc formalsOf*( l: Atom ): Atom = return second(l)
+proc answerOf*( l: Atom ): Atom = return second(l)
+# `third` and aliases #
 proc third*( l: Atom ): Atom  =  return get_car(get_cdr(get_cdr(l))) # return the third item of 'l', (caddr l)
+proc bodyOf*( l: Atom ): Atom = return third(l)
+# `get_cdr` aliases #
+proc condLinesOf*( l: Atom ): Atom = return get_cdr(l)
 
 # TEST #
 echo second( A00 )
@@ -626,20 +639,23 @@ echo lookupInContext( eAnonBlock, make_string( "xur" ), TEST_CALLBACK )
 # 2022-04-14: All Tests Pass!
 
 
-proc newContext*( names: seq[string], vals: seq[Atom], oldContext: Env ): Env =
+proc newContext*( names: seq[string], vals: seq[Atom], oldContext: Env = nil ): Env =
+    # Create a new context of name-value pairs as a child of the `oldContext`
+    result = newEnv() # --------------- Create a new Env
+    for pair in zip( names, vals ): # - Assoc arrays and iterate pairs
+        let (nam,val) = pair # -------- Split the singular pair back apart
+        result.boundVars[ nam ] = val # Store in the hash
+    if oldContext != nil: # ----------- Set `oldContext` as parent of the new Env, if one was given
+        result.parent = oldContext 
 
+var eBlockBlock = newContext( @[ "xur"           , "aup"           , "ske"            ], 
+                              @[ make_number(4.0), make_number(5.0), make_number(6.0) ], 
+                              eAnonBlock                                                 )
 
-
-# function newContext(names, vals, oldContext){ // create a new context of name-value pairs consed onto the 'oldContext'
-# 	var c = {}; // 'c' is an object (associative array) to hold the new name-value pairs
-# 	while(!p_Null(names)){
-# 		c[get_car(names)] = get_car(vals);
-# 		names = get_cdr(names);
-# 		vals = get_cdr(vals);
-# 	}
-# 	return make_cons(
-# 		c,
-# 		( oldContext ? oldContext : null ) // If 'oldContext' exists, then store a reference to it in the cdr, else null cdr
-# 	);
-# }
-    
+echo lookupInContext( eBlockBlock, make_string( "foo" ), TEST_CALLBACK )
+echo lookupInContext( eBlockBlock, make_string( "bar" ), TEST_CALLBACK )
+echo lookupInContext( eBlockBlock, make_string( "baz" ), TEST_CALLBACK )
+echo lookupInContext( eBlockBlock, make_string( "xur" ), TEST_CALLBACK )
+echo lookupInContext( eBlockBlock, make_string( "aup" ), TEST_CALLBACK )
+echo lookupInContext( eBlockBlock, make_string( "ske" ), TEST_CALLBACK )
+echo lookupInContext( eBlockBlock, make_string( "ral" ), TEST_CALLBACK )
