@@ -67,7 +67,7 @@ Based on "The Little JavaScripter" by Douglas Crockford, with a good deal of mod
 2013-11-17: * Copied the following functions/variables from "little.js": 'global', 'build', 'first', 'second', 'third', 'newEntry',
               'lookupInEntryHelp', 'lookupInEntry', 'extendTable', 'lookupInTable', 'lookupInContext', 'newContext', 'expressionToAction',
               'listToAction', '$specialform', '$global', 'value', 'evcon', 'apply', 'applyPrimitive', 'applyClosure', 'meaning', 'tableOf',
-              'formalsOf', 'bodyOf', 'textOf', 'questionOf', 'answerOf', 'bodyOf', 'isElse', 'evcon', 'evlis', 'functionOf', 'argumentsOf',
+              'formalsOf', 'bodyOf', 'textOf', 'questionOf', 'answerOf', 'bodyOf', 'p_else', 'evcon', 'evlis', 'functionOf', 'argumentsOf',
               'EXPPARSER', 'rgx_next_match', 'push_onto_L', 'attempt_num', 's_build', 's'
             * Passed evaluator tests! (Taken from "Chaper 10 Tests" of "little_UT.js"), test on 'rember' removed, 'rember' not in this implementation
 2013-11-16: Copied the following functions from "little.js": 'Object.prototype.begetObject', 'cons', 'car', 'cdr', 'p_literal', 'isNull', 'p_eq',
@@ -260,11 +260,11 @@ var tableOf = first, // -- alias, table is the first item
 var questionOf = first, // alias, question - condition to eval is the first item
     answerOf = second, // alias, answer - action to take is the second item
     condLinesOf = cdr; // alias, lines - cond lines are in the sublist following func name
-function isElse(x){ return p_literal(x) && p_eq(x, 'else'); } // is the arg an 'else symbol?
+function p_else(x){ return p_literal(x) && p_eq(x, 'else'); } // is the arg an 'else symbol?
 // -- end cond --
 
 function evcon(lines, context){ // evaluate cond form by form, this is the guts of cond
-	return isElse(questionOf(get_car(lines))) ? meaning(answerOf(get_car(lines)), context) : // item question is 'else, eval item answer
+	return p_else(questionOf(get_car(lines))) ? meaning(answerOf(get_car(lines)), context) : // item question is 'else, eval item answer
 		meaning(questionOf(get_car(lines)), context) ? meaning(answerOf(get_car(lines)), context) : //eval item question -> is true, eval item answer
 			evcon(get_cdr(lines), context); // else, recur on sublist lines and table
 } // note there was no action for the 'null?' case, one of the above conditions better be true!

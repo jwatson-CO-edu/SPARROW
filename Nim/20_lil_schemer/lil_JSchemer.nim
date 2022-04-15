@@ -662,20 +662,58 @@ echo lookupInContext( eBlockBlock, make_string( "ske" ), TEST_CALLBACK )
 echo lookupInContext( eBlockBlock, make_string( "ral" ), TEST_CALLBACK )
 
 
-##### Builtins #####
-# These are the bedrock of the language, ALL ACTIONS must boil down to these
+##### Builtins & Special Forms #####
+let 
+    BUILTINS* = [ # Builtins are the bedrock of the language, ALL ACTIONS must boil down to these
+        "true", "false", "#t", "#f", # --------------- Truth literals
+        "atom?", "eq?", "null?", "zero?", "number?", # Type queries
+        "+", "-", "*", "/", "1+", "1-", # ------------ Mathematics
+        "<", ">", "<=", ">=", # ---------------------- Comparators
+    ]
+    SPECIALFORMS* = [
+        "quote", # ----------- Operate on text
+        "lambda", "define", #- Anonymous functions and definitions
+        "cond", "and", "or", # Conditionals and logical operators
+        "load", # ------------ File operations
+    ]
 
-let BUILTINS* = [ 
-    "true", "false", "#t", "#f", # --------------- Truth literals
-    "atom?", "eq?", "null?", "zero?", "number?", # Type queries
-    "+", "-", "*", "/", "1+", "1-", # ------------ Mathematics
-    "<", ">", "<=", ">=", # ---------------------- Comparators
-]
+proc p_builtin_func_name*( name: string ): bool =
+    return (name in BUILTINS)
 
-# FIXME: WRITE FUNCTION `p_builtin_func_name`, IT IS **NOT** AN ENVIRONMENT!
+proc p_special_form_name*( name: string ): bool =
+    return (name in SPECIALFORMS)
 
-# ... more JSchemer stuff ... #
+# TEST #
+echo p_builtin_func_name( "atom?" )
+echo p_builtin_func_name( "foo?" )
+echo p_special_form_name( "quote" )
+echo p_special_form_name( "foo?" )
 
-# FIXME: WRITE FUNCTION `eval_builtin`, ALL FINCH ACTIONS BOIL DOWN TO BUILTINS!
+proc p_else*( x: Atom ): bool =  
+    let y = make_string( "else" )
+    return (p_literal( x ) and p_eq( x, y ))
+    
+# TEST #
+echo p_else( make_string( "else" ) )
+echo p_else( make_string( "foo?" ) )
+
+# 2022-04-14: All Tests Pass!
+
+
+# proc evcon*( lines: Atom, context: Env ): Atom =
+#     # evaluate cond form by form, this is the guts of cond
+#     # 1. item question is 'else, eval item answer
+#     if p_else( questionOf( get_car( lines ) ) ):
+#         result = meaning( answerOf( get_car( lines ) ), context )
+#     # 2. eval item question -> is true, eval item answer
+#     elif meaning( questionOf( get_car( lines ) ), context ): 
+#         result = meaning(answerOf(get_car(lines)), context)
+#     # 3. else, recur on sublist lines and table
+#     else:
+#         result = evcon( get_cdr( lines ), context )
+    
+
+
+# LATER: WRITE FUNCTION `eval_builtin`, ALL FINCH ACTIONS BOIL DOWN TO BUILTINS!
 
 
