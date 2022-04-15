@@ -648,6 +648,7 @@ proc newContext*( names: seq[string], vals: seq[Atom], oldContext: Env = nil ): 
     if oldContext != nil: # ----------- Set `oldContext` as parent of the new Env, if one was given
         result.parent = oldContext 
 
+# TEST #
 var eBlockBlock = newContext( @[ "xur"           , "aup"           , "ske"            ], 
                               @[ make_number(4.0), make_number(5.0), make_number(6.0) ], 
                               eAnonBlock                                                 )
@@ -659,3 +660,22 @@ echo lookupInContext( eBlockBlock, make_string( "xur" ), TEST_CALLBACK )
 echo lookupInContext( eBlockBlock, make_string( "aup" ), TEST_CALLBACK )
 echo lookupInContext( eBlockBlock, make_string( "ske" ), TEST_CALLBACK )
 echo lookupInContext( eBlockBlock, make_string( "ral" ), TEST_CALLBACK )
+
+
+##### Builtins #####
+# These are the bedrock of the language, ALL ACTIONS must boil down to these
+
+let BUILTINS* = [ 
+    "true", "false", "#t", "#f", # --------------- Truth literals
+    "atom?", "eq?", "null?", "zero?", "number?", # Type queries
+    "+", "-", "*", "/", "1+", "1-", # ------------ Mathematics
+    "<", ">", "<=", ">=", # ---------------------- Comparators
+]
+
+# FIXME: WRITE FUNCTION `p_builtin_func_name`, IT IS **NOT** AN ENVIRONMENT!
+
+# ... more JSchemer stuff ... #
+
+# FIXME: WRITE FUNCTION `eval_builtin`, ALL FINCH ACTIONS BOIL DOWN TO BUILTINS!
+
+
