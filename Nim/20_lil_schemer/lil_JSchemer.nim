@@ -62,6 +62,11 @@ type
             sorc: Atom # ----------------------- Actual code of the function
 
 
+##### Boolean Interpretation #####
+# FIXME, START HERE: truthiness
+
+
+
 ##### Printing ##################################
 
 proc `$`( item: Atom ): string = 
@@ -380,16 +385,17 @@ echo A00
 
 ##### Access #####
 # `first` and aliases #
-proc first*( l: Atom ): Atom =  return get_car(l) # -------- Return the second item in a list, (cadr l)
-proc tableOf*( l: Atom ): Atom = return first(l)
-proc questionOf*( l: Atom ): Atom = return first(l)
+proc first*( l: Atom ): Atom =       return get_car(l) # -------- Return the second item in a list, (cadr l)
+proc tableOf*( l: Atom ): Atom =     return first(l)
+proc questionOf*( l: Atom ): Atom =  return first(l)
 # `second` and aliases #
-proc second*( l: Atom ): Atom =  return get_car(get_cdr(l)) # -------- Return the second item in a list, (cadr l)
-proc formalsOf*( l: Atom ): Atom = return second(l)
-proc answerOf*( l: Atom ): Atom = return second(l)
+proc second*( l: Atom ): Atom =     return get_car(get_cdr(l)) # -------- Return the second item in a list, (cadr l)
+proc formalsOf*( l: Atom ): Atom =  return second(l)
+proc answerOf*( l: Atom ): Atom =   return second(l)
+proc textOf*( l: Atom ): Atom =     return second(l)
 # `third` and aliases #
 proc third*( l: Atom ): Atom  =  return get_car(get_cdr(get_cdr(l))) # return the third item of 'l', (caddr l)
-proc bodyOf*( l: Atom ): Atom = return third(l)
+proc bodyOf*( l: Atom ): Atom =  return third(l)
 # `get_cdr` aliases #
 proc condLinesOf*( l: Atom ): Atom = return get_cdr(l)
 
@@ -646,7 +652,13 @@ proc newContext*( names: seq[string], vals: seq[Atom], oldContext: Env = nil ): 
         let (nam,val) = pair # -------- Split the singular pair back apart
         result.boundVars[ nam ] = val # Store in the hash
     if oldContext != nil: # ----------- Set `oldContext` as parent of the new Env, if one was given
-        result.parent = oldContext 
+        result.parent = oldContext
+
+proc appendContext*( oldContext: Env = nil ): Env =
+    # Create a new empty context as a child of the `oldContext`
+    result = newEnv() # --- Create a new Env
+    if oldContext != nil: # Set `oldContext` as parent of the new Env, if one was given
+        result.parent = oldContext
 
 # TEST #
 var eBlockBlock = newContext( @[ "xur"           , "aup"           , "ske"            ], 
@@ -662,32 +674,26 @@ echo lookupInContext( eBlockBlock, make_string( "ske" ), TEST_CALLBACK )
 echo lookupInContext( eBlockBlock, make_string( "ral" ), TEST_CALLBACK )
 
 
-##### Builtins & Special Forms #####
-let 
-    BUILTINS* = [ # Builtins are the bedrock of the language, ALL ACTIONS must boil down to these
-        "true", "false", "#t", "#f", # --------------- Truth literals
-        "atom?", "eq?", "null?", "zero?", "number?", # Type queries
-        "+", "-", "*", "/", "1+", "1-", # ------------ Mathematics
-        "<", ">", "<=", ">=", # ---------------------- Comparators
-    ]
-    SPECIALFORMS* = [
-        "quote", # ----------- Operate on text
-        "lambda", "define", #- Anonymous functions and definitions
-        "cond", "and", "or", # Conditionals and logical operators
-        "load", # ------------ File operations
-    ]
+##### Forward Declarations #####
+proc evcon*( lines: Atom, context: Env ): Atom
+proc meaning*( lines: Atom, context: Env ): Atom
+proc expressionToAction*( e: Atom, context: Env ): Atom
+
+
+##### Builtins #####
+let BUILTINS* = [ # Builtins are the bedrock of the language, ALL ACTIONS must boil down to these
+    "true", "false", "#t", "#f", # --------------- Truth literals
+    "atom?", "eq?", "null?", "zero?", "number?", # Type queries
+    "+", "-", "*", "/", "1+", "1-", # ------------ Mathematics
+    "<", ">", "<=", ">=", # ---------------------- Comparators
+]
 
 proc p_builtin_func_name*( name: string ): bool =
     return (name in BUILTINS)
 
-proc p_special_form_name*( name: string ): bool =
-    return (name in SPECIALFORMS)
-
 # TEST #
 echo p_builtin_func_name( "atom?" )
 echo p_builtin_func_name( "foo?" )
-echo p_special_form_name( "quote" )
-echo p_special_form_name( "foo?" )
 
 proc p_else*( x: Atom ): bool =  
     let y = make_string( "else" )
@@ -700,20 +706,47 @@ echo p_else( make_string( "foo?" ) )
 # 2022-04-14: All Tests Pass!
 
 
-# proc evcon*( lines: Atom, context: Env ): Atom =
-#     # evaluate cond form by form, this is the guts of cond
-#     # 1. item question is 'else, eval item answer
-#     if p_else( questionOf( get_car( lines ) ) ):
-#         result = meaning( answerOf( get_car( lines ) ), context )
-#     # 2. eval item question -> is true, eval item answer
-#     elif meaning( questionOf( get_car( lines ) ), context ): 
-#         result = meaning(answerOf(get_car(lines)), context)
-#     # 3. else, recur on sublist lines and table
-#     else:
-#         result = evcon( get_cdr( lines ), context )
+##### Special Forms #####
+let SPECIALFORMS* = [
+    "quote", # ----------- Operate on text
+    "lambda", "define", #- Anonymous functions and definitions
+    "cond", "and", "or", # Conditionals and logical operators
+    "load", # ------------ File operations
+]
+
+proc p_special_form_name*( name: string ): bool =
+    return (name in SPECIALFORMS)
+
+# TEST #
+echo p_special_form_name( "quote" )
+echo p_special_form_name( "foo?" )
+
+proc quote*(e: Atom, context: Env): Atom =   return textOf(e)
+
+proc lambda*(e: Atom, context: Env): Env =  
+    return appendContext( context )
+
+proc cond*(e: Atom, context: Env): Atom =  return evcon( condLinesOf(e), context )
+
+
+proc evcon*( lines: Atom, context: Env ): Atom =
+    # evaluate cond form by form, this is the guts of cond
+    # 1. item question is 'else, eval item answer
+    if p_else( questionOf( get_car( lines ) ) ):
+        result = meaning( answerOf( get_car( lines ) ), context )
+    # 2. eval item question -> is true, eval item answer
+    elif truthiness( meaning( questionOf( get_car( lines ) ), context ) ): 
+        result = meaning(answerOf(get_car(lines)), context)
+    # 3. else, recur on sublist lines and table
+    else:
+        result = evcon( get_cdr( lines ), context )
     
 
 
 # LATER: WRITE FUNCTION `eval_builtin`, ALL FINCH ACTIONS BOIL DOWN TO BUILTINS!
 
 
+proc meaning( e: Atom, context: Env ): return type =
+    
+
+function (){ return expressionToAction(e, context); } // lookup action for expression e, and apply to e and global table
