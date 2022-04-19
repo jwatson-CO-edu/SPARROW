@@ -50,6 +50,7 @@ Completion Key:
     https://www.crockford.com/little.html (See `JS` folder for reference implementation)
     [>] Adapt JS file to match names used in Nim file
     [>] Make changes to reference implementation when necessary and/or convenient, That is use Nim advantages when they present themselves
+    [ ] T: Repeat all REPLacement tests!
 [ ] Parse "Easy S-Expressions" instead: 2022-04-19, Ignore whitespace except to separate symbols
     [ ] Implicit open paren, `;` is close paren
     [ ] <funcName> <arg1> ... <argN>;
@@ -57,13 +58,14 @@ Completion Key:
     [ ] T: Verify that statement precedence with block brackets already exists in evaluator, If not then Implement it! 
     [ ] T: Make sure that nested statements and blocks do not cause ambiguity
     [ ] Line Continuation: `\+`    
+    [ ] T: Translate and repeat all REPLacement tests!
 [ ] Evaluate "The Seasoned Schemer" for useful features and structures (If yes, then expand this bullet with REQUIRED topics ONLY )
 [ ] Experiment with memory models
     [ ] Q: Which is faster? `object` -or- `ref object`
         [ ] T: Copy -vs- Reference Simple Test in folder 05
         [ ] T: Attempt simple conversion of SPARROW to copy mode
     [ ] Q: Is selective compilation possible in Nim?
-        [ ] T: If so, test a program that needs it to be compatible w/ Windows
+        [ ] T: If so, test a program that requires selective compilation in order to be compatible w/ Windows
     [ ] Read: How does Nim allocate memory?
     [ ] Q: Can a block of "null pointer" memory be allocated?
     [ ] Q: Can a large array of variant `Atoms` be allocated? What is the per-unit size in memory?
@@ -74,6 +76,8 @@ Completion Key:
 [ ] E: Identify Philosophical Differences
     [ ] Identify Dynamic Typing, Where does the language burn time matching?
     [ ] Identify where value history can be built
+[ ] E: Windows-compatible SPARROW?
+[ ] E: File extension: .BRD, .SPW, .FNC,
 
 ### Phase 2, Feature Research ###
 [ ] Q: What are the use cases? (Need more)
