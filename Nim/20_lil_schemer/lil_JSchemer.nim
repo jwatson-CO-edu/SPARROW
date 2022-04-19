@@ -57,13 +57,23 @@ type
         of FUNC:
             levl: int
             name: string # --------------------- Function name
-            args: OrderedTable[string, F_Type] # Input  arguments and types
-            rtns: OrderedTable[string, F_Type] # Output returns   and types
+            # args: OrderedTable[string, F_Type] # Input  arguments and types
+            # rtns: OrderedTable[string, F_Type] # Output returns   and types
             sorc: Atom # ----------------------- Actual code of the function
 
 
 ##### Boolean Interpretation #####
-# FIXME, START HERE: truthiness
+proc truthiness( item: Atom ): bool = 
+    if item == nil:
+        return false
+    case item.kind:
+    #[Null   ]# of NULL:  return false # --------------------------------------------- Null is always false
+    #[Str/Sym]# of STRN:  return (len( item.str ) > 0) # ----------------------------- A non-empty string is true
+    #[Num    ]# of NMBR:  return (item.num > 0.0) # ---------------------------------- FINCH: Positive numbers are true
+    #[Bool   ]# of BOOL:  return item.bul # ------------------------------------------ Booleans are already boolean
+    #[Pair   ]# of CONS:  return (truthiness( item.car ) and truthiness( item.cdr )) # Cons is true if it contains any true componenent
+    #[Error  ]# of EROR:  return false # --------------------------------------------- Errors are always false
+    #[Func   ]# of FUNC:  return truthiness( item.sorc ) # --------------------------- HACK: A function with non-false source is true
 
 
 
@@ -73,13 +83,13 @@ proc `$`( item: Atom ): string =
     # Return the string representation of the `item`
     # Null Symbol: https://www.fileformat.info/info/unicode/char/29c4/index.htm
     case item.kind:
-    #[Null   ]# of NULL:  result = "\xE2\xA7\x84"
-    #[Str/Sym]# of STRN:  result = "\"" & item.str & "\""
-    #[Num    ]# of NMBR:  result = $item.num
-    #[Bool   ]# of BOOL:  result = $item.bul
-    #[Pair   ]# of CONS:  result = "(" & $item.car & ", " & $item.cdr & ")"  
-    #[Error  ]# of EROR:  result = "(Error Code: " & $item.code & ", Info: " & item.info & ")"
-    #[Func   ]# of FUNC:  result = "(" & $item.name & ")"  # FIXME: LIST ALL KEYS INPUT # FIXME: LIST ALL KEYS OUTPUT
+    #[Null   ]# of NULL:  result = "\xE2\xA7\x84" # -------------------------------------------- Crossed box `⧄` from old LISP lit
+    #[Str/Sym]# of STRN:  result = "\"" & item.str & "\"" # ------------------------------------ Already a string
+    #[Num    ]# of NMBR:  result = $item.num # ------------------------------------------------- Nim has a rep for numbers
+    #[Bool   ]# of BOOL:  result = $item.bul # ------------------------------------------------- Nim has a rep for bools
+    #[Pair   ]# of CONS:  result = "(" & $item.car & ", " & $item.cdr & ")" # ------------------ Recursively pring left and right
+    #[Error  ]# of EROR:  result = "(Error Code: " & $item.code & ", Info: " & item.info & ")" # Print code and populated info
+    #[Func   ]# of FUNC:  result = $item.name & "{\n" & $item.sorc & "\n}" # ------------------- Print name and dump source
 
 
 
@@ -129,9 +139,13 @@ proc make_error*( errCode: F_Error, errInfo: string ): Atom =
     return Atom( kind: EROR, code: errCode, info: errInfo )
         
 
-proc make_function*( fName: string, fArgs: OrderedTable[string, F_Type], fReturnVals: OrderedTable[string, F_Type], source: Atom ): Atom =
+# proc make_function*( fName: string, fArgs: OrderedTable[string, F_Type], fReturnVals: OrderedTable[string, F_Type], source: Atom ): Atom =
+#     # Allocate and return a function
+#     return Atom( kind: FUNC, name: fName, args: fArgs, rtns: fReturnVals, sorc: source  )
+
+proc make_function*( fName: string, source: Atom ): Atom =
     # Allocate and return a function
-    return Atom( kind: FUNC, name: fName, args: fArgs, rtns: fReturnVals, sorc: source  )
+    return Atom( kind: FUNC, name: fName, sorc: source  )
     
 
 proc empty_function*( funcName: string ): Atom =
@@ -154,8 +168,7 @@ proc get_car*( cons: Atom ): Atom =  return cons.car # --------------- Get the l
 proc get_cdr*( cons: Atom ): Atom =  return cons.cdr # --------------- Get the right pair item
 proc set_car_B*( cons: Atom , valu: Atom ): void =   cons.car = valu # Set the left  pair item
 proc set_cdr_B*( cons: Atom , valu: Atom ): void =   cons.cdr = valu # Set the right pair item
-# FIXME: START HERE, rename: `build_cons`
-# function build(s1, s2){ return cons(s1, cons(s2, null)); } // return a two-item list with 's1' as the first item and 's2' as the second item
+# JS `build` --> Nim: `make_list_of_2`
 
 
 proc consify_atom*( atm: Atom ): Atom = 
@@ -413,32 +426,55 @@ echo p_literal( A01 )
 proc p_eq*( s: Atom, t: Atom ): bool =
     if s.kind != t.kind: # If not the same kind, then don't bother checking values
         return false
-    case s.kind: # - Otherwise, there is more work to do ...
-    of NULL:  return true # - Two Nulls are always the same
-    of STRN:  return s.str == t.str # - Rely on Nim string comparison
-    of NMBR:  return s.num == t.num # - Numbers must be exactly the same
-    of BOOL:  return s.bul == t.bul # - Boolean values must be the same
+    case s.kind: # ------------------------------------------------- Otherwise, there is more work to do ...
+    of NULL:  return true # ---------------------------------------- Two Nulls are always the same
+    of STRN:  return s.str == t.str # ------------------------------ Rely on Nim string comparison
+    of NMBR:  return s.num == t.num # ------------------------------ Numbers must be exactly the same
+    of BOOL:  return s.bul == t.bul # ------------------------------ Boolean values must be the same
     of EROR:  return (s.code == t.code) # -------------------------- Don't care if the message is the same
     of CONS:  return p_eq( s.car, t.car ) and p_eq( s.cdr, t.cdr ) # Recursively determine if a structure is equal
-    of FUNC:  return false # FIXME: COMPARE TABLES
+    of FUNC:  return p_eq( s.sorc, t.sorc ) # ---------------------- HACK: Source must be identical to be identical functions
+    #                                                                      This deals directly w/ whether overloading will be allowed!
 
 # TEST #
 var
+    Anul0 = make_null()
     Astr1 = make_string("foo")
     Astr2 = make_string("foo")
-    Anum1 = make_number( 2 )
-    Anum2 = make_number( 3 )
-    Abul1 = make_bool( true )
-    Abul2 = make_bool( true )
+    Astr3 = make_string("")
+    Anum1 = make_number(  2 )
+    Anum2 = make_number(  3 )
+    Anum6 = make_number( -4 )
+    Abul1 = make_bool( true  )
+    Abul2 = make_bool( true  )
+    Abul3 = make_bool( false )
     Aerr1 = make_error( NOVALUE, "This message does not matter" )
     Aerr2 = make_error( NOVALUE, "Neither does this one"        )
     Acns1 = make_cons( make_cons( make_number( 1 ), make_number( 2 ) ), make_cons( make_number( 3 ), make_number( 4 ) ) )
     Acns2 = make_cons( make_cons( make_number( 1 ), make_number( 2 ) ), make_cons( make_number( 3 ), make_number( 4 ) ) )
     Acns3 = make_cons( make_cons( make_number( 1 ), make_number( 2 ) ), make_cons( make_number( 3 ), make_number( 5 ) ) )
+    Acns4 = make_cons()
+    Afnc3 = make_function(  "NoName", Acns1 )
+    Afnc2 = empty_function( "NoName" )
+    
+
 echo p_eq( Astr1, Astr2 ) , ' ' , p_eq( Astr1, Anum2 ) , ' ' , p_eq( Anum1, Anum2 ) , ' ' , p_eq( Abul1, Abul2 )
 echo p_eq( Aerr1, Aerr2 ) , ' ' , p_eq( Acns1, Acns2 ) , ' ' , p_eq( Acns1, Acns3 ) , ' ' , p_eq( Acns2, Acns3 )
 
 # 2022-04-06: All tests pass!
+
+# TEST `truthiness` #
+echo "\nTEST `truthiness`"
+echo $truthiness( Anul0 )
+echo $truthiness( Astr2 ) & ' ' & $truthiness( Astr3 )
+echo $truthiness( Anum2 ) & ' ' & $truthiness( Anum6 )
+echo $truthiness( Abul2 ) & ' ' & $truthiness( Abul3 )
+echo $truthiness( Acns3 ) & ' ' & $truthiness( Acns4 )
+echo $truthiness( Aerr1 )
+echo $truthiness( Afnc3 ) & ' ' & $truthiness( Afnc2 )
+echo "\n"
+
+# 2022-04-19: All tests pass!
 
 
 proc p_number*( a: Atom ): bool =
@@ -601,7 +637,7 @@ echo ge( 4.0, 3.0, 1.0, 2.0 )
 
 ##### Environment #####
 
-# FIXME: RENAME --> `lookupInContextHelp`
+
 proc lookupInContextHelp*( env: Env, ident: string, DNEcallback: proc( en: Env, id: string ): Atom ): Atom =
     # Does the work of searching for a bound name in this and all containing contexts
     # 1: List of names null, invoke the contingency func
@@ -616,7 +652,7 @@ proc lookupInContextHelp*( env: Env, ident: string, DNEcallback: proc( en: Env, 
     else:
         return DNEcallback( env, ident )
 
-# FIXME: RENAME --> `lookupInContext`
+
 proc lookupInContext*(env: Env, ident: Atom, DNEcallback: proc( en: Env, id: string ): Atom ): Atom =
     # Return value associated with name if entry, otherwise (entry-f name)
     return lookupInContextHelp( env, ident.str, DNEcallback )
@@ -675,9 +711,9 @@ echo lookupInContext( eBlockBlock, make_string( "ral" ), TEST_CALLBACK )
 
 
 ##### Forward Declarations #####
-proc evcon*( lines: Atom, context: Env ): Atom
-proc meaning*( lines: Atom, context: Env ): Atom
-proc expressionToAction*( e: Atom, context: Env ): Atom
+# proc evcon*( lines: Atom, context: Env ): Atom
+# proc meaning*( lines: Atom, context: Env ): Atom
+# proc expressionToAction*( e: Atom, context: Env ): Atom
 
 
 ##### Builtins #####
@@ -726,27 +762,27 @@ proc quote*(e: Atom, context: Env): Atom =   return textOf(e)
 proc lambda*(e: Atom, context: Env): Env =  
     return appendContext( context )
 
-proc cond*(e: Atom, context: Env): Atom =  return evcon( condLinesOf(e), context )
+# proc cond*(e: Atom, context: Env): Atom =  return evcon( condLinesOf(e), context )
 
 
-proc evcon*( lines: Atom, context: Env ): Atom =
-    # evaluate cond form by form, this is the guts of cond
-    # 1. item question is 'else, eval item answer
-    if p_else( questionOf( get_car( lines ) ) ):
-        result = meaning( answerOf( get_car( lines ) ), context )
-    # 2. eval item question -> is true, eval item answer
-    elif truthiness( meaning( questionOf( get_car( lines ) ), context ) ): 
-        result = meaning(answerOf(get_car(lines)), context)
-    # 3. else, recur on sublist lines and table
-    else:
-        result = evcon( get_cdr( lines ), context )
+# proc evcon*( lines: Atom, context: Env ): Atom =
+#     # evaluate cond form by form, this is the guts of cond
+#     # 1. item question is 'else, eval item answer
+#     if p_else( questionOf( get_car( lines ) ) ):
+#         result = meaning( answerOf( get_car( lines ) ), context )
+#     # 2. eval item question -> is true, eval item answer
+#     elif truthiness( meaning( questionOf( get_car( lines ) ), context ) ): 
+#         result = meaning(answerOf(get_car(lines)), context)
+#     # 3. else, recur on sublist lines and table
+#     else:
+#         result = evcon( get_cdr( lines ), context )
     
 
 
-# LATER: WRITE FUNCTION `eval_builtin`, ALL FINCH ACTIONS BOIL DOWN TO BUILTINS!
+# # LATER: WRITE FUNCTION `eval_builtin`, ALL FINCH ACTIONS BOIL DOWN TO BUILTINS!
 
 
-proc meaning( e: Atom, context: Env ): return type =
+# proc meaning( e: Atom, context: Env ): return type =
     
 
-function (){ return expressionToAction(e, context); } // lookup action for expression e, and apply to e and global table
+# function (){ return expressionToAction(e, context); } // lookup action for expression e, and apply to e and global table
