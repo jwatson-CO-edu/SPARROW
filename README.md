@@ -50,10 +50,10 @@ Completion Key:
     https://www.crockford.com/little.html (See `JS` folder for reference implementation)
     [>] Adapt JS file to match names used in Nim file
     [>] Make changes to reference implementation when necessary and/or convenient, That is use Nim advantages when they present themselves
-[ ] Parse "Easy S-Expressions" instead: 
+[ ] Parse "Easy S-Expressions" instead: 2022-04-19, Ignore whitespace except to separate symbols
     [ ] Implicit open paren, `;` is close paren
     [ ] <funcName> <arg1> ... <argN>;
-    [ ] Program Blocks: All of `{}`, `()`, `[]` 
+    [ ] Program Blocks: All of `{}`, `()`, `[]`
     [ ] T: Verify that statement precedence with block brackets already exists in evaluator, If not then Implement it! 
     [ ] T: Make sure that nested statements and blocks do not cause ambiguity
     [ ] Line Continuation: `\+`    
@@ -163,13 +163,21 @@ Completion Key:
 ## (Possible) Names
 * Language: [F]lexible [I]nterpreted [N]ode [C]omputing [H]elper
     - Birds are cool
-* Execution Model: [B]asic [O]peration e[X]change for [F]lows [A]agents and [B]ehaviors
+* Base Node:       [B]ase     [I]nterpreter    and [R]esource  [D]ispatcher for [B]asic [O]peration e[X]change  # Per host coordinator
+* Sub  Node:       [B]asic    [I]nterpreter,       [R]EPL, and [D]ispatcher # ----------------------------------- Implements FINCH per job
+* Execution Model: [B]ehavior [I]nterpretation and [R]esource  [D]ispatch   for [B]asic [O]peration e[X]change  # Execution mentality
     - Possible extension to behavior trees
-    - An execution model based on Petri Nets that seeks to support commonsense solutions to Job Shop Scheduling problems as they relate to computing
-* Interpreter: BOX? HOUSE? PERCH? BLUEBIRD? FLOCK? (Either a riff on BOXFAB or birds)
-    - [B]ase [I]nterpreter and [R]esource [D]ispatch
+    - An execution model based on Petri Nets that seeks to support commonsense solutions to Job Shop Scheduling problems as they relate to computing  
+    - REPL is just a job to manage, and the REPL is a terminal that can spawn other jobs
+        * Spawn/Kill process jobs (Including remote BIRDBOXes)
+        * Start/Stop data flows
+
+
+* Alternate Names: BOX? HOUSE? PERCH? BLUEBIRD? FLOCK? (Either a riff on BOXFAB or birds)
+    - [B]ase [I]nterpreter, [R]EPL, and [D]ispatcher
     - [B]ase [I]nterpreter and [R]esource [D]ispatch for [H]ierarchical [O]perations and [U]sage of [S]ystem [E]xpediencies
     - [P]etri [E]nabled [R]esource [C]omputation [H]ierarchy
+    - [B]asic [O]peration e[X]change for [F]lows, [A]gents, and [B]ehaviors
 
 
 # Daydreams
@@ -195,6 +203,7 @@ Completion Key:
     - Node Red capabilities
 * Mathematics / Statistics
     - Stochastic Programming
+    - Linear Algebra
     - Deep Learning
     - Geometric Algebra
 * AI
