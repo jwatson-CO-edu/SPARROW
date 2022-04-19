@@ -54,7 +54,8 @@ Completion Key:
     [ ] Implicit open paren, `;` is close paren
     [ ] <funcName> <arg1> ... <argN>;
     [ ] Program Blocks: All of `{}`, `()`, `[]` 
-    [ ] Verify that statement precedence with block brackets already exists in evaluator, If not then Implement it! 
+    [ ] T: Verify that statement precedence with block brackets already exists in evaluator, If not then Implement it! 
+    [ ] T: Make sure that nested statements and blocks do not cause ambiguity
     [ ] Line Continuation: `\+`    
 [ ] Evaluate "The Seasoned Schemer" for useful features and structures (If yes, then expand this bullet with REQUIRED topics ONLY )
 [ ] Experiment with memory models
@@ -110,7 +111,7 @@ Completion Key:
 [ ] Pharo (SmallTalk) Mooc (Listen only)
     [ ] Evaluate save states
 
-### Phase 3, Static Expansion ###
+### Phase 3, Serial Expansion ###
 [ ] Special Blocks, _<prefix> immediately followed by block brackets
     [ ] `_math(...){...}` ________ : Math block, infix operators are allowed
     [ ] `_name(<string>){...}`: Named block, can be used to copy portions of code only
@@ -122,6 +123,13 @@ Completion Key:
     [ ] Analyzer:    Run before interpretation
     [ ] Interpreter: REPL frontend, Core execution backend, invokes analyzer 
     [ ] Transpiler:  Turn interpreter code into Nim code that never wastes time on type checks
+[ ] Optiional Whitespace Formatting
+    [ ] End statements at newline by default
+    [ ] Check previous, then check new in the cases that the new has replaced it
+    [ ] Do not allow mixing below top level, Lock parser FSM into mode below the root level
+    [ ] <function signature>:  <-- Begins a function block
+[ ] E: Loops?
+[ ] E: Iterators?
 
 ### Phase 4, Parallel Concepts ###
 [ ] Types of Sync
@@ -149,7 +157,7 @@ Completion Key:
     [ ] Same Conclusion?
     
 ### Phase 6, Optimization ###
-[ ] Transpile back to Nim --> C --> Binary (See Daydream paper notes)
+[ ] Transpile back to Nim --> C --> LLVM --> Binary (See Daydream paper notes)
 ```
 
 ## (Possible) Names
@@ -158,8 +166,10 @@ Completion Key:
 * Execution Model: [B]asic [O]peration e[X]change for [F]lows [A]agents and [B]ehaviors
     - Possible extension to behavior trees
     - An execution model based on Petri Nets that seeks to support commonsense solutions to Job Shop Scheduling problems as they relate to computing
-* Interpreter: BOX? HOUSE? PERCH? (Either a riff on BOXFAB or birds)
+* Interpreter: BOX? HOUSE? PERCH? BLUEBIRD? FLOCK? (Either a riff on BOXFAB or birds)
     - [B]ase [I]nterpreter and [R]esource [D]ispatch
+    - [B]ase [I]nterpreter and [R]esource [D]ispatch for [H]ierarchical [O]perations and [U]sage of [S]ystem [E]xpediencies
+    - [P]etri [E]nabled [R]esource [C]omputation [H]ierarchy
 
 
 # Daydreams
