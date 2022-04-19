@@ -67,13 +67,13 @@ proc truthiness( item: Atom ): bool =
     if item == nil:
         return false
     case item.kind:
-    #[Null   ]# of NULL:  return false # --------------------------------------------- Null is always false
-    #[Str/Sym]# of STRN:  return (len( item.str ) > 0) # ----------------------------- A non-empty string is true
-    #[Num    ]# of NMBR:  return (item.num > 0.0) # ---------------------------------- FINCH: Positive numbers are true
-    #[Bool   ]# of BOOL:  return item.bul # ------------------------------------------ Booleans are already boolean
-    #[Pair   ]# of CONS:  return (truthiness( item.car ) and truthiness( item.cdr )) # Cons is true if it contains any true componenent
-    #[Error  ]# of EROR:  return false # --------------------------------------------- Errors are always false
-    #[Func   ]# of FUNC:  return truthiness( item.sorc ) # --------------------------- HACK: A function with non-false source is true
+    #[Null   ]# of NULL:  return false # -------------------------------------------- Null is always false
+    #[Str/Sym]# of STRN:  return (len( item.str ) > 0) # ---------------------------- A non-empty string is true
+    #[Num    ]# of NMBR:  return (item.num > 0.0) # --------------------------------- FINCH: Positive numbers are true
+    #[Bool   ]# of BOOL:  return item.bul # ----------------------------------------- Booleans are already boolean
+    #[Pair   ]# of CONS:  return (truthiness( item.car ) or truthiness( item.cdr )) # Cons is true if it contains any true componenent
+    #[Error  ]# of EROR:  return false # -------------------------------------------- Errors are always false
+    #[Func   ]# of FUNC:  return truthiness( item.sorc ) # -------------------------- HACK: A function with non-false source is true
 
 
 
