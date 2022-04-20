@@ -120,19 +120,30 @@ Completion Key:
     [ ] Analyzer:    Run before interpretation
     [ ] Interpreter: REPL frontend, Core execution backend, invokes analyzer 
     [ ] Transpiler:  Turn interpreter code into Nim code that never wastes time on type checks
+[ ] E: Is it possible to have both static type checks and dynamic type checks?
+[ ] Attempt Windows Compilation
+    [ ] Selective compilation portions per platform?
 
 ### Phase 4, Parallel Concepts ###
 [ ] Types of Sync
     [ ] Hard Sync: Must wait for an updated value
     [ ] Soft Sync: Retrieves the current value as soon as the mutex allows, regardless of whether or not it is ``fresh''
+
+### Phase 5, Flow Concepts ###
 [ ] Publisher/Subscriber
     [ ] Push Model w Callbacks
     [ ] Pull Model
 [ ] Tick/Lockstep
 [ ] How much of ROS do I need?
+[ ] Q: What are the flow use cases?
     
-### Phase 5, Parallel Expansion ###
+### Phase 6, Parallel Expansion ###
 [ ] Value Dependency Graph
+[ ] Automatically Identify Code Motion Opportunities
+    * Code Sinking / Lazy Code Motion: Move instructions to the branches in which they are used
+    * Allocation Sinking: Removes many unused/'temporary' allocations, by moving allocations to positions where they might escape to the heap.
+    * Commonality Extraction: Merge common dependencies between branches into the branch above it
+    * Instruction Scheduling: Reduce times you are waiting for the results of an as-yet undetermined calc
 [ ] Interpreter Program
     [ ] Inter-process connections
 [ ] Parallel Test 1
@@ -145,9 +156,21 @@ Completion Key:
 [ ] Petri Rep for Parallel Test 1
 [ ] Auto parallelize Parallel Test 1
     [ ] Same Conclusion?
+[ ] E: OpenCL and offloating LINALG onto the GPU?
+    * When does this save time?
+    * Can this be done on windows?
+    * How to measure GPU usage/throughput?
     
-### Phase 6, Optimization ###
-[ ] Transpile back to Nim --> C --> Binary (See Daydream paper notes)
+### Phase 7, Optimization ###
+[ ] E: LuaJIT, Reknouned and Fast JIT Compiler, used by CENR
+    * https://staff.fnwi.uva.nl/h.vandermeer/docs/lua/luajit/luajit_intro.html
+    * https://en.wikipedia.org/wiki/Tracing_just-in-time_compilation 
+[ ] E: Transpile back to Nim --> C --> Binary (See Daydream paper notes)
+    * JIT: Just-in-time compilation is a technique to increase execution speed of programs by compiling parts of a program to machine code at runtime.
+    * AOT:ahead-of-time compilation (AOT compilation) is the act of compiling an (often) higher-level programming language into an (often) lower-level language before execution of a program, usually at build-time, to reduce the amount of work needed to be performed at run time. 
+    * PGO: profile-guided optimization uses the results of profiling test runs of the instrumented program to optimize the final generated code.
+    * Tracing Compilation: recording a linear sequence of frequently executed operations, compiling them to native machine code and executing them
+      Tracing JITs are based on the assumptions that programs spend most of their time in some loops of the program ("hot loops") and subsequent loop iterations often take similar paths.
 ```
 
 ## (Possible) Names

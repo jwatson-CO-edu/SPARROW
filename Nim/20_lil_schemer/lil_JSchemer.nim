@@ -104,7 +104,7 @@ proc make_cons*( car: Atom = nil, cdr: Atom = nil ): Atom =
     return Atom( kind: CONS, car: op1, cdr: op2 )
 
 
-proc make_string*( str: string ): Atom =
+proc make_string*( str: string = "" ): Atom =
     # Make a string
     return Atom( kind: STRN, str: str )
 
@@ -699,6 +699,10 @@ echo p_else( make_string( "foo?" ) )
 
 # 2022-04-14: All Tests Pass!
 
+proc test_proc[T, U](arg1: T, arg2: U): float # https://forum.nim-lang.org/t/9109#59371
+
+# proc meaning[T]( s_expr: T ): Atom # https://forum.nim-lang.org/t/9109#59371
+    
 
 # proc evcon*( lines: Atom, context: Env ): Atom =
 #     # evaluate cond form by form, this is the guts of cond
@@ -711,7 +715,55 @@ echo p_else( make_string( "foo?" ) )
 #     # 3. else, recur on sublist lines and table
 #     else:
 #         result = evcon( get_cdr( lines ), context )
+
+proc truthiness*( a: Atom ): bool =
+    case a.kind:
+    of CONS:
+        return ((not p_Null( a.car )) or (not p_Null( a.cdr )))
+    of STRN:
+        return (len( a.str ) > 0)
+    of NMBR:
+        return (a.num > 0.0)
+    of BOOL:
+        return (a.bul == true)
+    of NULL:
+        return false
+    of EROR:
+        return false
+    of FUNC:
+        return ((a.sorc != nil) and (not p_Null( a.sorc ))) # Check `nil` first to prevent reading from `nil`
+        
+# TEST #
+var 
+    Acns4 = make_cons()
+    Astr3 = make_string()
+    Afnc2 = empty_function( "NoName" )
+Afnc2.sorc = make_cons( make_number(1.0), make_number(2.0) )
+echo truthiness( Acns1 ), ' ', truthiness( Acns4 )
+echo truthiness( Astr1 ), ' ', truthiness( Astr3 )
+echo truthiness( Anum1 ), ' ', truthiness( Anum5 ) #FIXME: How to handle NaN, Inf, -Inf?
+echo truthiness( Abul1 ), ' ', truthiness( Abul2 )
+echo truthiness( Aerr1 )
+echo truthiness( Afnc2 ), ' ', truthiness( Afnc1 )
+
+
+
+#[ ~ 'and', R5RS (PDF), pg 11 ~
+The test expressions are evaluated from left to right, and the value of the first expression that evaluates to a false value is returned. Any remaining
+expressions are not evaluated. If all the expressions evaluate to true values, the value of the last expression is returned. If there are no expressions
+then '#t' is returned. ]#
+
+# proc F_and( a: Atom, context: Env ): Atom =
+#     # the recursive portion of the evaluation of 'and', case that args list non-null
+#     var current: Atom # var to hold meaning of current arg, '$and' assumes there is at least one
     
+
+
+# function $and(e, context){ // 
+# 	var current; // 
+# 	return !(current = meaning(get_car(e), context)) ? current : // fetch first item 'meaning', if false, return
+# 		p_Null(get_cdr(e)) ? current : $and(get_cdr(e), context); // else if list end, return 'current', else recur sublist
+# }
 
 
 # LATER: WRITE FUNCTION `eval_builtin`, ALL FINCH ACTIONS BOIL DOWN TO BUILTINS!
