@@ -16,6 +16,9 @@ Also, we are using `readLine` so that the messsage gets stored only when user pr
 while true:
   stdout.write("> ")
   let message: string = stdin.readLine()
-  client.send(message)
+  # client.send(message)
+  
+  client.send(message & "\r\L") #[ The server uses \r\L as the delimiter. 
+  This means, on the client side, for each message we send, we would also need to append this delimiter.  ]#
 
 client.close()
