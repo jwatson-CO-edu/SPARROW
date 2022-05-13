@@ -1,5 +1,6 @@
 #[
     https://blog.tejasjadhav.xyz/simple-chat-server-in-nim-using-sockets/
+    nim compile --run -o:./exec/ac_chat_client -r ac_chat_client.nim
 ]#
 
 import net
