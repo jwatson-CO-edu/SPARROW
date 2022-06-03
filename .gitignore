@@ -10,6 +10,9 @@ Lisp/eval
 Nim/exec
 Nim/*/exec
 
+## ZIG ##
+Zig/zig-cache
+
 # Prerequisites
 *.d
 
