@@ -23,12 +23,47 @@ test "##### If-Else #####" {
     try expect(x == 1);
 }
 
+
 test "##### Ternary #####" {
     const a = true;
     var x: u16 = 0;
     x += if (a) 1 else 2;
     try expect(x == 1);
 }
+
+
+test "##### Switch Statement #####" {
+    // Zig’s switch works as both a statement and an expression. The types of all branches must 
+    // coerce to the type which is being switched upon. All possible values must have an associated branch;
+    // values cannot be left out. Cases cannot fall through to other branches.
+    var x: i8 = 10;
+    switch (x) {
+        -1...1 => {
+            x = -x;
+        },
+        10, 100 => {
+            //special considerations must be made
+            //when dividing signed integers
+            x = @divExact(x, 10);
+        },
+        else => {}, // The `else` is required to satisfy the exhaustiveness of this switch.
+    }
+    try expect(x == 1);
+}
+
+
+test "##### Switch Expression #####" { // Here is the former, but as a switch expression.
+    var x: i8 = 10;
+    x = switch (x) { // Setting a value with `switch`
+        -1...1 => -x,
+        10, 100 => @divExact(x, 10),
+        else => x,
+    };
+    try expect(x == 1);
+}
+
+
+////////// LOOPS ///////////////////////////////////////////////////////////////////////////////////
 
 test "##### While #####" {
     var i: u8 = 2;
@@ -119,7 +154,7 @@ fn addFive(x: u32) u32 {
     return x + 5;
 }
 
-test "function" {
+test "##### Function Definition #####" {
     const y = addFive(0);
     try expect(@TypeOf(y) == u32);
     try expect(y == 5);
@@ -134,9 +169,26 @@ fn fibonacci(n: u16) u16 {
     return fibonacci(n - 1) + fibonacci(n - 2);
 }
 
-test "function recursion" {
+test "##### Recursion #####" {
     const x = fibonacci(10);
     try expect(x == 55);
+}
+
+
+///// Returning Unions /////
+
+// Functions often return error unions. 
+fn failingFunction() error{Oops}!void {
+    // A function that always fails, used for examples
+    return error.Oops;
+}
+
+test "returning an error" {
+    failingFunction() catch |err| { // |err| syntax receives the value of the error. 
+        // --------------------------- This is called payload capturing
+        try expect(err == error.Oops);
+        return;
+    };
 }
 
 
@@ -163,6 +215,83 @@ test "coerce error from a subset to a superset" {
 // An error set type and a normal type can be combined with the `!` operator to form an error union type. 
 // Values of these types may be an error value, or a value of the normal type.
 
+test "error union" {
+    const maybe_error: AllocationError!u16 = 10; // Create an error union with `!`
+    const no_error = maybe_error catch 0;
+
+    try expect(@TypeOf(no_error) == u16);
+    try expect(no_error == 10);
+}
+
+///// `try x` Idiom /////
+// `try x` is a shortcut for `x catch |err| return err`, and is commonly used in places where 
+// handling an error isn’t appropriate. Zig’s try and catch are *unrelated* to try-catch in other languages.
+
+fn failFn() error{Oops}!i32 {
+    try failingFunction();
+    return 12;
+}
+
+test "##### `try x` Idiom #####" {
+    var v = failFn() catch |err| {
+        try expect(err == error.Oops);
+        return;
+    };
+    try expect(v == 12); // is never reached
+}
+
+
+///// errdefer /////
+// errdefer works like defer, but only executing when the function is returned from 
+// with an error inside of the errdefer’s block.
+
+var problems: u32 = 98;
+
+fn failFnCounter() error{Oops}!void {
+    errdefer problems += 1; // Action to perform on error
+    try failingFunction(); //- Thing to try
+}
+
+test "errdefer" {
+    failFnCounter() catch |err| {
+        try expect(err == error.Oops);
+        try expect(problems == 99);
+        return;
+    };
+}
+
+
+///// Inferred Error Unions /////
+// Error unions returned from a function can have their error sets inferred by not having an 
+// explicit error set. This inferred error set contains all possible errors which the function may return.
+
+fn createFile() !void { // Blank space unioned with `void`
+    return error.AccessDenied;
+}
+
+test "inferred error set" {
+    //type coercion successfully takes place
+    const x: error{AccessDenied}!void = createFile();
+
+    //Zig does not let us ignore error unions via _ = x;
+    //we must unwrap it with "try", "catch", or "if" by any means
+    _ = x catch {};
+}
+
+
+///// Merging Error Sets /////
+const A = error{ NotDir, PathNotFound };
+const B = error{ OutOfMemory, PathNotFound };
+const C = A || B;
+
+
+///// `anyerror` Note /////
+// `anyerror` is the global error set which due to being the superset of all error sets, 
+// can have an error from any set coerce to a value of it. Its usage should be generally avoided
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+////////// MAIN, UNUSED: ONLY HERE FOR COMPILATION PURPOSES ////////////////////////////////////////
 pub fn main() void {
 // NOTE: Unused local variables will throw compiler errors!
 }
