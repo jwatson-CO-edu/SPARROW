@@ -14,42 +14,27 @@ Completion Key:
 * `[N]` Will NOT Be Done
 * `[~]` Partially Done and/or Skipped for Now
 ```
-### Phase 0, Nim Language: COMPLETE! ###
-[Y] Finish Nim tuts, 2022-03-24
-    [Y] Part 1: Basics, 2022-03-23
-    [Y] Part 2: Classes and Exceptions, 2022-03-24
-    [Y] Part 3: Metaprogramming and Macros, 2022-03-24
+### Phase 0, Zig Language ###
+[ ] Finish Zig tuts
+    [ ] Part 1: Basics
+    [ ] Part 2: Standard Patterns
+    [ ] Part 3: Build System
+    [ ] Part 4: Working w/ C
+    [ ] Part 5: Async
 
 ### Phase 1, Basic Function and Preliminaty Tests ###
-[Y] Translate first evaluator to Nim, 2022-03-30, Great Success!
-    [Y] All Functions Implemented, 2022-03-30, However there is a segfault in `append` that has 
-        revealed some misunderstandings with pointers, see below.
-    [Y] All Tests, Pointer Learning, 2022-03-30, Dropped pointers, using `ref object`s instead
-        [Y] DLL Heap and Stress Tests (Concepts folder), 2022-04-02,
-        [Y] SPARROW debugging, 2022-03-30, Now using smart refs instead of pointers
-            [N] Refactor?, 2022-03-30, Not Needed, However need to learn when to use a `ref object`
-        [Y] T: All tests pass, 2022-03-30, Added tests for untested functions in Cpp
-    [Y] Q: How big is each `Atom`?, 2022-03-30, Answer seems wrong
-            Size of a number: 8
-            Size of a NULL:   8
-            Size of a String: 8
-            Size of a cons:   8
-            Size of an error: 8, Is this because they are all references? 64bit address?
-[Y] When to use object -vs- ref object?, 2022-04-03, Listened to some helpful YouTube tutorials
-    * User-Defined Types
-        - Tuple:   Stack, collection of unnamed fields in which only type and order matter, Copy by value    , Can be accessed by index
-        - Object:  Stack, collection of named   fields that must be accessed by name      , Copy by value    , Thread safe
-        - Ref Obj: Heap , collection of named   fields that must be accessed by name      , Copy by reference, NOT thread safe (v1.6.4)
-    * Tuts:
-        - Objects: _____ https://www.youtube.com/watch?v=aME-tyPCPvE
-        - Ref Objects: _ https://www.youtube.com/watch?v=kkSAVKKIoVc
-        - Obj. Variants: https://www.youtube.com/watch?v=fi7UasgzFhQ
-    [N] D: Evaluate plain object refactor, 2022-04-03,  Atoms and variables will be stored in the `Env` and accessed/used elsewhere, 
-           so it would not be efficient to copy by value
-[>] Translate "The Little Javascripter" by Douglas Crockford
+[ ] Translate first evaluator to Zig
+    [ ] All Functions Implemented
+    [ ] Q: How big is each `Atom`?
+            Size of a number: ?
+            Size of a NULL:   ?
+            Size of a String: ?
+            Size of a cons:   ?
+            Size of an error: ?
+[ ] Translate "The Little Javascripter" by Douglas Crockford
     https://www.crockford.com/little.html (See `JS` folder for reference implementation)
-    [>] Adapt JS file to match names used in Nim file
-    [>] Make changes to reference implementation when necessary and/or convenient, That is use Nim advantages when they present themselves
+    [ ] Adapt JS file to match names used in Nim file
+    [ ] Make changes to reference implementation when necessary and/or convenient, That is use Nim advantages when they present themselves
     [ ] T: Repeat all REPLacement tests!
 [ ] Parse "Easy S-Expressions" instead: 2022-04-19, Ignore whitespace except to separate symbols
     [ ] Implicit open paren, `;` is close paren
