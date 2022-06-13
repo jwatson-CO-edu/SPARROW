@@ -184,6 +184,32 @@ test "switch on tagged union" {
 
 
 
+////////// COMPTIME TYPES //////////////////////////////////////////////////////////////////////////
+
+///// @Type /////
+
+// We can use the `@Type` function to create a type from a `@typeInfo`. 
+// `@Type` is implemented for most types but is notably unimplemented for enums, unions, functions, and structs.
+fn GetBiggerInt(comptime T: type) type {
+    // Here anonymous struct syntax is used with .{}, because the T in T{} can be inferred. 
+    //In this example we will get a compile error if the Int tag isn’t set.
+    return @Type(.{
+        .Int = .{
+            .bits = @typeInfo(T).Int.bits + 1,
+            .signedness = @typeInfo(T).Int.signedness,
+        },
+    });
+}
+
+test "@Type" {
+    try expect(GetBiggerInt(u8) == u9);
+    try expect(GetBiggerInt(i31) == i32);
+}
+
+
+///// Data Structures /////
+// https://ziglearn.org/chapter-1/#comptime
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////// MAIN, UNUSED: ONLY HERE FOR COMPILATION PURPOSES ////////////////////////////////////////
