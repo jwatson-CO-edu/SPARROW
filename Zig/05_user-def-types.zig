@@ -208,8 +208,54 @@ test "@Type" {
 
 
 ///// Data Structures /////
-// https://ziglearn.org/chapter-1/#comptime
+// Returning a struct type is how you make generic data structures in Zig. The usage of `@This` 
+// is required here, which gets the type of the innermost struct, union, or enum. 
 
+
+fn Vec(
+    comptime count: comptime_int,
+    comptime T: type,
+) type {
+    return struct {
+        data: [count]T,
+        const Self = @This();
+
+        fn abs(self: Self) Self {
+            var tmp = Self{ .data = undefined };
+            for (self.data) |elem, i| {
+                tmp.data[i] = if (elem < 0)
+                    -elem
+                else
+                    elem;
+            }
+            return tmp;
+        }
+
+        fn init(data: [count]T) Self {
+            return Self{ .data = data };
+        }
+    };
+}
+
+const eql = @import("std").mem.eql; // Here `std.mem.eql` is also used which compares two slices.
+
+test "generic vector" {
+    const x = Vec(3, f32).init([_]f32{ 10, -10, 5 });
+    const y = x.abs();
+    try expect(eql(f32, &y.data, &[_]f32{ 10, 10, 5 }));
+}
+
+
+///// Type Inferrence /////
+// The types of function parameters can also be inferred by using anytype in place of a type. 
+// `@TypeOf` can then be used on the parameter.
+fn plusOne(x: anytype) @TypeOf(x) {
+    return x + 1;
+}
+
+test "inferred function parameter" {
+    try expect(plusOne(@as(u32, 1)) == 2);
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////// MAIN, UNUSED: ONLY HERE FOR COMPILATION PURPOSES ////////////////////////////////////////

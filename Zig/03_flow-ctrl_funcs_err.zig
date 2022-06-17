@@ -6,7 +6,7 @@
 
 ////////// INIT ////////////////////////////////////////////////////////////////////////////////////
 const expect = @import("std").testing.expect; // `expect` == `assert`
-
+const eql    = @import("std").mem.eql;
 
 
 
@@ -122,6 +122,21 @@ test "########## For, different forms ##########" {
 
     for (string) |_| {}
 }
+
+
+///// Inline Loops /////
+// `inline` loops are unrolled, and allow some things to happen which only work at compile time. 
+// Using these for performance reasons is inadvisable unless you’ve tested that explicitly unrolling is faster; 
+// the compiler tends to make better decisions here than you.
+
+test "inline for" { // Here we use a for, but a while works similarly.
+    const types = [_]type{ i32, f32, u8, bool };
+    var sum: usize = 0;
+    inline for (types) |T| sum += @sizeOf(T);
+    try expect(sum == 10);
+}
+
+
 
 
 test "##### Defer #####" {
@@ -288,6 +303,109 @@ const C = A || B;
 ///// `anyerror` Note /////
 // `anyerror` is the global error set which due to being the superset of all error sets, 
 // can have an error from any set coerce to a value of it. Its usage should be generally avoided
+
+
+
+////////// PAYLOAD CAPTURES ////////////////////////////////////////////////////////////////////////
+// https://ziglearn.org/chapter-1/#payload-captures
+// Payload captures use the syntax `|value|`. Wherever they appear, 
+// they are used to “capture” the value from something, and return it.
+
+
+test "##### Optional-If Payload #####" { // Playload Capture with if statements and optionals.
+    var maybe_num: ?usize = 10;
+    if (maybe_num) |n| {
+        try expect(@TypeOf(n) == usize);
+        try expect(n == 10);
+    } else {
+        unreachable;
+    }
+}
+
+
+test "##### While Optional Payload #####" { // With while loops and optionals. This may have an else block.
+    var i: ?u32 = 10;
+    while (i) |num| : (i.? -= 1) {
+        try expect(@TypeOf(num) == u32);
+        if (num == 1) {
+            i = null;
+            break;
+        }
+    }
+    try expect(i == null);
+}
+
+
+///// Error Union Capture /////
+// With while loops and error unions. The else with the error capture is required here.
+
+var numbers_left2: u32 = undefined;
+
+fn eventuallyErrorSequence() !u32 {
+    return if (numbers_left2 == 0) error.ReachedZero else blk: {
+        numbers_left2 -= 1;
+        break :blk numbers_left2;
+    };
+}
+
+test "while error union capture" {
+    var sum: u32 = 0;
+    numbers_left2 = 3;
+    while (eventuallyErrorSequence()) |value| {
+        sum += value;
+    } else |err| {
+        try expect(err == error.ReachedZero);
+    }
+}
+
+
+test "##### for Capture #####" {
+    const x = [_]i8{1, 5, 120, -5};
+    for (x) |v| try expect(@TypeOf(v) == i8);
+}
+
+
+///// Switch cases on tagged unions /////
+
+const Info = union(enum) {
+    a: u32,
+    b: []const u8,
+    c,
+    d: u32,
+};
+
+test "switch capture" {
+    var b = Info{ .a = 10 };
+    const x = switch (b) {
+        .b => |str| blk: {
+            try expect(@TypeOf(str) == []const u8);
+            break :blk 1;
+        },
+        .c => 2,
+        //if these are of the same type, they
+        //may be inside the same capture group
+        .a, .d => |num| blk: {
+            try expect(@TypeOf(num) == u32);
+            break :blk num * 2;
+        },
+    };
+    try expect(x == 20);
+}
+
+
+///// Pointer Capture /////
+// As we saw in the Union and Optional sections above, values captured with the `|val|` syntax are immutable 
+// (similar to function arguments), but we can use pointer capture to modify the original values. 
+// This captures the values as pointers that are themselves still immutable, but because the value is now a pointer, 
+// we can modify the original value by dereferencing it:
+
+test "for with pointer capture" {
+    var data = [_]u8{1, 2, 3};
+    for (data) |*byte| byte.* += 1;
+    try expect(eql(u8, &data, &[_]u8{2, 3, 4}));
+}
+
+
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

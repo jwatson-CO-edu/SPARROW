@@ -65,16 +65,21 @@ Completion Key:
 [ ] E: File extension: .BRD, .SPW, .FNC,
 
 ### Phase 2, Feature Research ###
+[ ] Read & Take Notes on "Actors" by Gul Agha
 [ ] Q: What are the use cases? (Need more)
+    A: Running large simulations with disparate parts that can be parallelized (automatically)
     A: Standing up a small network of devices and automatically and cleanly giving them their own processes
         - R: Must be able to talk to Python
             * Q: Does it make sense for FINCH to do data plumbing for Python
     A: Offloading multiprocessing work from Python
-[ ] Language Review of Competing Projects Based on Nim
-    [ ] Gene, Lisp, https://github.com/gcao/gene.nim
-    [ ] Min, Stack Based, https://min-lang.org/
+    A: Experimentation & Knowledge!
+[ ] Review of Actor Languages
+    [ ] Review "Sal", Implement?
+    [ ] Review "Act", Implement?
+    [ ] Lit Review
+[ ] Language Review of Competing Projects Based on Zig/Nim
+    [ ] Bog, Strongly-Typed, Embedded, https://github.com/Vexu/bog 
     [ ] NimScript, Interpreted Nim, https://nim-lang.org/docs/nims.html
-    [ ] Nim VM, https://nim-lang.org/docs/compiler/vm.html
 [Y] Q: Where do I introduce type checking?, 2022-04-10, A: In the compile-time functions --> before a script is executed
 [ ] Collect flow programming requirments
     [ ] Petri Reading Program: Read selected papers in the FINCH collection while digging into available flow programming systems

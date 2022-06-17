@@ -25,6 +25,29 @@ const h = [5]u8{ 'h', 'e', 'l', 'l', 'o' }; // Arrays are denoted by [N]T, where
 const i = [_]u8{ 'w', 'o', 'r', 'l', 'd' }; // For array literals, N may be replaced by `_` to infer the size of the array.
 
 
+///// Concatenation at **comptime** /////
+// Comptime also introduces the operators `++` and `**` for concatenating and repeating arrays and slices. 
+// **These operators do not work at runtime.**
+test "++" {
+    const x: [4]u8 = undefined;
+    const y = x[0..];
+
+    const a: [6]u8 = undefined;
+    const b = a[0..];
+
+    const new = y ++ b;
+    try expect(new.len == 10);
+}
+
+test "**" {
+    const pattern = [_]u8{ 0xCC, 0xAA };
+    const memory = pattern ** 3;
+    try expect(eql(
+        u8,
+        &memory,
+        &[_]u8{ 0xCC, 0xAA, 0xCC, 0xAA, 0xCC, 0xAA }
+    ));
+}
 
 ////////// INTEGER RULES ///////////////////////////////////////////////////////////////////////////
 // Zig supports hex, octal and binary integer literals.
@@ -181,8 +204,9 @@ test "##### orelse unreachable #####" {
 }
 
 
-///// Optional Payload Capture /////
-// https://ziglearn.org/chapter-1/#optionals
+
+////////// OPAQUE //////////////////////////////////////////////////////////////////////////////////
+// FIXME: https://ziglearn.org/chapter-1/#opaque
 
 
 
