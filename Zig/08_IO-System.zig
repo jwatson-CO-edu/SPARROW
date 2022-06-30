@@ -231,6 +231,68 @@ test "custom writer" {
 ////////// JSON ////////////////////////////////////////////////////////////////////////////////////
 // https://ziglearn.org/chapter-2/#json
 
+const Place = struct { lat: f32, long: f32 };
+
+test "##### json parse --to-> struct #####" {
+    var stream = std.json.TokenStream.init(
+        \\{ "lat": 40.684540, "long": -74.401422 }
+    );
+    // Let’s parse a json string into a struct type, using the streaming parser.
+    const x = try std.json.parse(Place, &stream, .{});
+
+    try expect(x.lat == 40.684540);
+    try expect(x.long == -74.401422);
+}
+
+
+test "##### json stringify --to-> bytes #####" {
+    const x = Place{
+        .lat = 51.997664,
+        .long = -0.740687,
+    };
+
+    var buf: [100]u8 = undefined;
+    var fba = std.heap.FixedBufferAllocator.init(&buf);
+    var string = std.ArrayList(u8).init(fba.allocator());
+    // And using stringify to turn arbitrary data into a string.
+    try std.json.stringify(x, .{}, string.writer());
+
+    try expect(eql(
+        u8,
+        string.items,
+        \\{"lat":5.19976654e+01,"long":-7.40687012e-01}
+    ));
+}
+
+
+test "##### json parse with strings #####" {
+    var stream = std.json.TokenStream.init(
+        \\{ "name": "Joe", "age": 25 }
+    );
+
+    const User = struct { name: []u8, age: u16 };
+
+    // The json parser requires an allocator for javascript’s string, array, and map types. 
+    // This memory may be freed using std.json.parseFree.
+
+    const x = try std.json.parse(
+        User,
+        &stream,
+        .{ .allocator = test_allocator },
+    );
+
+    defer std.json.parseFree(
+        User,
+        x,
+        .{ .allocator = test_allocator },
+    );
+
+    try expect(eql(u8, x.name, "Joe"));
+    try expect(x.age == 25);
+}
+
+
+
 
 
 ////////// MAIN ////////////////////////////////////////////////////////////////////////////////////
