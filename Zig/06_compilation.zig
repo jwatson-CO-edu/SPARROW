@@ -56,3 +56,12 @@ test "typeinfo switch" {
     try expect(@TypeOf(x) == u16);
     try expect(x == 50);
 }
+
+
+
+////////// IMPORTS /////////////////////////////////////////////////////////////////////////////////
+// The built-in function `@import` takes in a file, and gives you a struct type based on that file. 
+// All declarations labelled as pub (for public) will end up in this struct type, ready for use.
+
+// `@import("std")` is a special case in the compiler, and gives you access to the standard library. 
+// Other `@import`s will take in a file path, or a package name.
