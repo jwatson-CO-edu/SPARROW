@@ -16,7 +16,7 @@ Completion Key:
 ```
 ### Phase 0, Zig Language ###
 [ ] Finish Zig tuts
-    [ ] Part 1: Basics
+    [Y] Part 1: Basics - 2022-06-NN, Finished basics, all files compile
     [ ] Part 2: Standard Patterns
     [ ] Part 3: Build System
     [ ] Part 4: Working w/ C
