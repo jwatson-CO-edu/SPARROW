@@ -1,5 +1,5 @@
 # Petri Language  
-An interpreted language written in [Nim](https://nim-lang.org/), with the goals of learning language design and introducing straightforward, automated parallelism to the computing world.
+An interpreted language written in [Zig](https://ziglang.org/), with the goals of learning language design and introducing straightforward, automated parallelism to the computing world.
 
 ## `DEV PLAN`
 Task Key:  
