@@ -1,5 +1,5 @@
 # Petri Language  
-An interpreted language written in [Zig](https://ziglang.org/), with the goals of learning language design and introducing straightforward, automated parallelism to the computing world.
+An interpreted language written in [Zig](https://ziglang.org/), with the goals of learning language design and introducing straightforward, automated, and tunable parallelism to the computing world.
 
 ## `DEV PLAN`
 Task Key:  
@@ -15,9 +15,9 @@ Completion Key:
 * `[~]` Partially Done and/or Skipped for Now
 ```
 ### Phase 0, Zig Language ###
-[ ] Finish Zig tuts
+[>] Finish Zig tuts
     [Y] Part 1: Basics - 2022-06-NN, Finished basics, all files compile
-    [ ] Part 2: Standard Patterns
+    [Y] Part 2: Standard Patterns - 2022-07-01, An exhaustive review of Part 3 may not be necessary
     [ ] Part 3: Build System
     [ ] Part 4: Working w/ C
     [ ] Part 5: Async

@@ -1,4 +1,5 @@
 ////////// INIT ////////////////////////////////////////////////////////////////////////////////////
+const std    = @import("std");
 const expect = @import("std").testing.expect; // `expect` == `assert`
 
 ////////// ASSIGNMENT && PRIMITIVE TYPES ///////////////////////////////////////////////////////////
@@ -32,10 +33,11 @@ test "++" {
     const x: [4]u8 = undefined;
     const y = x[0..];
 
-    const a: [6]u8 = undefined;
-    const b = a[0..];
+    const d: [6]u8 = undefined;
+    const e = a[0..];
 
-    const new = y ++ b;
+    const new = y ++ e;
+    _ = d;
     try expect(new.len == 10);
 }
 
@@ -101,8 +103,8 @@ test "##### vector looping #####" {
     const x = Vector(4, u8){ 255, 0, 255, 0 };
     var sum = blk: {
         var tmp: u10 = 0;
-        var i: u8 = 0;
-        while (i < len(x)) : (i += 1) tmp += x[i];
+        var j: u8 = 0;
+        while (j < len(x)) : (j += 1) tmp += x[j];
         break :blk tmp;
     };
     try expect(sum == 510);
@@ -138,6 +140,198 @@ test "#### ArrayList #####" {
 
     try expect(eql(u8, list.items, "Hello World!"));
 }
+
+
+////////// HASH MAPS ///////////////////////////////////////////////////////////////////////////////
+// The standard library provides `std.AutoHashMap`, which lets you easily create a hash map type 
+// from a key type and a value type. These must be initiated with an allocator.
+// `std.StringHashMap` and `std.AutoHashMap` are just wrappers for `std.HashMap`. 
+// If these two do not fulfil your needs, using `std.HashMap` directly gives you much more control.
+
+// If having your elements backed by an array is wanted behaviour, try `std.ArrayHashMap` 
+// and its wrapper `std.AutoArrayHashMap`.
+
+
+test "##### hashing #####" {
+    const Point = struct { x: i32, y: i32 };
+
+    // `std.AutoHashMap( <KEY TYPE>, <VALUE TYPE> )`
+    var map = std.AutoHashMap(u32, Point).init(
+        test_allocator,
+    );
+    defer map.deinit();
+
+    // Let’s put some values in a hash map.
+    try map.put(1525, .{ .x = 1, .y = -4 });
+    try map.put(1550, .{ .x = 2, .y = -3 });
+    try map.put(1575, .{ .x = 3, .y = -2 });
+    try map.put(1600, .{ .x = 4, .y = -1 });
+
+    try expect(map.count() == 4);
+
+    var sum = Point{ .x = 0, .y = 0 };
+    var iterator = map.iterator();
+
+    while (iterator.next()) |entry| {
+        sum.x += entry.value_ptr.x;
+        sum.y += entry.value_ptr.y;
+    }
+
+    try expect(sum.x == 10);
+    try expect(sum.y == -10);
+}
+
+
+test "##### fetchPut #####" {
+    var map = std.AutoHashMap(u8, f32).init(
+        test_allocator,
+    );
+    defer map.deinit();
+
+    try map.put(255, 10);
+    // `.fetchPut` puts a value in the hash map, returning a value if there was previously a value for that key.
+    const old = try map.fetchPut(255, 100);
+
+    try expect(old.?.value == 10);
+    try expect(map.get(255).? == 100);
+}
+
+
+test "##### string hashmap #####" {
+    // `std.StringHashMap` is also provided for when you need strings as keys.
+    var map = std.StringHashMap(enum { cool, uncool }).init(
+        test_allocator,
+    );
+    defer map.deinit();
+
+    try map.put("loris", .uncool);
+    try map.put("me", .cool);
+
+    try expect(map.get("me").? == .cool);
+    try expect(map.get("loris").? == .uncool);
+}
+
+
+////////// STACKS //////////////////////////////////////////////////////////////////////////////////
+// `std.ArrayList` provides the methods necessary to use it as a stack.
+
+test "##### stack #####" {
+    const string = "(()())";
+    var stack = std.ArrayList(usize).init(
+        test_allocator,
+    );
+    defer stack.deinit();
+
+    const Pair = struct { open: usize, close: usize };
+    var pairs = std.ArrayList(Pair).init(
+        test_allocator,
+    );
+    defer pairs.deinit();
+
+    for (string) |char, u| {
+        if (char == '(') try stack.append(u);
+        if (char == ')')
+            try pairs.append(.{
+                .open = stack.pop(),
+                .close = u,
+            });
+    }
+
+    for (pairs.items) |pair, u| {
+        try expect(std.meta.eql(pair, switch (u) {
+            0 => Pair{ .open = 1, .close = 2 },
+            1 => Pair{ .open = 3, .close = 4 },
+            2 => Pair{ .open = 0, .close = 5 },
+            else => unreachable,
+        }));
+    }
+}
+
+
+
+////////// SORTING /////////////////////////////////////////////////////////////////////////////////
+// The standard library provides utilities for in-place sorting slices. 
+// `std.sort.asc` and `.desc` create a comparison function for the given type at comptime; 
+// if non-numerical types should be sorted, the user must provide their own comparison function.
+// `std.sort.sort` has a best case of O(n), and an average and worst case of `O(n*log(n))`.
+
+test "##### sorting #####" {
+    var data = [_]u8{ 10, 240, 0, 0, 10, 5 };
+    std.sort.sort(u8, &data, {}, comptime std.sort.asc(u8));
+    try expect(eql(u8, &data, &[_]u8{ 0, 0, 5, 10, 10, 240 }));
+    std.sort.sort(u8, &data, {}, comptime std.sort.desc(u8));
+    try expect(eql(u8, &data, &[_]u8{ 240, 10, 10, 5, 0, 0 }));
+}
+
+
+
+////////// ITERATORS ///////////////////////////////////////////////////////////////////////////////
+// It is a common idiom to have a struct type with a next function with an optional in its return type, 
+// so that the function may return a `null` to indicate that iteration is finished.
+
+test "##### split iterator #####" {
+    const text = "robust, optimal, reusable, maintainable, ";
+    // `std.mem.SplitIterator` (and the subtly different `std.mem.TokenIterator`) is an example of this pattern.
+    var iter = std.mem.split(u8, text, ", ");
+    try expect(eql(u8, iter.next().?, "robust"));
+    try expect(eql(u8, iter.next().?, "optimal"));
+    try expect(eql(u8, iter.next().?, "reusable"));
+    try expect(eql(u8, iter.next().?, "maintainable"));
+    try expect(eql(u8, iter.next().?, ""));
+    try expect(iter.next() == null);
+}
+
+///// Iterator Unpacking and Looping /////
+// Some iterators have a `!?T` return type, as opposed to `?T`. `!?T` requires that we unpack 
+// the error union before the optional, meaning that the work done to get to the next iteration may error. 
+
+test "iterator looping" {
+    // `cwd` has to be opened with iterate permissions in order for the directory iterator to work.
+    var iter = (try std.fs.cwd().openDir(
+        ".",
+        .{ .iterate = true },
+    )).iterate();
+
+    var file_count: usize = 0;
+    while (try iter.next()) |entry| {
+        if (entry.kind == .File) file_count += 1;
+    }
+
+    try expect(file_count > 0);
+}
+
+
+///// Custom Iterator /////
+// This will iterate over a slice of strings, yielding the strings which contain a given string.
+
+const ContainsIterator = struct {
+    strings: []const []const u8,
+    needle: []const u8,
+    index: usize = 0,
+    fn next(self: *ContainsIterator) ?[]const u8 {
+        const index = self.index;
+        for (self.strings[index..]) |string| {
+            self.index += 1;
+            if (std.mem.indexOf(u8, string, self.needle)) |_| {
+                return string;
+            }
+        }
+        return null;
+    }
+};
+
+test "custom iterator" {
+    var iter = ContainsIterator{
+        .strings = &[_][]const u8{ "one", "two", "three" },
+        .needle = "e",
+    };
+
+    try expect(eql(u8, iter.next().?, "one"));
+    try expect(eql(u8, iter.next().?, "three"));
+    try expect(iter.next() == null);
+}
+
+
 
 ////////// INTEGER RULES ///////////////////////////////////////////////////////////////////////////
 // Zig supports hex, octal and binary integer literals.
@@ -199,10 +393,10 @@ const more_hex:   f64 = 0x1234_5678.9ABC_CDEFp-10;
 // value cannot fit in the integer destination type.
 
 test "int-float conversion" {
-    const a: i32 = 0;
-    const b = @intToFloat(f32, a);
-    const c = @floatToInt(i32, b);
-    try expect(c == a);
+    const f: i32 = 0;
+    const g = @intToFloat(f32, f);
+    const l = @floatToInt(i32, g);
+    try expect(l == f);
 }
 
 
@@ -216,15 +410,16 @@ test "int-float conversion" {
 test "labelled blocks" {
     const count = blk: { //Here, we are using a label called `blk`
         var sum: u32 = 0;
-        var i: u32 = 0;
-        while (i < 10) : (i += 1) sum += i;
+        var m: u32 = 0;
+        while (m < 10) : (m += 1) sum += m;
         break :blk sum;
     };
     const inc_op = pp: {
         const tmp = i;
         i += 1;
         break :pp tmp;
-    }
+    };
+    _ = inc_op;
     try expect(count == 45);
     try expect(@TypeOf(count) == u32);
 }
@@ -248,9 +443,9 @@ test "nested continue" {
 // Loops in Zig also have an `else` branch on loops, which is evaluated when the loop is not exited from with a break.
 
 fn rangeHasNumber(begin: usize, end: usize, number: usize) bool {
-    var i = begin;
-    return while (i < end) : (i += 1) {
-        if (i == number) {
+    var n = begin;
+    return while (n < end) : (n += 1) {
+        if (n == number) {
             break true;
         }
     } else false;
@@ -267,30 +462,30 @@ test "while loop expression" {
 test "optional" {
     var found_index: ?usize = null;
     const data = [_]i32{ 1, 2, 3, 4, 5, 6, 7, 8, 12 };
-    for (data) |v, i| {
-        if (v == 10) found_index = i;
+    for (data) |v, o| {
+        if (v == 10) found_index = o;
     }
     try expect(found_index == null);
 }
 
 
 test "##### `orelse` #####" {
-    var a: ?f32 = null;
+    var p: ?f32 = null;
     // Optionals support the orelse expression, which acts when the optional is null. 
-    var b = a orelse 0; // This unwraps the optional to its child type.
-    try expect(b == 0);
-    try expect(@TypeOf(b) == f32);
+    var q = p orelse 0; // This unwraps the optional to its child type.
+    try expect(q == 0);
+    try expect(@TypeOf(q) == f32);
 }
 
 
 test "##### orelse unreachable #####" {
-    const a: ?f32 = 5;
-    const b = a orelse unreachable;
+    const r: ?f32 = 5;
+    const s = r orelse unreachable;
     //`.?` is a shorthand for `orelse unreachable`. 
-    const c = a.?; // This is used for when you know it is impossible for an optional value to be null, 
+    const t = s.?; // This is used for when you know it is impossible for an optional value to be null, 
     // -------------- and using this to unwrap a null value is detectable illegal behaviour.
-    try expect(b == c);
-    try expect(@TypeOf(c) == f32);
+    try expect(b == t);
+    try expect(@TypeOf(t) == f32);
 }
 
 
@@ -306,29 +501,29 @@ test "##### orelse unreachable #####" {
 const Window = opaque {};
 const Button = opaque {};
 
-extern fn show_window(*Window) callconv(.C) void;
+extern fn show_window1(*Window) callconv(.C) void;
 
 test "opaque" {
     var main_window: *Window = undefined;
-    show_window(main_window);
+    show_window1(main_window);
 
     var ok_button: *Button = undefined;
-    show_window(ok_button);
+    show_window1(ok_button);
 }
 
 // Opaque types may have declarations in their definitions (the same as structs, enums and unions).
 
 const Window2 = opaque {
     fn show(self: *Window) void {
-        show_window(self);
+        show_window1(self);
     }
 };
 
-extern fn show_window(*Window2) callconv(.C) void;
+extern fn show_window2(*Window2) callconv(.C) void;
 
 test "opaque with declarations" {
     var main_window: *Window2 = undefined;
-    main_window.show();
+    main_window.show_window2();
 }
 
 ////////// MAIN ////////////////////////////////////////////////////////////////////////////////////
