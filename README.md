@@ -18,8 +18,8 @@ Completion Key:
 [>] Finish Zig tuts
     [Y] Part 1: Basics - 2022-06-NN, Finished basics, all files compile
     [Y] Part 2: Standard Patterns - 2022-07-01, An exhaustive review of Part 3 may not be necessary
-    [ ] Part 3: Build System
-    [ ] Part 4: Working w/ C
+    [Y] Part 3: Build System - 2022-07-01, An exhaustive review of Part 4 may not be necessary
+    [N] Part 4: Working w/ C - 2022-07-01, Review if you are actually working with C/++
     [ ] Part 5: Async
 
 ### Phase 1, Basic Function and Preliminaty Tests ###

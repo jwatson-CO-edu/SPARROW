@@ -11,7 +11,9 @@ Nim/exec
 Nim/*/exec
 
 ## ZIG ##
-Zig/zig-cache
+*/zig-cache
+*/*/zig-cache
+*/*/*/zig-cache
 
 # Prerequisites
 *.d
