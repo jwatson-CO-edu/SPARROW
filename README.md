@@ -1,4 +1,5 @@
 # Petri Language  
+## 2022-07-18: DEVELOPMENT SUSPENDED UNTIL FURTHER NOTICE
 An interpreted language written in [Zig](https://ziglang.org/), with the goals of learning language design and introducing straightforward, automated, and tunable parallelism to the computing world.
 
 ## `DEV PLAN`
@@ -13,14 +14,29 @@ Completion Key:
 * `[Y]` Done
 * `[N]` Will NOT Be Done
 * `[~]` Partially Done and/or Skipped for Now
+
 ```
-### Phase 0, Zig Language ###
+### Phase -1, ASSESS NEED ###
+[ ] FIGURE OUT YOUR PROBLEM BEFORE YOU BURN TIME ON A SOLUTION
+# CONS #
+{-} Auto-parallelization has been well-studied
+{-} I do not have a problem that would efficiently consume all CPU/GPU resources (Embarrassingly Parallel)
+{-} I have no need to build large multi-threaded servers
+{-} FINCH is a threat to my PhD degree attainment
+# PROS #
+{+} An entity-component language could possibly address the dissatisfaction I have with OOP
+{+} It could possibly be useful to have a Bash-like terminal to programmatically lash together other programs
+    with some kind of unified communication protocol (stdout?)
+{+} Keep in mind that any language you *may* build is for your own needs and entertainment and *may not* gain wide traction
+
+
+### Phase 0, Zig Language - 2022-07-18, COMPLETE ###
 [>] Finish Zig tuts
     [Y] Part 1: Basics - 2022-06-NN, Finished basics, all files compile
     [Y] Part 2: Standard Patterns - 2022-07-01, An exhaustive review of Part 3 may not be necessary
     [Y] Part 3: Build System - 2022-07-01, An exhaustive review of Part 4 may not be necessary
     [N] Part 4: Working w/ C - 2022-07-01, Review if you are actually working with C/++
-    [ ] Part 5: Async
+    [Y] Part 5: Async - 2022-07-18, Unsure if this capability is actually needed
 
 ### Phase 1, Basic Function and Preliminaty Tests ###
 [ ] Translate first evaluator to Zig
