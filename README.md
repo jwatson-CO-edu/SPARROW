@@ -39,6 +39,7 @@ Spelled "FINCH" or "Finch".
     * Is a virtual/fanciful machine needed?
 
 ## Phase 4: Learn Parallel Programming -- FINCH
+**ALERT: DO NOT ATTEMPT THIS PHASE UNTIL YOU HAVE ACHIEVED YOUR DEGREE**
 1. Select a use-case.  
 Possible options:
     * A fun simulation
@@ -50,9 +51,11 @@ Possible options:
 1. Multi-machine
 
 ## Phase 5: Basic Cognitive Architecture -- CORVID
+**ALERT: USE ONLY IF THERE ARE JUSTIFIABLE ADVANTAGES**
 1. AI-focused dialect of FINCH
 
 ## Phase 6: Heavy Simulation -- MAGPIE
+**ALERT: USE ONLY IF THERE ARE JUSTIFIABLE ADVANTAGES**
 1. A simulation-focused dialect of CORVID
 
 ## Phase N: Far Future -- ???
