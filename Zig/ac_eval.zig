@@ -1,3 +1,6 @@
+////////// INIT ////////////////////////////////////////////////////////////////////////////////////
+const print = @import("std").fmt.format;
+
 ////////// ATOMS ///////////////////////////////////////////////////////////////////////////////////
 
 ///// Atom Data Payload /////
@@ -11,7 +14,7 @@ const DataType   = enum {
 };
 const AtomData64 = union( DataType ){ 
     // Tagged Union for a 64bit payload
-    STRN: u64, // String/Symbol
+    STRN: [8]u8, // String/Symbol
     NMBR: f64, // Number
     NULL: u64, // Null
     EROR: u64  // Error object
@@ -27,7 +30,6 @@ const AtomType = enum {
     NULL, // Null
     EROR, // Error object
 };
-
 const Atom64 = struct{
     // Most basic component of the language
     typ: AtomType, // - Type of atom
@@ -37,10 +39,16 @@ const Atom64 = struct{
 };
 
 ////////// STRINGS /////////////////////////////////////////////////////////////////////////////////
-// FIXME: START HERE - PRINT MINI-STRINGS?
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-////////// MAIN, UNUSED: ONLY HERE FOR COMPILATION PURPOSES ////////////////////////////////////////
+////////// MAIN ////////////////////////////////////////////////////////////////////////////////////
 pub fn main() void {
-// NOTE: Unused local variables will throw compiler errors!
+
+    const x = "goodcode";
+    print("x = \"{s}\"\n",.{x});
+    print("sizeOf( x ) = {} bytes\n",.{@sizeOf([8]u8)});
+    print("sizeOf(f64) = {} bytes\n",.{@sizeOf(f64)});
+    print("sizeOf(u64) = {} bytes\n",.{@sizeOf(u64)});
+
 }
