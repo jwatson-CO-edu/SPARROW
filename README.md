@@ -1,8 +1,63 @@
-# Petri Language  
-## 2022-07-18: DEVELOPMENT SUSPENDED UNTIL FURTHER NOTICE
-An interpreted language written in [Zig](https://ziglang.org/), with the goals of learning language design and introducing straightforward, automated, and tunable parallelism to the computing world.
+# **F**low **I**nterpreter for **N**ovice **C**omputer language **H**acking [FINCH]
+An interpreted language written in [D](https://dlang.org/), with the goal of learning language design.  That's it.  
+FINCH's ability to solve problems for others is a side-effect.  
+Spelled "FINCH" or "Finch".
 
-## `DEV PLAN`
+# Design Goals
+1. This is for my own entertainment and edification.
+1. Flow-Based & Modular
+1. Data construction & mutation > OOP Hierarchy & Polymorphims
+1. Ergonimic & Fun to use
+1. Begin simply, and add justifiable complexity with caution!
+
+# Purpose & Roadmap
+## Phase 1: Learn Computer Language Design via Scheme -- SPARROW
+1. Parsing & Syntax
+1. Program Blocks
+1. Memory Management & Garbage Collection
+
+## Phase 2: Learn Flow-Based Programming -- FINCH
+1. Data Production + Mutation + Flow paradigm
+1. Flow execution model
+    1. Message Passing
+    1. Variables are for connecting ports, not primarily for storage
+1. Efficient data sharing
+1. Event-based programming (Evaluate Need)
+    * Event loops as a first class structure?
+1. Networking? (Evaluate Need)
+
+## Phase 3: Tune the Machine -- FINCH
+1. Memory/Cache Efficiency
+1. Execution Efficiency
+1. Evaluate Design Choices
+    * What makes FINCH fun to use?
+    * What makes FINCH hard to use?
+    * What would make FINCH more syntactically compact?
+    * What would make FINCH use less memory?
+    * What would make FINCH use less faster?
+        - Find benchmarks and run them
+    * Is a virtual/fanciful machine needed?
+
+## Phase 4: Learn Parallel Programming -- FINCH
+1. Select a use-case.  
+Possible options:
+    * A fun simulation
+    * Personal webserver
+    * ???
+1. Multiprocess
+    1. Share data _efficiently_ across nodes
+    1. OpenMPI
+1. Multi-machine
+
+## Phase 5: Basic Cognitive Architecture -- CORVID
+1. AI-focused dialect of FINCH
+
+## Phase 6: Heavy Simulation -- MAGPIE
+1. A simulation-focused dialect of CORVID
+
+## Phase N: Far Future -- ???
+
+# `DEV PLAN` 
 Task Key:  
 * `T:` Test to Conduct
 * `Q:` Question to Answer
@@ -15,59 +70,42 @@ Completion Key:
 * `[N]` Will NOT Be Done
 * `[~]` Partially Done and/or Skipped for Now
 
+## Phase 1: Learn Computer Language Design via Scheme -- SPARROW
 ```
-### Phase -1, ASSESS NEED ###
-[ ] FIGURE OUT YOUR PROBLEM BEFORE YOU BURN TIME ON A SOLUTION
-# CONS #
-{-} Auto-parallelization has been well-studied
-{-} I do not have a problem that would efficiently consume all CPU/GPU resources (Embarrassingly Parallel)
-{-} I have no need to build large multi-threaded servers
-{-} FINCH is a threat to my PhD degree attainment
-# PROS #
-{+} An entity-component language could possibly address the dissatisfaction I have with OOP
-{+} It could possibly be useful to have a Bash-like terminal to programmatically lash together other programs
-    with some kind of unified communication protocol (stdout?)
-{+} Keep in mind that any language you *may* build is for your own needs and entertainment and *may not* gain wide traction
-
-
-### Phase 0, Zig Language - 2022-07-18, COMPLETE ###
-[>] Finish Zig tuts
-    [Y] Part 1: Basics - 2022-06-NN, Finished basics, all files compile
-    [Y] Part 2: Standard Patterns - 2022-07-01, An exhaustive review of Part 3 may not be necessary
-    [Y] Part 3: Build System - 2022-07-01, An exhaustive review of Part 4 may not be necessary
-    [N] Part 4: Working w/ C - 2022-07-01, Review if you are actually working with C/++
-    [Y] Part 5: Async - 2022-07-18, Unsure if this capability is actually needed
-
-### Phase 1, Basic Function and Preliminaty Tests ###
-[ ] Translate first evaluator to Zig
+[ ] Translate first "ab_" evaluator to Dlang
     [ ] All Functions Implemented
+    [ ] All tests pass
     [ ] Q: How big is each `Atom`?
             Size of a number: ?
             Size of a NULL:   ?
             Size of a String: ?
             Size of a cons:   ?
             Size of an error: ?
+[ ] Translate second "ac_" evaluator to Dlang
+    [ ] All Functions Implemented
+    [ ] All tests pass
 [ ] Translate "The Little Javascripter" by Douglas Crockford
     https://www.crockford.com/little.html (See `JS` folder for reference implementation)
-    [ ] Adapt JS file to match names used in Nim file
-    [ ] Make changes to reference implementation when necessary and/or convenient, That is use Nim advantages when they present themselves
     [ ] T: Repeat all REPLacement tests!
 [ ] Parse "Easy S-Expressions" instead: 2022-04-19, Ignore whitespace except to separate symbols
     [ ] Implicit open paren, `;` is close paren
     [ ] <funcName> <arg1> ... <argN>;
-    [ ] Program Blocks: All of `{}`, `()`, `[]`
+    [ ] Program Blocks:
+        [ ] Curly Braces {}
+        [ ] Pythonic / Implicit
     [ ] T: Verify that statement precedence with block brackets already exists in evaluator, If not then Implement it! 
     [ ] T: Make sure that nested statements and blocks do not cause ambiguity
     [ ] Line Continuation: `\+`    
     [ ] T: Translate and repeat all REPLacement tests!
 [ ] Evaluate "The Seasoned Schemer" for useful features and structures (If yes, then expand this bullet with REQUIRED topics ONLY )
 [ ] Experiment with memory models
-    [ ] Q: Which is faster? `object` -or- `ref object`
-        [ ] T: Copy -vs- Reference Simple Test in folder 05
-        [ ] T: Attempt simple conversion of SPARROW to copy mode
-    [ ] Q: Is selective compilation possible in Nim?
+    [ ] Q: Which is faster? 
+        * Pointer
+        * Reference
+        * Copy
+    [ ] Q: Is selective compilation possible in Dlang?
         [ ] T: If so, test a program that requires selective compilation in order to be compatible w/ Windows
-    [ ] Read: How does Nim allocate memory?
+    [ ] Read: How does Dlang allocate memory?
     [ ] Q: Can a block of "null pointer" memory be allocated?
     [ ] Q: Can a large array of variant `Atoms` be allocated? What is the per-unit size in memory?
     [ ] T: Which is faster; (Pre-allocated block -vs- Dynamic vars); Create 1000 vars and assign randomly for 10k steps
@@ -79,31 +117,17 @@ Completion Key:
     [ ] Identify where value history can be built
 [ ] E: Windows-compatible SPARROW?
 [ ] E: File extension: .BRD, .SPW, .FNC,
-
-### Phase 2, Feature Research ###
-[ ] Read & Take Notes on "Actors" by Gul Agha
-[ ] Q: What are the use cases? (Need more)
-    A: Running large simulations with disparate parts that can be parallelized (automatically)
-    A: Standing up a small network of devices and automatically and cleanly giving them their own processes
-        - R: Must be able to talk to Python
-            * Q: Does it make sense for FINCH to do data plumbing for Python
-    A: Offloading multiprocessing work from Python
-    A: Experimentation & Knowledge!
-[ ] Review of Actor Languages
-    [ ] Review "Sal", Implement?
-    [ ] Review "Act", Implement?
-    [ ] Lit Review
-[ ] Language Review of Competing Projects Based on Zig/Nim
-    [ ] Bog, Strongly-Typed, Embedded, https://github.com/Vexu/bog 
-    [ ] NimScript, Interpreted Nim, https://nim-lang.org/docs/nims.html
-[Y] Q: Where do I introduce type checking?, 2022-04-10, A: In the compile-time functions --> before a script is executed
+```
+## Phase 2: Learn Flow-Based Programming -- FINCH
+```
+[ ] Read & Take Notes on Flow Programming Sources
 [ ] Collect flow programming requirments
+    [ ] How is data constructed?
+    [ ] How is data passed?
+    [ ] How is data mutated?
     [ ] Petri Reading Program: Read selected papers in the FINCH collection while digging into available flow programming systems
     [ ] What are Node Red's capabilities?
-[ ] Q: What are ORC and ARC?
-[ ] Q: Does Nim target LLVM yet? Is there another intermediate representation instead?
 [ ] Type System
-    [ ] Q: How does the Nim type system work?
     [ ] User-defined types? -and/or- Entity Component System (ECS) with interfaces?
         [ ] Evaluate Entity Component System ([Polymorph](https://github.com/rlipsc/polymorph))
         [ ] Alternatives to ECS?
@@ -113,35 +137,37 @@ Completion Key:
     [ ] Hashes?
     [ ] Dynamic Arrays?
     [ ] Heterogeneous (Python) Arrays? (Unlikely for static typing focus)
-[ ] Concurrency Model & Scheduling
-    [ ] Nim Threads   in Linux and Windows
-    [ ] Nim Processes in Linux and Windows
-    [ ] READ: "Actors" by Gul Agha
-    [ ] Petri Representation? (Value Dependency/History Graph)
-[ ] Pharo (SmallTalk) Mooc (Listen only)
-    [ ] Evaluate save states
+```
 
-### Phase 3, Serial Expansion ###
+## Phase 3: Tune the Machine -- FINCH
+```
+[ ] E: Loops?
+[ ] E: Iterators?
+[ ] Optiional Whitespace Formatting
+    [ ] End statements at newline by default
+    [ ] Check previous, then check new in the cases that the new has replaced it
+    [ ] <function signature>:  <-- Begins a function block
+[ ] Split Interpreter into Functional Areas
+    [ ] Components:  Basic types that also compose AST
+    [ ] Analyzer:    Run before interpretation
+    [ ] Interpreter: REPL frontend, Core execution backend, invokes analyzer 
 [ ] Special Blocks, _<prefix> immediately followed by block brackets
     [ ] `_math(...){...}` ________ : Math block, infix operators are allowed
     [ ] `_name(<string>){...}`: Named block, can be used to copy portions of code only
     [ ] Block Flags
         [ ] Parens are optional for special blocks, if they are missing then assume no args or options
         [ ] `_<bloc>(-v){...}`: Verbatim, do not wrap in its own context!, instead add to existing context
-[ ] Split Interpreter into Functional Areas
-    [ ] Components:  Basic types that also compose AST
-    [ ] Analyzer:    Run before interpretation
-    [ ] Interpreter: REPL frontend, Core execution backend, invokes analyzer 
-    [ ] Transpiler:  Turn interpreter code into Nim code that never wastes time on type checks
-[ ] Optiional Whitespace Formatting
-    [ ] End statements at newline by default
-    [ ] Check previous, then check new in the cases that the new has replaced it
-    [ ] Do not allow mixing below top level, Lock parser FSM into mode below the root level
-    [ ] <function signature>:  <-- Begins a function block
-[ ] E: Loops?
-[ ] E: Iterators?
+[ ] Pharo (SmallTalk) Mooc (Listen only)
+    [ ] Evaluate save states
+```
 
-### Phase 4, Parallel Concepts ###
+## Phase 4: Learn Parallel Programming -- FINCH
+```
+[ ] Concurrency Model & Scheduling
+    [ ] Dlang Threads   in Linux and Windows
+    [ ] Dlang Processes in Linux and Windows
+    [ ] READ: "Actors" by Gul Agha
+    [ ] Petri Representation? (Value Dependency/History Graph)
 [ ] Types of Sync
     [ ] Hard Sync: Must wait for an updated value
     [ ] Soft Sync: Retrieves the current value as soon as the mutex allows, regardless of whether or not it is ``fresh''
@@ -150,8 +176,6 @@ Completion Key:
     [ ] Pull Model
 [ ] Tick/Lockstep
 [ ] How much of ROS do I need?
-    
-### Phase 5, Parallel Expansion ###
 [ ] Value Dependency Graph
 [ ] Interpreter Program
     [ ] Inter-process connections
@@ -162,33 +186,36 @@ Completion Key:
         [ ] Multi-Process
     [ ] Run Comparison Test
     [ ] Document Results
-[ ] Petri Rep for Parallel Test 1
-[ ] Auto parallelize Parallel Test 1
-    [ ] Same Conclusion?
-    
-### Phase 6, Optimization ###
-[ ] Transpile back to Nim --> C --> LLVM --> Binary (See Daydream paper notes)
+    [ ] Petri Rep for Parallel Test 1
 ```
 
-## (Possible) Names
-* Language: [F]lexible [I]nterpreted [N]ode [C]omputing [H]elper
+## Phase 5: Basic Cognitive Architecture -- CORVID
+1. AI-focused dialect of FINCH
+* AI
+    - Plug-and-Play learning appliances (Brain Book)
+        - Reason over domain structures in order to re-use capabilities or suggest the structure of new capabilities
+    - DL auto-tuning of interpreter parameters
+* Resource Links
+    - [Flow-Based Programming For Machine Learning](https://assets.researchsquare.com/files/rs-707294/v1_covered.pdf), 2021 Mahapatra
+
+## Phase 6: Heavy Simulation -- MAGPIE
+1. A simulation-focused dialect of CORVID
+* Mathematics / Statistics
+    - Stochastic Programming
+    - Linear Algebra
+    - Deep Learning
+    - Geometric Algebra
+
+## Phase N: Far Future -- ???
+
+# Resources
+???
+
+# (Possible) Names
+* Language: [F]low [I]nterpreter for [N]ovice [C]omputer language [H]acking
     - Birds are cool
-* Base Node:       [B]ase     [I]nterpreter    and [R]esource  [D]ispatcher for [B]asic [O]peration e[X]change  # Per host coordinator
-* Sub  Node:       [B]asic    [I]nterpreter,       [R]EPL, and [D]ispatcher # ----------------------------------- Implements FINCH per job
-* Execution Model: [B]ehavior [I]nterpretation and [R]esource  [D]ispatch   for [B]asic [O]peration e[X]change  # Execution mentality
-    - Possible extension to behavior trees
-    - An execution model based on Petri Nets that seeks to support commonsense solutions to Job Shop Scheduling problems as they relate to computing  
-    - REPL is just a job to manage, and the REPL is a terminal that can spawn other jobs
-        * Spawn/Kill process jobs (Including remote BIRDBOXes)
-        * Start/Stop data flows
-
-
-* Alternate Names: BOX? HOUSE? PERCH? BLUEBIRD? FLOCK? (Either a riff on BOXFAB or birds)
-    - [B]ase [I]nterpreter, [R]EPL, and [D]ispatcher
-    - [B]ase [I]nterpreter and [R]esource [D]ispatch for [H]ierarchical [O]perations and [U]sage of [S]ystem [E]xpediencies
-    - [P]etri [E]nabled [R]esource [C]omputation [H]ierarchy
-    - [B]asic [O]peration e[X]change for [F]lows, [A]gents, and [B]ehaviors
-
+* Base Node: [B]ase [I]nterpreter, [R]EPL, and [D]ispatcher for [B]asic [O]peration e[X]change, Per-host coordination & control
+* Sub  Node: [B]asic [I]nstruction and [R]esource, and [D]ispatcher, Implements FINCH per job
 
 # Daydreams
 * Enhanced alternative to Behavior Trees
@@ -211,17 +238,9 @@ Completion Key:
     - Automatic load balancing
     - FINCH-OS, a (realtime?) operating system with advanced task scheduling
     - Node Red capabilities
-* Mathematics / Statistics
-    - Stochastic Programming
-    - Linear Algebra
-    - Deep Learning
-    - Geometric Algebra
-* AI
-    - Plug-and-Play learning appliances (Brain Book)
-        - Reason over domain structures in order to re-use capabilities or suggest the structure of new capabilities
-    - DL auto-tuning of interpreter parameters
 * Hardware
     - Home/Life automation
+    - Real-time control
     - Hardware Emulation
         - CHIP8, Fantasy CPU
         - Zilog 80A, RadioShack TRS-80 / Sinclair ZX Spectrum
@@ -232,9 +251,4 @@ Completion Key:
         - The ability to compile the graph of chip emulators down into a full system emulator using the normal compression and compilation pipeline
             - Emulate SNES from a ROM!
 
-# Resources
 
-## Links
-
-## Future Applications
-* [Flow-Based Programming For Machine Learning](https://assets.researchsquare.com/files/rs-707294/v1_covered.pdf), 2021 Mahapatra
