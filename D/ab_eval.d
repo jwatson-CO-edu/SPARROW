@@ -10,11 +10,12 @@
 
 import std.string; // `string` type
 import std.stdio; //- `writeln`
+import std.conv; // - string conversions
 
 enum F_Error{ 
-    OKAY,    // No error code applicable
-    NOVALUE, // There is no value held in this atom
-    NAN,     // Not A Number
+    OKAY    = "OKAY",    // No error code applicable
+    NOVALUE = "NOVALUE", // There is no value held in this atom
+    NAN     = "NAN",     // Not A Number
 }
 
 enum F_Type{ 
@@ -29,8 +30,8 @@ enum F_Type{
 
 struct Atom{
     F_Type  kind; // ---------------- What kind of atom this is
-    Atom* car; // ----------------- Left  `Atom` Pointer
-    Atom* cdr; // ----------------- Right `Atom` Pointer
+    Atom*   car; // ----------------- Left  `Atom` Pointer
+    Atom*   cdr; // ----------------- Right `Atom` Pointer
     double  num; // ----------------- Number value
     string  str; // ----------------- String value, currently limited to 16 characters
     F_Error err = F_Error.NOVALUE; /* Error code, 2022-09-03: Any atom can have an error code
@@ -46,19 +47,13 @@ Atom* empty_atom(){
         null,
         null,
         double.nan,
-        "",
+        "NO VALUE",
         F_Error.NOVALUE
     );
 }
 
 Atom* make_cons( Atom* car = null, Atom* cdr = null, ){
     // Make a pair
-    // Atom rtnAtm;
-    // rtnAtm.kind = F_Type.CONS;
-    // rtnAtm.car  = car;
-    // rtnAtm.cdr  = cdr;
-    // if( (car != null) || (cdr != null) ){  rtnAtm.err = F_Error.OKAY;  }
-    // return rtnAtm;
     F_Error mtCode;
     if( (car != null) || (cdr != null) ){  mtCode = F_Error.OKAY; }
     else{  mtCode = F_Error.NOVALUE;  }
@@ -74,11 +69,6 @@ Atom* make_cons( Atom* car = null, Atom* cdr = null, ){
 
 Atom* make_string( string str ){
     // Make a string
-    // Atom rtnAtm;
-    // rtnAtm.kind = F_Type.STRN;
-    // rtnAtm.str = str;
-    // if( str.length > 0 ){  rtnAtm.err = F_Error.OKAY;  }
-    // return rtnAtm;
     return new Atom(
         F_Type.STRN,
         null,
@@ -91,11 +81,6 @@ Atom* make_string( string str ){
 
 Atom* make_number( double nmbr ){
     // Make a number
-    // Atom rtnAtm;
-    // rtnAtm.kind = F_Type.NMBR;
-    // rtnAtm.num  = nmbr;
-    // rtnAtm.err  = F_Error.OKAY;
-    // return rtnAtm;
     return new Atom(
         F_Type.NMBR,
         null,
@@ -108,7 +93,7 @@ Atom* make_number( double nmbr ){
 
 // 2022-09-04: Compiles
 
-////////// LIST PROCESSING ////////////////////////////////////////////////////////////////////////
+////////// LIST PROCESSING /////////////////////////////////////////////////////////////////////////
 
 
 ///// Type Tests ////////////////////////////////
@@ -156,44 +141,53 @@ Atom* append( Atom* list, Atom* atm = null ){
     if( list.kind == F_Type.CONS ){
         /* 2. If we were given an atom to append, it either belongs in the `car` of the empty cons,
               or in the `car` of a new terminal cons */
-        
-        // FIXME: START HERE, SEE BELOW
-
+        if( !p_empty( atm ) ){
+             if( p_empty( list.car ) ){
+                list = make_cons( atm, empty_atom() );
+             }else{
+                endCns = find_terminus( list );
+                set_cdr_B( endCns, consify_atom( atm ) );
+             }
+        }
     }else{ // 3. Else we either have one or two non-cons atoms
-
+        rtnLst = consify_atom( list ); // --------------- ( `list` , [X] )
+        if( !p_empty( atm ) ){
+            set_cdr_B( rtnLst, consify_atom( atm ) ); // ( `list` , ( `atom` , [X] ) )
+        }
     }
+    return rtnLst;
 }
 
 
-// proc append*( list: var pt_Atom, atom: pt_Atom = nil ): pt_Atom {.discardable.} = 
-//     # 
-//     echo "Entered `append`"
-//     var 
-//         rtnLst: pt_Atom = list
-//         endCns: pt_Atom = nil
-//     echo "Created vars!"
-//     #  
-//     if list.kind == CONS:
-//         echo "Input was CONS!"
-//         # 
-//         if atom != nil: 
-//             echo "Atom not `nil`!"
-//             if p_Null( list.car ):
-//                 echo "Atom was list terminator!"
-//                 list = nil
-//                 list = make_cons( atom, make_null() )
-//             else:
-//                 endCns = find_terminus( list )
-//                 set_cdr_B( endCns, consify_atom( atom ) )
-//     # 
-//     else:
-//         echo "Input NOT cons!"
-//         rtnLst = consify_atom( list ) # -------------------------- ( `list` , [X] )
-//         if atom != nil:
-//             set_cdr_B( rtnLst, consify_atom( atom ) ) # ( `list` , ( `atom` , [X] ) )
-//     echo "Exited `append`"
-//     return rtnLst
+///// Printing ///////////////////////////////////
 
+string str( Atom* item ){
+    // Return the string representation of the `item`
+    // Null Symbol: https://www.fileformat.info/info/unicode/char/29c4/index.htm
+    string rtnStr = "";
+    if( p_empty( item ) ){  rtnStr = "\xE2\xA7\x84";  }
+    else{
+        switch( item.kind ){
+            case F_Type.STRN:
+                rtnStr = item.str;
+                break;
+            case F_Type.NMBR:
+                rtnStr = item.num.to!string();
+                break;
+            case F_Type.CONS:
+                rtnStr = "( "~str(item.car)~", "~str(item.cdr)~" )";
+                break;
+            case F_Type.EROR:
+                rtnStr = "( ERROR: " ~ item.err ~ ", " ~ item.str ~ " )";
+                break;
+            default: break;
+        }
+    }
+    return rtnStr;
+}
+
+
+////////// PARSING /////////////////////////////////////////////////////////////////////////////////
 
 
 void main(){
