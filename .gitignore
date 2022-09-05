@@ -15,9 +15,6 @@ Nim/*/exec
 */*/zig-cache
 */*/*/zig-cache
 
-# Prerequisites
-*.d
-
 # Compiled Object files
 *.slo
 *.lo
