@@ -188,9 +188,20 @@ string str( Atom* item ){
 
 
 ////////// PARSING /////////////////////////////////////////////////////////////////////////////////
+string[string] RESERVED;
+
+void init_reserved(){
+    RESERVED["("] = "open_parn"; // Open  paren
+    RESERVED[")"] = "clos_parn"; // Close paren
+}
+
+string find_reserved(  )
 
 
 void main(){
+    init_reserved();
+    
+
     Atom* mt = empty_atom(); 
     writeln( mt ); // Address of new atom
     writeln( p_empty( mt ) ); // true
