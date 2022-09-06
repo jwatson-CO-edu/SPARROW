@@ -91,6 +91,18 @@ Atom* make_number( double nmbr ){
     );
 }
 
+Atom* make_error( F_Error code, string msg ){
+    // Make an error
+    return new Atom(
+        F_Type.EROR,
+        null,
+        null,
+        double.nan,
+        msg,
+        code
+    );
+}
+
 // 2022-09-04: Compiles
 
 ////////// LIST PROCESSING /////////////////////////////////////////////////////////////////////////
@@ -195,13 +207,41 @@ void init_reserved(){
     RESERVED[")"] = "clos_parn"; // Close paren
 }
 
-string find_reserved(  )
+string find_reserved( string token ){
+    // Return the name of the reserved symbol, or an empty string if not found
+    string* res = token in RESERVED;
+    if( res !is null ){  return *res;  } // If key in dict, then return the string name of the reserved token
+    else{  return "";  } // --------------- Else the search failed, return an empty string
+}
 
+string[] tokenize( string expStr, dchar sepChar = ' ' ){
+    string[] tokens;
+    dchar    c      = ' ';
+    string   token  = "";
+    ulong    expLen = expStr.length;
+
+    // Helpers //
+    void stow_token(){  tokens ~= token;  token = "";  }
+    void stow_char(){  tokens ~= to!string( c );  }
+    void cache_char(){  token ~= c;  }
+
+    // 0. Apply the postfix hack
+    expStr ~= sepChar;
+    // 1. For every character in the string
+    foreach( i, ch_i; expStr ){
+        // 2. Fetch character
+        c = ch_i;
+        // 3. Either add char to present token or create a new one
+
+    }
+
+    return tokens;
+}
+    
 
 void main(){
     init_reserved();
     
-
     Atom* mt = empty_atom(); 
     writeln( mt ); // Address of new atom
     writeln( p_empty( mt ) ); // true
@@ -213,4 +253,19 @@ void main(){
     writeln( p_cons( atm3 ) ); // true
     Atom* atm4 = consify_atom( atm2 );
     writeln( p_cons( atm4 ) ); // true
+    Atom* atm5 = make_error( F_Error.NAN, "Invalid number string" );
+
+    writeln( str( mt ) ); // - ⧄
+    writeln( str( atm1 ) ); // 2
+    writeln( str( atm3 ) ); // ( 2, 3 )
+    writeln( str( atm4 ) ); // ( 3, ⧄ )
+    append( atm4, make_number( 4 ) );
+    append( atm4, make_number( 5 ) );
+    append( atm4, make_number( 6 ) );
+    writeln( str( atm4 ) ); // ( 3, ( 4, ( 5, ( 6, ⧄ ) ) ) )
+    writeln( str( atm5 ) ); // ( ERROR: NAN, Invalid number string )
+
+    writeln( find_reserved( "(" ) ); // - open_parn
+    writeln( find_reserved( ")" ) ); // - clos_parn
+    writeln( find_reserved( "foo" ) ); // <nothing>
 }
