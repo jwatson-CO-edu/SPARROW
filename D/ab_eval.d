@@ -65,15 +65,15 @@ Atom* empty_atom(){
 Atom* make_cons( Atom* car = null, Atom* cdr = null, ){
     // Make a pair
     F_Error mtCode;
-    if( (car != null) || (cdr != null) ){  mtCode = F_Error.OKAY; }
-    else{  mtCode = F_Error.NOVALUE;  }
+    // if( (car != null) || (cdr != null) ){  mtCode = F_Error.OKAY; }
+    // else{  mtCode = F_Error.NOVALUE;  }
     return new Atom(
         F_Type.CONS,
         car,
         cdr,
         double.nan,
         "",
-        mtCode
+        F_Error.OKAY
     );
 }
 
@@ -130,8 +130,19 @@ bool p_cons( Atom* atm ){  return (atm.kind == F_Type.CONS);  } // ---- Return t
 
 ///// Accessing & Constructing ///////////////////
 
-bool set_car_B( Atom* atm, Atom* carAtm ){  atm.car = carAtm;  return true;  } // Set left  pair item
-bool set_cdr_B( Atom* atm, Atom* cdrAtm ){  atm.cdr = cdrAtm;  return true;  } // Set right pair item
+bool set_car_B( Atom* atm, Atom* carAtm ){  
+    // Set left  pair item
+    // if( carAtm != null ){  atm.err = F_Error.OKAY;  }
+    atm.car = carAtm;  
+    return true;  
+} 
+
+bool set_cdr_B( Atom* atm, Atom* cdrAtm ){  
+    // Set right pair item
+    // if( cdrAtm != null ){  atm.err = F_Error.OKAY;  }
+    atm.cdr = cdrAtm;  
+    return true;  
+} 
 
 Atom* consify_atom( Atom* carAtm ){
     // Wrap the `atm` in a cons, with `carAtm` as 'car'
@@ -276,8 +287,71 @@ bool p_float_string( string inputStr ){
 
 // 2022-09-06: All tests PASS!
 
-// FIXME, START HERE: `p_empty_atom_string` {"", "\xE2\xA7\x84", "[/]" } // Replace `p_null_string`
+bool p_empty_atom_string( string inputStr ){
+    // Return T if the string is appropriate for empty atom conversion, otherwise return F
+    if( inputStr == null ){ /*------*/ return true;  }
+    if( inputStr == "" ){ /*--------*/ return true;  }
+    if( inputStr == "\xE2\xA7\x84" ){  return true;  }
+    if( inputStr == "[/]" ){ /*-----*/ return true;  }
+    return false;
+}
 
+Atom* atomize_string( string token ){
+    // Convert a string token into a non-cons atom
+    if( p_float_string( token ) ){       return make_number( token.to!double() );  }  
+    if( p_empty_atom_string( token ) ){  return empty_atom();  }  
+   /* else assume string -------------*/ return make_string( token );
+}
+
+// FIXME: THERE IS A PROBLEM WITH `consify_token_sequence`
+
+// Atom* consify_token_sequence( string[] tokens, ulong i ){
+Atom* consify_token_sequence( string[] tokens, ulong i = 0 ){
+    // Recursively render tokens as a cons structure
+    string token;
+    ulong  seqLen  = tokens.length;
+    writeln( "Got a sequence of ", seqLen, " tokens, at index ", i, " ", (seqLen-i) > 1 ) ;
+    Atom*  rtnTree = null;
+    // 1. If there are one or more strings to process, then attempt to construct a token tree
+    if( (seqLen-i) > 1 ){
+        // 2. Start off by creating a cons list, if needed
+        rtnTree = make_cons();
+        // 3. For each token in the vector
+        while( i < seqLen ){
+            // 4. Fetch token at this index and update counter
+            token = tokens[i];
+            i += 1;
+            // 5. Case Open Paren
+            if( find_reserved( token ) == "open_parn" ){
+                // If there is a new level of depth to the existing structure, recur
+                if( i>1 ){  append(  rtnTree , consify_token_sequence( tokens, i )  );  }  
+                // else this is the first level
+                else{  
+                    // destroy( rtnTree );  
+                    rtnTree = consify_token_sequence( tokens, i );  
+                }
+            }else{
+                // 6. Case Close Paren, ascend one level
+                if( find_reserved( token ) == "clos_parn" ){  return rtnTree;  }  
+                // 7. Case Empty, is a list terminator
+                else if( p_empty_atom_string( token ) ){  append( rtnTree , empty_atom() );  }  
+                // 8. Case literal
+                else{  append( rtnTree , atomize_string( token ) );  }
+            }
+        }
+        // 9. Return the constructed tree
+        return rtnTree;
+    }else{ // 10. else there were no tokens, return Empty
+        return empty_atom();
+    }
+}
+
+Atom* expression_from_string( string expStr, dchar sepChar = ' ' ){
+    // Tokenize the `expStr`, express it as a nested cons struct, and return
+    string[] tokens = tokenize( expStr, sepChar );
+    writeln( tokens );
+    return consify_token_sequence( tokens );
+}
 
 void main(){
     // SPARROW Init //
@@ -320,4 +394,9 @@ void main(){
     // Parsing Tests //
     writeln( p_float_string( "42.5" ) );
     writeln( p_float_string( "foo" ) );
+
+    // Lexing Tests //
+    string exprStr1 = "(cons a b)";
+    Atom*  exprLsp1 = expression_from_string( exprStr1 );
+    writeln( str( exprLsp1 ) );
 }
