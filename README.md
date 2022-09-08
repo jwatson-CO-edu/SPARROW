@@ -90,6 +90,8 @@ Completion Key:
 [ ] Parse "Easy S-Expressions" instead: 2022-04-19, Ignore whitespace except to separate symbols
     [ ] Implicit open paren, `;` is close paren
     [ ] <funcName> <arg1> ... <argN>;
+    [ ] T: Parse and run a plaintext file
+        [ ] E: File extension: .BRD, .SPW, .FNC,
     [ ] Program Blocks:
         [ ] Curly Braces {}
         [ ] Pythonic / Implicit
@@ -98,16 +100,20 @@ Completion Key:
     [ ] Line Continuation: `\+`    
     [ ] T: Translate and repeat all REPLacement tests!
 [ ] Evaluate "The Seasoned Schemer" for useful features and structures (If yes, then expand this bullet with REQUIRED topics ONLY )
+[ ] Atom Size Reduction
+    [ ] Try unions: 1{car, str, num} + 2{cdr, err}
+    [ ] T: Size of Union -vs- Speed of computation
+        * "Fat Atoms" might be faster if we can assume the components are always there
+        * Do "Slim Atoms" offer any performance improvements other than memory usage?
 [ ] Experiment with memory models
     [ ] Q: Which is faster? 
         * Pointer
-        * Reference
         * Copy
     [ ] Q: Is selective compilation possible in Dlang?
         [ ] T: If so, test a program that requires selective compilation in order to be compatible w/ Windows
     [ ] Read: How does Dlang allocate memory?
     [ ] Q: Can a block of "null pointer" memory be allocated?
-    [ ] Q: Can a large array of variant `Atoms` be allocated? What is the per-unit size in memory?
+    [ ] Q: Can a large array of `Atoms` be allocated? 
     [ ] T: Which is faster; (Pre-allocated block -vs- Dynamic vars); Create 1000 vars and assign randomly for 10k steps
 [ ] E: Evaluate "Practical Common Lisp" (PCL) for useful features and structures (If yes, then expand this bullet with REQUIRED topics ONLY )
 [ ] E: R6RS, Complete Scheme without Error System
@@ -115,8 +121,9 @@ Completion Key:
 [ ] E: Identify Philosophical Differences
     [ ] Identify Dynamic Typing, Where does the language burn time matching?
     [ ] Identify where value history can be built
-[ ] E: Windows-compatible SPARROW?
-[ ] E: File extension: .BRD, .SPW, .FNC,
+[ ] T: Will SPARROW compile & run in Windows without modification?
+
+
 ```
 ## Phase 2: Learn Flow-Based Programming -- FINCH
 ```
@@ -159,15 +166,20 @@ Completion Key:
         [ ] `_<bloc>(-v){...}`: Verbatim, do not wrap in its own context!, instead add to existing context
 [ ] Pharo (SmallTalk) Mooc (Listen only)
     [ ] Evaluate save states
+[ ] Q: What are the advantages of a SmallTalk save state?  When have you ever wished for this? 
+    * A: I use saved vars in Jupyter all the time
 ```
 
 ## Phase 4: Learn Parallel Programming -- FINCH
 ```
 [ ] Concurrency Model & Scheduling
     [ ] Dlang Threads   in Linux and Windows
+        [ ] Q: Managed by the interpreter?
     [ ] Dlang Processes in Linux and Windows
+        [ ] Q: Managed by the BIRDBOX?
     [ ] READ: "Actors" by Gul Agha
-    [ ] Petri Representation? (Value Dependency/History Graph)
+[ ] E: Petri Representation? 
+    [ ] Value Dependency/History Graph
 [ ] Types of Sync
     [ ] Hard Sync: Must wait for an updated value
     [ ] Soft Sync: Retrieves the current value as soon as the mutex allows, regardless of whether or not it is ``fresh''
@@ -176,7 +188,6 @@ Completion Key:
     [ ] Pull Model
 [ ] Tick/Lockstep
 [ ] How much of ROS do I need?
-[ ] Value Dependency Graph
 [ ] Interpreter Program
     [ ] Inter-process connections
 [ ] Parallel Test 1
@@ -186,7 +197,7 @@ Completion Key:
         [ ] Multi-Process
     [ ] Run Comparison Test
     [ ] Document Results
-    [ ] Petri Rep for Parallel Test 1
+    [ ] Petri Rep for Parallel Test 1 ?
 ```
 
 ## Phase 5: Basic Cognitive Architecture -- CORVID
