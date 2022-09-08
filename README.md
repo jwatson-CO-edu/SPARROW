@@ -75,15 +75,10 @@ Completion Key:
 
 ## Phase 1: Learn Computer Language Design via Scheme -- SPARROW
 ```
-[ ] Translate first "ab_" evaluator to Dlang
-    [ ] All Functions Implemented
-    [ ] All tests pass
-    [ ] Q: How big is each `Atom`?
-            Size of a number: ?
-            Size of a NULL:   ?
-            Size of a String: ?
-            Size of a cons:   ?
-            Size of an error: ?
+[Y] Translate first "ab_" evaluator to Dlang - 2022-09-07: COMPLETE
+    [Y] All Functions Implemented - 2022-09-07: Nim had pointer references, so some implementation needed changing
+    [Y] All tests pass - 2022-09-07: No Nim tests had been written for variable binding, so these functions were not implemented
+    [Y] Q: How big is each `Atom`? - 2022-09-07: 64 bytes for all kinds because strings are pointers
 [ ] Translate second "ac_" evaluator to Dlang
     [ ] All Functions Implemented
     [ ] All tests pass

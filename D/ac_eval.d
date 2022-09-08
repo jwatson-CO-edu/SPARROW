@@ -5,9 +5,8 @@
 
    rdmd ab_eval.d
    
-   https://github.com/jwatson-CO-edu/FINCH/blob/main/Nim/10_Cpp_Eval/ab_eval.nim
+   https://github.com/jwatson-CO-edu/FINCH/blob/main/Nim/10_Cpp_Eval/ac_eval.nim
    James Watson, 2022-09 */
-
 
 ////////// INIT ////////////////////////////////////////////////////////////////////////////////////
 
@@ -352,53 +351,26 @@ Atom* expression_from_string( string expStr, dchar sepChar = ' ' ){
 
 // 2022-09-07: All tests PASS!
 
+
+
+////////// ENVIRONMENT /////////////////////////////////////////////////////////////////////////////
+
+struct Env{
+    Env* /*----*/ parent = null; // Pointer to the environment that contains this one
+    Atom*[] /*-*/ freeVars; // ---- Free  variables, without binding
+    Atom*[string] boundVars; // --- Bound variables, have names given to them by statements
+}
+
+// FIXME: START HERE
+
+
+////////// MAIN ////////////////////////////////////////////////////////////////////////////////////
+
 void main(){
     // SPARROW Init //
     init_reserved();
     
-    // Atom Tests //
-    Atom* mt = empty_atom(); 
-    writeln( mt ); // Address of new atom
-    writeln( p_empty( mt ) ); // true
-    writeln( p_has_error( mt ) ); // true
-    Atom* atm1 = make_number( 2 );
-    Atom* atm2 = make_number( 3 );
-    Atom* atm3 = make_cons( atm1, atm2 );
-    writeln( p_cons( atm2 ) ); // false
-    writeln( p_cons( atm3 ) ); // true
-    Atom* atm4 = consify_atom( atm2 );
-    writeln( p_cons( atm4 ) ); // true
-    Atom* atm5 = make_error( F_Error.NAN, "Invalid number string" );
+    Env* env = new Env();
 
-    // String Representation Tests //
-    writeln( str( mt ) ); // - ⧄
-    writeln( str( atm1 ) ); // 2
-    writeln( str( atm3 ) ); // ( 2, 3 )
-    writeln( str( atm4 ) ); // ( 3, ⧄ )
-    append( atm4, make_number( 4 ) );
-    append( atm4, make_number( 5 ) );
-    append( atm4, make_number( 6 ) );
-    writeln( str( atm4 ) ); // ( 3, ( 4, ( 5, ( 6, ⧄ ) ) ) )
-    writeln( str( atm5 ) ); // ( ERROR: NAN, Invalid number string )
-
-    // Lexing Tests //
-    writeln( find_reserved( "(" ) ); // - open_parn
-    writeln( find_reserved( ")" ) ); // - clos_parn
-    writeln( find_reserved( "foo" ) ); // <nothing>
-
-    string   exprString1 = "(foo a b)";
-    string[] exprTokens1 = tokenize( exprString1 );
-    writeln( exprTokens1 ); // ["(", "foo", "a", "b", ")"]
-
-    // Parsing Tests //
-    writeln( p_float_string( "42.5" ) );
-    writeln( p_float_string( "foo" ) );
-
-    // Lexing Tests //
-    string exprStr1 = "(cons a b)";
-    Atom*  exprLsp1 = expression_from_string( exprStr1 );
-    writeln( str( exprLsp1 ) );
-
-    // Size Tests //
-    writeln( "An `Atom` is ", Atom.sizeof, " bytes." );
+    // FIXME: TRY STORING SOME FREE VARS AND ITERATING OVER THEM
 }
