@@ -361,7 +361,23 @@ struct Env{
     Atom*[string] boundVars; // --- Bound variables, have names given to them by statements
 }
 
-// FIXME: START HERE
+// 2022-09-08: All tests PASS!
+
+void bind_atom( Env* env, string name, Atom* atom ){
+    // Bind an `atom` to a `name` by adding it to the mapping, If the name already exists, it will be updated
+    env.boundVars[ name ] = atom;
+}
+
+bool p_binding_exists( Env* env, string name ){
+    // Return T if the binding exists in the `boundVars` of `env`, otherwise return F
+    return (name in env.boundVars) !is null;
+}
+
+Atom* get_bound_atom( Env* env, string name ){
+    // Return the atom bound to `name`, if it exists, Otherwise return an empty atom
+    if( p_binding_exists( env, name ) ){  return env.boundVars[ name ];  }
+    else{  return empty_atom();  }
+}
 
 
 ////////// MAIN ////////////////////////////////////////////////////////////////////////////////////
@@ -370,7 +386,17 @@ void main(){
     // SPARROW Init //
     init_reserved();
     
+    // Context Tests //
     Env* env = new Env();
 
-    // FIXME: TRY STORING SOME FREE VARS AND ITERATING OVER THEM
+    env.freeVars ~= make_number( 1 );
+    env.freeVars ~= make_number( 2 );
+    env.freeVars ~= make_number( 3 );
+
+    foreach( Atom* atm; env.freeVars ){  write( str( atm ), " " );  }  writeln(); // 1 2 3
+
+    bind_atom( env, "foo", make_string( "bar" ) );
+    writeln( p_binding_exists( env, "foo" ) ); // true
+    writeln( str( get_bound_atom( env, "foo" ) ) ); // bar
+    writeln( str( get_bound_atom( env, "baz" ) ) ); // ⧄ // DNE in this env
 }

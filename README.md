@@ -79,12 +79,14 @@ Completion Key:
     [Y] All Functions Implemented - 2022-09-07: Nim had pointer references, so some implementation needed changing
     [Y] All tests pass - 2022-09-07: No Nim tests had been written for variable binding, so these functions were not implemented
     [Y] Q: How big is each `Atom`? - 2022-09-07: 64 bytes for all kinds because strings are pointers
-[ ] Translate second "ac_" evaluator to Dlang
-    [ ] All Functions Implemented
-    [ ] All tests pass
+[Y] Translate second "ac_" evaluator to Dlang - 2022-09-08: COMPLETE
+    [Y] All Functions Implemented - 2022-09-08: COMPLETE
+    [Y] All tests pass - 2022-09-08: Environment bound and unbound variables implemented, are ref counts needed?
+
 [ ] Translate "The Little Javascripter" by Douglas Crockford
     https://www.crockford.com/little.html (See `JS` folder for reference implementation)
-    [ ] T: Repeat all REPLacement tests!
+    [ ] T: All REPLacement tests pass
+    
 [ ] Parse "Easy S-Expressions" instead: 2022-04-19, Ignore whitespace except to separate symbols
     [ ] Implicit open paren, `;` is close paren
     [ ] <funcName> <arg1> ... <argN>;
