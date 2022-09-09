@@ -118,8 +118,11 @@ Atom* make_cons( Atom* car = null, Atom* cdr = null, ){
 
 // Getters and Setters //
 
-Atom* get_car( Atom* atm ){  return atm.car;  } // Get left  pair item
-Atom* get_cdr( Atom* atm ){  return atm.cdr;  } // Get right pair item
+Atom* get_car( Atom* atm ){  return atm.car;  } // ---------------------- Get left  pair item
+Atom* get_cdr( Atom* atm ){  return atm.cdr;  } // ---------------------- Get right pair item
+Atom* first(   Atom* atm ){  return get_car(atm);  } // ----------------- Return the first item of an LS pair
+Atom* second(  Atom* atm ){  return get_car(get_cdr(atm));  } // -------- Return the second item in a list, (cadr l)
+Atom* third(   Atom* atm ){  return get_car(get_cdr(get_cdr(atm)));  } // Return the third item of 'l', (caddr l)
 
 
 bool set_car_B( Atom* atm, Atom* carAtm ){  
@@ -138,10 +141,7 @@ bool set_cdr_B( Atom* atm, Atom* cdrAtm ){
 } 
 
 
-////////// LIST PROCESSING /////////////////////////////////////////////////////////////////////////
-
-
-///// Type Tests ////////////////////////////////
+////////// PREDICATES //////////////////////////////////////////////////////////////////////////////
 
 bool p_empty( Atom* atm ){  
     //- Atom either has the `NOVALUE` code or is null
@@ -149,6 +149,11 @@ bool p_empty( Atom* atm ){
 } 
 bool p_has_error( Atom* atm ){  return (atm.err != F_Error.OKAY);  } // Atom has any code other than `OKAY`
 bool p_cons( Atom* atm ){  return (atm.kind == F_Type.CONS);  } // ---- Return true if Atom is a pair
+bool p_literal( Atom* atm ){  return (atm.kind == F_Type.NMBR) || (atm.kind == F_Type.STRN);  }
+
+
+
+////////// LIST PROCESSING /////////////////////////////////////////////////////////////////////////
 
 
 ///// Accessing & Constructing ///////////////////
@@ -201,10 +206,12 @@ Atom* append( Atom* list, Atom* atm = null ){
 
 Atom* make_list_of_2( Atom* atm1, Atom* atm2 ){
     // return a two-item list with 's1' as the first item and 's2' as the second item
-    // FIXME: START HERE
+    return make_cons( atm1, make_cons(atm2, empty_atom));
 }
 
-// function make_list_of_2(s1, s2){ return make_cons(s1, make_cons(s2, null)); } // return a two-item list with 's1' as the first item and 's2' as the second item
+
+
+
 
 
 
@@ -234,6 +241,8 @@ string str( Atom* item ){
     }
     return rtnStr;
 }
+
+void prnt( Atom* atm ){  writeln( str( atm ) );  } // Print a cons structure
 
 
 ////////// LEXING //////////////////////////////////////////////////////////////////////////////////
@@ -290,6 +299,8 @@ string[] tokenize( string expStr, dchar sepChar = ' ' ){
 
 ////////// PARSING /////////////////////////////////////////////////////////////////////////////////
 
+///// Predicates /////
+
 bool p_float_string( string inputStr ){
     string slimStr = strip( inputStr );
     try{
@@ -310,6 +321,8 @@ bool p_empty_atom_string( string inputStr ){
     if( inputStr == "[/]" ){ /*-----*/ return true;  }
     return false;
 }
+
+///// Text Processing /////
 
 Atom* atomize_string( string token ){
     // Convert a string token into a non-cons atom
@@ -412,4 +425,13 @@ void main(){
     init_reserved();
     init_env();
     
+    // Structure Tests //
+    Atom* list1 = make_list_of_2( make_number(2), make_number(3) );
+    writeln( str( list1 ) );
+    append( list1, make_number(4) );
+    append( list1, make_number(5) );
+    writeln( str( list1 ) );
+    prnt( first( list1 ) );
+    prnt( second( list1 ) );
+    prnt( third( list1 ) );
 }

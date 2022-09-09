@@ -128,6 +128,7 @@ function third(l){ return get_car(get_cdr(get_cdr(l))); } // return the third it
 function p_cons(a){ return a && typeof a === 'object' && a.constructor === Array; }
 function p_literal(a){ return typeof a === 'string' || typeof a === 'number' || typeof a === 'boolean'; } // 'a' is any of String, Number, or Boolean
 function p_Null(a){ return typeof a === 'undefined' || (typeof a === 'object' && !a); } // is undefined or a false-like object
+// 2022-09-09, Dlang: The following predicates are delayed until further decisions about the implementation
 function p_eq(s, t){ return s === t; } // Args are strictly equivalent
 function p_number(a){ return isFinite(a); } // URL: http://www.w3schools.com/jsref/jsref_isfinite.asp
 function p_boolean(a){ return typeof a === 'boolean'; }
