@@ -33,6 +33,7 @@ enum F_Type{
     STRN, // String/Symbol
     NMBR, // Number
     EROR, // Error object
+    BOOL, // Boolean value
     // NULL, // Null // 2022-09-03: Trying it w/o NULL
 }
 
@@ -43,7 +44,8 @@ struct Atom{
     Atom*   car; // ----------------- Left  `Atom` Pointer
     Atom*   cdr; // ----------------- Right `Atom` Pointer
     double  num; // ----------------- Number value
-    string  str; // ----------------- String value, currently limited to 16 characters
+    string  str; // ----------------- String value, D-string underlies
+    bool    bul; // ----------------- Boolean value
     F_Error err = F_Error.NOVALUE; /* Error code, 2022-09-03: Any atom can have an error code
                                       Instead of NULL, we can ask the Atom if it has a fault code assigned to it */
 }
@@ -57,6 +59,7 @@ Atom* empty_atom(){
         null,
         double.nan,
         "NO VALUE",
+        false,
         F_Error.NOVALUE
     );
 }
@@ -70,6 +73,7 @@ Atom* make_string( string str ){
         null,
         double.nan,
         str,
+        (str.length > 0),
         F_Error.OKAY
     );
 }
@@ -83,6 +87,7 @@ Atom* make_number( double nmbr ){
         null,
         nmbr,
         "",
+        (nmbr > 0.0),
         F_Error.OKAY
     );
 }
@@ -95,10 +100,23 @@ Atom* make_error( F_Error code, string msg ){
         null,
         double.nan,
         msg,
+        false,
         code
     );
 }
 
+Atom* make_bool( bool val ){
+    // Make an error
+    return new Atom(
+        F_Type.BOOL,
+        null,
+        null,
+        double.nan,
+        "",
+        val,
+        F_Error.OKAY
+    );
+}
 
 ///// Cons /////
 
@@ -113,6 +131,7 @@ Atom* make_cons( Atom* car = null, Atom* cdr = null, ){
         cdr,
         double.nan,
         "",
+        true,
         F_Error.OKAY
     );
 }
@@ -162,9 +181,10 @@ bool p_empty( Atom* atm ){
 } 
 bool p_has_error( Atom* atm ){  return (atm.err != F_Error.OKAY);  } // Atom has any code other than `OKAY`
 bool p_cons( Atom* atm ){  return (atm.kind == F_Type.CONS);  } // ---- Return true if Atom is a pair
-bool p_literal( Atom* atm ){  return (atm.kind == F_Type.NMBR) || (atm.kind == F_Type.STRN);  }
+bool p_literal( Atom* atm ){  return (atm.kind == F_Type.NMBR) || (atm.kind == F_Type.STRN) || (atm.kind == F_Type.BOOL);  }
 bool p_number( Atom* atm ){  return (atm.kind == F_Type.NMBR);  }
 bool p_string( Atom* atm ){  return (atm.kind == F_Type.STRN);  }
+bool p_bool( Atom* atm ){  return (atm.kind == F_Type.BOOL);  }
 
 
 ////////// MATHEMATICS /////////////////////////////////////////////////////////////////////////////
@@ -338,6 +358,10 @@ string str( Atom* item ){
         switch( item.kind ){
             case F_Type.STRN:
                 rtnStr = item.str;
+                break;
+            case F_Type.BOOL:
+                if( item.bul ){  rtnStr = "T";  }
+                else{            rtnStr = "F";  }
                 break;
             case F_Type.NMBR:
                 rtnStr = item.num.to!string();
@@ -532,6 +556,8 @@ void init_env(){
 
 ////////// INTERPRETATION && EXECUTION /////////////////////////////////////////////////////////////
 
+///// Scheme --to-> D ////////////////////////////
+
 double[] flatten_double_list( Atom* dbblList ){
     // Take a LISP list of numbers and convert to a Dlang dyn. array
     Atom*    currCons = dbblList;
@@ -543,9 +569,8 @@ double[] flatten_double_list( Atom* dbblList ){
     return rtnArr;
 }
 
-
 string[] flatten_string_list( Atom* strnList ){
-    // Take a LISP list of numbers and convert to a Dlang dyn. array
+    // Take a LISP list of strings and convert to a Dlang dyn. array
     Atom*    currCons = strnList;
     string[] rtnArr;
     while( !p_empty( currCons ) ){
@@ -555,6 +580,57 @@ string[] flatten_string_list( Atom* strnList ){
     return rtnArr;
 }
 
+Atom*[] flatten_atom_list( Atom* atomList ){
+    // Take a LISP list of Atoms and convert to a Dlang dyn. array
+    Atom*   currCons = strnList;
+    Atom*[] rtnArr;
+    while( !p_empty( currCons ) ){
+        if( p_string( currCons.car ) ){  rtnArr ~= currCons.car;  }
+        currCons = currCons.cdr;
+    }
+    return rtnArr;
+}
+
+///// D --to-> Scheme ////////////////////////////
+
+struct Payload{ // https://forum.dlang.org/post/tcnpomjpodsveowbzgdd@forum.dlang.org
+    // Container struct of interpreted data
+    double[] dbbls;
+    string[] strns;
+    Atom*[]  atoms;
+    // Probably others ...
+}
+
+///// Primitive Helpers /////
+
+// FIXME: START HERE
+// FIXME: all_atoms_same_type( Atom*[] atoms ){...}
+
+///// Primitives /////
+
+Atom* function( Payload )[string] primitives;
+Payload function( Atom* )[string] gatherers;
+
+void init_primitives(){
+    primitives["true"]  = function Atom*( Payload args ){  return make_bool(true);   };
+    primitives["#t"]    = function Atom*( Payload args ){  return make_bool(true);   };
+    primitives["false"] = function Atom*( Payload args ){  return make_bool(false);  };
+    primitives["#f"]    = function Atom*( Payload args ){  return make_bool(false);  };
+    
+    primitives["atom?"] = function Atom*( Payload args ){
+        // Test if atom is a literal
+        if( p_literal( args.atoms[0] ) ){  return make_bool(true);  }
+        else{  return make_bool(false);  }
+    };
+
+    primitives["eq?"] = function Atom*( Payload args ){
+        if( args.atoms.length > 1 ){
+            F_Type typ0 = args.atoms
+        }else{  return make_bool(false);  }
+    }
+
+
+}
 
 
 ////////// MAIN ////////////////////////////////////////////////////////////////////////////////////
