@@ -143,6 +143,7 @@ function p_function(a){ return typeof a === 'function'; } // Arg is a JS functio
 function add1(n){ return n ? n + 1 :  1; } // returns the first argument plus  1, returns  1 if no argument given
 function sub1(n){ return n ? n - 1 : -1; } // returns the first argument minus 1, returns -1 if no argument given
 
+
 // URL: http://stackoverflow.com/questions/2141520/javascript-variable-number-of-arguments-to-function
 function plus(){ // sums an arbitrary number of arguments, returns 0 if no args given
 	var sum = 0;

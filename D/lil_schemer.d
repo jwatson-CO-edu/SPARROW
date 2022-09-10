@@ -14,6 +14,7 @@ import std.string; // `string` type
 import std.stdio; //- `writeln`
 import std.conv; // - string conversions
 import std.uni; // -- `strip`
+import std.math.operations; // `NaN`
 
 ///// Env Vars /////
 bool _DEBUG_VERBOSE = true;
@@ -116,8 +117,9 @@ Atom* make_cons( Atom* car = null, Atom* cdr = null, ){
     );
 }
 
-// Getters and Setters //
+///// Getters and Setters ////////////////////////
 
+// Basic Getters //
 Atom* get_car( Atom* atm ){  return atm.car;  } // ---------------------- Get left  pair item
 Atom* get_cdr( Atom* atm ){  return atm.cdr;  } // ---------------------- Get right pair item
 Atom* first(   Atom* atm ){  return get_car(atm);  } // ----------------- Return the first item of an LS pair
@@ -125,6 +127,17 @@ Atom* second(  Atom* atm ){  return get_car(get_cdr(atm));  } // -------- Return
 Atom* third(   Atom* atm ){  return get_car(get_cdr(get_cdr(atm)));  } // Return the third item of 'l', (caddr l)
 
 
+// Aliased Getters //
+Atom* condLinesOf( Atom* atm ){  return get_cdr( atm );   }
+Atom* tableOf(     Atom* atm ){  return first( atm );     }
+Atom* questionOf(  Atom* atm ){  return first( atm );     }
+Atom* textOf(      Atom* atm ){  return second( atm );    }
+Atom* formalsOf(   Atom* atm ){  return second( atm );    }
+Atom* answerOf(    Atom* atm ){  return second( atm );    }
+Atom* bodyOf(      Atom* atm ){  return third( atm );     }
+
+
+// Basic Setters //
 bool set_car_B( Atom* atm, Atom* carAtm ){  
     // Set left  pair item
     // if( carAtm != null ){  atm.err = F_Error.OKAY;  }
@@ -150,7 +163,111 @@ bool p_empty( Atom* atm ){
 bool p_has_error( Atom* atm ){  return (atm.err != F_Error.OKAY);  } // Atom has any code other than `OKAY`
 bool p_cons( Atom* atm ){  return (atm.kind == F_Type.CONS);  } // ---- Return true if Atom is a pair
 bool p_literal( Atom* atm ){  return (atm.kind == F_Type.NMBR) || (atm.kind == F_Type.STRN);  }
+bool p_number( Atom* atm ){  return (atm.kind == F_Type.NMBR);  }
+bool p_string( Atom* atm ){  return (atm.kind == F_Type.STRN);  }
 
+
+////////// MATHEMATICS /////////////////////////////////////////////////////////////////////////////
+
+///// Dlang Math /////
+double add1( double n ){  return n + 1.0;  }
+double sub1( double n ){  return n - 1.0;  }
+
+double add(double[] args){ 
+    // sums an arbitrary number of arguments, returns 0 if no args given
+    // typesafe variadic function: https://dlang.org/spec/function.html#typesafe_variadic_functions
+    double sum = 0.0;
+    foreach (double x; args)
+        sum += x;
+    return sum;
+}
+
+double minus(double[] args){ 
+    // returns the difference between the first arg and all subsequent args, returns NaN if no args given
+    if( args.length == 0 ){
+        return NaN(0);
+    }else if( args.length == 1 ){
+        return args[0];
+    }else{
+        double total = args[0];
+        foreach (double x; args[1..$])
+            total -= x;
+        return total;
+    }
+    return NaN(0);
+}
+
+
+double multiply(double[] args){ 
+    // returns the product of an arbitrary number of arguments, returns 1 if no args given
+    // typesafe variadic function: https://dlang.org/spec/function.html#typesafe_variadic_functions
+    double prod = 1.0;
+    foreach (double x; args)
+        prod *= x;
+    return prod;
+}
+
+
+double divide(double[] args){ 
+    // returns the quotient of the first agument divided by every subsequent argument, returns 1 if no args given
+    // typesafe variadic function: https://dlang.org/spec/function.html#typesafe_variadic_functions
+    double quot = 1.0;
+    foreach (double x; args)
+        quot /= x;
+    return quot;
+}
+
+
+bool lt(double[] args){
+    if( args.length < 2 ){  return false;  }
+    else{
+        double last = args[0];
+        foreach (double x; args[1..$]){
+            if( last >= x ){  return false;  }
+            last = x;
+        }
+        return true;
+    }
+}
+
+
+bool gt(double[] args){
+    if( args.length < 2 ){  return false;  }
+    else{
+        double last = args[0];
+        foreach (double x; args[1..$]){
+            if( last <= x ){  return false;  }
+            last = x;
+        }
+        return true;
+    }
+}
+
+
+bool le(double[] args){
+    if( args.length < 2 ){  return false;  }
+    else{
+        double last = args[0];
+        foreach (double x; args[1..$]){
+            if( last > x ){  return false;  }
+            last = x;
+        }
+        return true;
+    }
+}
+
+
+bool ge(double[] args){
+    if( args.length < 2 ){  return false;  }
+    else{
+        double last = args[0];
+        foreach (double x; args[1..$]){
+            if( last < x ){  return false;  }
+            last = x;
+        }
+        return true;
+    }
+}
 
 
 ////////// LIST PROCESSING /////////////////////////////////////////////////////////////////////////
@@ -208,11 +325,6 @@ Atom* make_list_of_2( Atom* atm1, Atom* atm2 ){
     // return a two-item list with 's1' as the first item and 's2' as the second item
     return make_cons( atm1, make_cons(atm2, empty_atom));
 }
-
-
-
-
-
 
 
 ///// Printing ///////////////////////////////////
@@ -418,6 +530,33 @@ void init_env(){
 }
 
 
+////////// INTERPRETATION && EXECUTION /////////////////////////////////////////////////////////////
+
+double[] flatten_double_list( Atom* dbblList ){
+    // Take a LISP list of numbers and convert to a Dlang dyn. array
+    Atom*    currCons = dbblList;
+    double[] rtnArr;
+    while( !p_empty( currCons ) ){
+        if( p_number( currCons.car ) ){  rtnArr ~= currCons.car.num;  }
+        currCons = currCons.cdr;
+    }
+    return rtnArr;
+}
+
+
+string[] flatten_string_list( Atom* strnList ){
+    // Take a LISP list of numbers and convert to a Dlang dyn. array
+    Atom*    currCons = strnList;
+    string[] rtnArr;
+    while( !p_empty( currCons ) ){
+        if( p_string( currCons.car ) ){  rtnArr ~= currCons.car.str;  }
+        currCons = currCons.cdr;
+    }
+    return rtnArr;
+}
+
+
+
 ////////// MAIN ////////////////////////////////////////////////////////////////////////////////////
 
 void main(){
@@ -434,4 +573,28 @@ void main(){
     prnt( first( list1 ) );
     prnt( second( list1 ) );
     prnt( third( list1 ) );
+
+    // Math Tests //
+    writeln( add1(2) ); // 3
+    writeln( sub1(2) ); // 1
+    writeln( add([2.0,3.0,4.0]) ); // 9
+    writeln( minus([2,3,4]) ); // -5
+    writeln( lt([2,3,4]) ); // true
+    writeln( lt([2,3,3]) ); // false
+    writeln( gt([4,3,2]) ); // true
+    writeln( gt([4,3,3]) ); // false
+    writeln( le([2,3,3]) ); // true
+    writeln( le([2,3,1]) ); // false
+    writeln( ge([4,3,3]) ); // true
+    writeln( ge([4,3,5]) ); // false
+
+    // Interpreter Tests //
+    writeln( flatten_double_list( list1 ) ); // [2, 3, 4, 5]
+    Atom* list2 = make_list_of_2( make_string( "foo" ), make_string( "bar" ) );
+    append( list2, make_string( "baz" ) );
+    append( list2, make_string( "xur" ) );
+    append( list2, make_string( "tef" ) );
+    writeln( flatten_string_list( list2 ) ); // ["foo", "bar", "baz", "xur", "tef"]
+
+
 }
