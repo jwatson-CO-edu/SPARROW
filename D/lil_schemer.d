@@ -608,24 +608,50 @@ struct Payload{ // https://forum.dlang.org/post/tcnpomjpodsveowbzgdd@forum.dlang
 
 ///// Primitives /////
 
-Atom* function( Payload )[string] primitives;
-Payload function( Atom* )[string] gatherers;
+Atom* function( Atom* )[string] primitiveFunctions;
+Atom* function()[string] /*--*/ primitiveSymbols;
+
 
 void init_primitives(){
-    primitives["true"]  = function Atom*( Payload args ){  return make_bool(true);   };
-    primitives["#t"]    = function Atom*( Payload args ){  return make_bool(true);   };
-    primitives["false"] = function Atom*( Payload args ){  return make_bool(false);  };
-    primitives["#f"]    = function Atom*( Payload args ){  return make_bool(false);  };
+
+    /// Zero Arguments ///
+
+    primitiveSymbols["true"]  = function Atom*(){  return make_bool(true);   };
+    primitiveSymbols["#t"]    = function Atom*(){  return make_bool(true);   };
+    primitiveSymbols["false"] = function Atom*(){  return make_bool(false);  };
+    primitiveSymbols["#f"]    = function Atom*(){  return make_bool(false);  };
     
-    primitives["atom?"] = function Atom*( Payload args ){
+    /// One Argument ///
+
+    primitiveFunctions["atom?"] = function Atom*( Atom* args ){
         // Test if atom is a literal
-        if( p_literal( args.atoms[0] ) ){  return make_bool(true);  }
+        if( p_literal( first( args ) ) ){  return make_bool(true);  }
         else{  return make_bool(false);  }
     };
 
-    primitives["eq?"] = function Atom*( Payload args ){
-        if( args.atoms.length > 1 ){
-            F_Type typ0 = args.atoms
+
+    /// Many Arguments ///
+
+    primitiveFunctions["eq?"] = function Atom*( Atom* args ){
+        Atom*[] atoms = flatten_atom_list( args )
+        if( atoms.length > 1 ){
+            F_Type typ0 = atoms[0].kind;
+            foreach(Atom* atm; args[1..$]){  if(atm.kind != typ0){  return false;  }  }
+            // NOTE: WOULD BE NICE TO USE A `Variant` HERE? (loops) (Algebraic?)
+            switch( typ0 ){
+                case F_Type.STRN:
+                    string val0 = atoms[0].str;
+                    foreach(Atom* atm; args[1..$]){  if(atm.str != val0){  return false;  }  }
+                case F_Type.NMBR:
+                    string val0 = atoms[0].num;
+                    foreach(Atom* atm; args[1..$]){  if(atm.num != val0){  return false;  }  }
+                case F_Type.BOOL:
+                    string val0 = atoms[0].bul;
+                    foreach(Atom* atm; args[1..$]){  if(atm.bul != val0){  return false;  }  }
+                default: 
+                    return make_bool(false);
+            }
+            return make_bool(true);       
         }else{  return make_bool(false);  }
     }
 
