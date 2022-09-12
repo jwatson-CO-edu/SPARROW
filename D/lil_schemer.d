@@ -17,7 +17,7 @@ import std.uni; // -- `strip`
 import std.math.operations; // `NaN`
 
 ///// Env Vars /////
-bool _DEBUG_VERBOSE = true;
+bool _DEBUG_VERBOSE = false;
 
 
 ////////// ATOMS ///////////////////////////////////////////////////////////////////////////////////
@@ -148,7 +148,9 @@ Atom* third(   Atom* atm ){  return get_car(get_cdr(get_cdr(atm)));  } // Return
 
 // Aliased Getters //
 Atom* condLinesOf( Atom* atm ){  return get_cdr( atm );   }
+Atom* argsOf(      Atom* atm ){  return get_cdr( atm );   }
 Atom* tableOf(     Atom* atm ){  return first( atm );     }
+Atom* nameOf(      Atom* atm ){  return first( atm );     }
 Atom* questionOf(  Atom* atm ){  return first( atm );     }
 Atom* textOf(      Atom* atm ){  return second( atm );    }
 Atom* formalsOf(   Atom* atm ){  return second( atm );    }
@@ -185,6 +187,7 @@ bool p_literal( Atom* atm ){  return (atm.kind == F_Type.NMBR) || (atm.kind == F
 bool p_number( Atom* atm ){  return (atm.kind == F_Type.NMBR);  }
 bool p_string( Atom* atm ){  return (atm.kind == F_Type.STRN);  }
 bool p_bool( Atom* atm ){  return (atm.kind == F_Type.BOOL);  }
+bool p_zero( Atom* atm ){  return (atm.kind == F_Type.NMBR) && (atm.num == 0.0);  }
 
 
 ////////// MATHEMATICS /////////////////////////////////////////////////////////////////////////////
@@ -433,87 +436,7 @@ string[] tokenize( string expStr, dchar sepChar = ' ' ){
     
 
 
-////////// PARSING /////////////////////////////////////////////////////////////////////////////////
 
-///// Predicates /////
-
-bool p_float_string( string inputStr ){
-    string slimStr = strip( inputStr );
-    try{
-        slimStr.to!double();
-        return true;
-    }catch( ConvException e ){
-        if(_DEBUG_VERBOSE){  writeln( "CONVERSION ERROR: Cannot convert \"", slimStr, "\"" );  }
-    }
-    return false;
-}
-
-
-bool p_empty_atom_string( string inputStr ){
-    // Return T if the string is appropriate for empty atom conversion, otherwise return F
-    if( inputStr == null ){ /*------*/ return true;  }
-    if( inputStr == "" ){ /*--------*/ return true;  }
-    if( inputStr == "\xE2\xA7\x84" ){  return true;  }
-    if( inputStr == "[/]" ){ /*-----*/ return true;  }
-    return false;
-}
-
-///// Text Processing /////
-
-Atom* atomize_string( string token ){
-    // Convert a string token into a non-cons atom
-    if( p_float_string( token ) ){       return make_number( token.to!double() );  }  
-    if( p_empty_atom_string( token ) ){  return empty_atom();  }  
-   /* else assume string -------------*/ return make_string( token );
-}
-
-
-// Atom* consify_token_sequence( string[] tokens, ulong i ){
-Atom* consify_token_sequence( string[] tokens, ulong i = 0 ){
-    // Recursively render tokens as a cons structure
-    string token;
-    ulong  seqLen  = tokens.length;
-    writeln( "Got a sequence of ", seqLen, " tokens, at index ", i, " ", (seqLen-i) > 1 ) ;
-    Atom*  rtnTree = null;
-    // 1. If there are one or more strings to process, then attempt to construct a token tree
-    if( (seqLen-i) > 1 ){
-        writeln( "There are ", seqLen-i, " tokens to process." );
-        // 2. Start off by creating a cons list, if needed
-        rtnTree = make_cons();
-        // 3. For each token in the vector
-        while( i < seqLen ){
-            // 4. Fetch token at this index and update counter
-            token = tokens[i];
-            i += 1;
-            // 5. Case Open Paren
-            if( find_reserved( token ) == "open_parn" ){
-                writeln( "Open Paren" );
-                // If there is a new level of depth to the existing structure, recur
-                if( i>1 ){  rtnTree = append(  rtnTree , consify_token_sequence( tokens, i )  );  }  
-                // else this is the first level, no action
-            }else{
-                // 6. Case Close Paren, ascend one level
-                if( find_reserved( token ) == "clos_parn" ){  return rtnTree;  }  
-                // 7. Case Empty, is a list terminator
-                else if( p_empty_atom_string( token ) ){  rtnTree = append( rtnTree , empty_atom() );  }  
-                // 8. Case literal
-                else{  rtnTree = append( rtnTree , atomize_string( token ) );  }
-            }
-        }
-        // 9. Return the constructed tree
-        return rtnTree;
-    }else{ // 10. else there were no tokens, return Empty
-        return empty_atom();
-    }
-}
-
-
-Atom* expression_from_string( string expStr, dchar sepChar = ' ' ){
-    // Tokenize the `expStr`, express it as a nested cons struct, and return
-    string[] tokens = tokenize( expStr, sepChar );
-    writeln( tokens );
-    return consify_token_sequence( tokens );
-}
 
 
 
@@ -582,7 +505,7 @@ string[] flatten_string_list( Atom* strnList ){
 
 Atom*[] flatten_atom_list( Atom* atomList ){
     // Take a LISP list of Atoms and convert to a Dlang dyn. array
-    Atom*   currCons = strnList;
+    Atom*   currCons = atomList;
     Atom*[] rtnArr;
     while( !p_empty( currCons ) ){
         if( p_string( currCons.car ) ){  rtnArr ~= currCons.car;  }
@@ -603,13 +526,15 @@ struct Payload{ // https://forum.dlang.org/post/tcnpomjpodsveowbzgdd@forum.dlang
 
 ///// Primitive Helpers /////
 
-// FIXME: START HERE
-// FIXME: all_atoms_same_type( Atom*[] atoms ){...}
 
 ///// Primitives /////
 
 Atom* function( Atom* )[string] primitiveFunctions;
 Atom* function()[string] /*--*/ primitiveSymbols;
+
+
+bool p_primitve_symbol( string token ){    return (token in primitiveSymbols) !is null;  }
+bool p_primitve_function( string token ){  return (token in primitiveFunctions) !is null;  }
 
 
 void init_primitives(){
@@ -633,29 +558,196 @@ void init_primitives(){
     /// Many Arguments ///
 
     primitiveFunctions["eq?"] = function Atom*( Atom* args ){
-        Atom*[] atoms = flatten_atom_list( args )
+        Atom*[] atoms = flatten_atom_list( args );
         if( atoms.length > 1 ){
             F_Type typ0 = atoms[0].kind;
-            foreach(Atom* atm; args[1..$]){  if(atm.kind != typ0){  return false;  }  }
+            foreach(Atom* atm; atoms[1..$]){  if(atm.kind != typ0){  return make_bool(false);  }  }
             // NOTE: WOULD BE NICE TO USE A `Variant` HERE? (loops) (Algebraic?)
             switch( typ0 ){
                 case F_Type.STRN:
                     string val0 = atoms[0].str;
-                    foreach(Atom* atm; args[1..$]){  if(atm.str != val0){  return false;  }  }
+                    foreach(Atom* atm; atoms[1..$]){  if(atm.str != val0){  return make_bool(false);  }  }
+                    break;
                 case F_Type.NMBR:
-                    string val0 = atoms[0].num;
-                    foreach(Atom* atm; args[1..$]){  if(atm.num != val0){  return false;  }  }
+                    double val0 = atoms[0].num;
+                    foreach(Atom* atm; atoms[1..$]){  if(atm.num != val0){  return make_bool(false);  }  }
+                    break;
                 case F_Type.BOOL:
-                    string val0 = atoms[0].bul;
-                    foreach(Atom* atm; args[1..$]){  if(atm.bul != val0){  return false;  }  }
+                    bool val0 = atoms[0].bul;
+                    foreach(Atom* atm; atoms[1..$]){  if(atm.bul != val0){  return make_bool(false);  }  }
+                    break;
                 default: 
                     return make_bool(false);
             }
             return make_bool(true);       
         }else{  return make_bool(false);  }
+    };
+
+    primitiveFunctions["empty?"] = function Atom*( Atom* args ){
+        Atom*[] atoms = flatten_atom_list( args );
+        foreach(Atom* atm; atoms){  if( !p_empty( atm ) ){  return make_bool(false);  }  }
+        return make_bool(true);
+    };
+
+    primitiveFunctions["zero?"] = function Atom*( Atom* args ){
+        Atom*[] atoms = flatten_atom_list( args );
+        foreach(Atom* atm; atoms){  if( !p_zero( atm ) ){  return make_bool(false);  }  }
+        return make_bool(true);
+    };
+    
+    primitiveFunctions["number?"] = function Atom*( Atom* args ){
+        Atom*[] atoms = flatten_atom_list( args );
+        foreach(Atom* atm; atoms){  if( !p_zero( atm ) ){  return make_bool(false);  }  }
+        return make_bool(true);
+    };
+
+    primitiveFunctions["+"] = function Atom*( Atom* args ){
+        double[] ops = flatten_double_list( args );
+        return make_number( add( ops ) );
+    };
+
+    primitiveFunctions["-"] = function Atom*( Atom* args ){
+        double[] ops = flatten_double_list( args );
+        return make_number( minus( ops ) );
+    };
+
+    primitiveFunctions["*"] = function Atom*( Atom* args ){
+        double[] ops = flatten_double_list( args );
+        return make_number( multiply( ops ) );
+    };
+
+    primitiveFunctions["/"] = function Atom*( Atom* args ){
+        double[] ops = flatten_double_list( args );
+        return make_number( divide( ops ) );
+    };
+
+    primitiveFunctions["1+"] = function Atom*( Atom* args ){
+        Atom*[] ops = flatten_atom_list( args );
+        Atom* rtnLst;
+        if( ops.length > 1 ){
+            rtnLst = make_cons();
+            foreach(Atom* atm; ops){  if( p_number( atm ) ){  append( rtnLst, make_number( add1( atm.num ) ) );  }  }
+        }else if( ops.length == 1 )
+            rtnLst = make_cons( make_number( add1( ops[0].num ) ) );
+        return rtnLst;
+    };
+
+    primitiveFunctions["1-"] = function Atom*( Atom* args ){
+        Atom*[] ops = flatten_atom_list( args );
+        Atom* rtnLst;
+        if( ops.length > 1 ){
+            rtnLst = make_cons();
+            foreach(Atom* atm; ops){  if( p_number( atm ) ){  append( rtnLst, make_number( sub1( atm.num ) ) );  }  }
+        }else if( ops.length == 1 )
+            rtnLst = make_cons( make_number( sub1( ops[0].num ) ) );
+        return rtnLst;
+    };
+
+    primitiveFunctions["<"] = function Atom*( Atom* args ){
+        double[] ops = flatten_double_list( args );
+        return make_bool( lt( ops ) );
+    };
+
+    primitiveFunctions[">"] = function Atom*( Atom* args ){
+        double[] ops = flatten_double_list( args );
+        return make_bool( gt( ops ) );
+    };
+
+    primitiveFunctions["<="] = function Atom*( Atom* args ){
+        double[] ops = flatten_double_list( args );
+        return make_bool( le( ops ) );
+    };
+
+    primitiveFunctions[">="] = function Atom*( Atom* args ){
+        double[] ops = flatten_double_list( args );
+        return make_bool( ge( ops ) );
+    };
+}
+
+
+////////// PARSING /////////////////////////////////////////////////////////////////////////////////
+
+///// Predicates /////
+
+bool p_float_string( string inputStr ){
+    string slimStr = strip( inputStr );
+    try{
+        slimStr.to!double();
+        return true;
+    }catch( ConvException e ){
+        if(_DEBUG_VERBOSE){  writeln( "CONVERSION ERROR: Cannot convert \"", slimStr, "\"" );  }
     }
+    return false;
+}
 
 
+bool p_empty_atom_string( string inputStr ){
+    // Return T if the string is appropriate for empty atom conversion, otherwise return F
+    if( inputStr == null ){ /*------*/ return true;  }
+    if( inputStr == "" ){ /*--------*/ return true;  }
+    if( inputStr == "\xE2\xA7\x84" ){  return true;  }
+    if( inputStr == "[/]" ){ /*-----*/ return true;  }
+    return false;
+}
+
+///// Text Processing /////
+
+Atom* atomize_string( string token ){
+    // Convert a string token into a non-cons atom
+    if( p_float_string( token ) ){       return make_number( token.to!double() );  }  
+    if( p_empty_atom_string( token ) ){  return empty_atom();  }  
+    if( p_primitve_symbol( token ) ){    return primitiveSymbols[ token ]();  }
+   /* else assume string -------------*/ return make_string( token );
+}
+
+
+// Atom* consify_token_sequence( string[] tokens, ulong i ){
+Atom* consify_token_sequence( string[] tokens, ulong i = 0 ){
+    // Recursively render tokens as a cons structure
+    string token;
+    ulong  seqLen  = tokens.length;
+    // writeln( "Got a sequence of ", seqLen, " tokens, at index ", i, " ", (seqLen-i) > 1 ) ;
+    Atom*  rtnTree = null;
+    // 1. If there are one or more strings to process, then attempt to construct a token tree
+    if( (seqLen-i) > 1 ){
+        // writeln( "There are ", seqLen-i, " tokens to process." );
+        // 2. Start off by creating a cons list, if needed
+        rtnTree = make_cons();
+        // 3. For each token in the vector
+        while( i < seqLen ){
+            // 4. Fetch token at this index and update counter
+            token = tokens[i];
+            i += 1;
+            // 5. Case Open Paren
+            if( find_reserved( token ) == "open_parn" ){
+                // writeln( "Open Paren" );
+                // If there is a new level of depth to the existing structure, recur
+                if( i>1 ){  rtnTree = append(  rtnTree , consify_token_sequence( tokens, i )  );  }  
+                // else this is the first level, no action
+            }else{
+                // 6. Case Close Paren, ascend one level
+                if( find_reserved( token ) == "clos_parn" ){  return rtnTree;  }  
+                // 7. Case Empty, is a list terminator
+                else if( p_empty_atom_string( token ) ){  rtnTree = append( rtnTree , empty_atom() );  }  
+                // 8. Case literal
+                else{  rtnTree = append( rtnTree , atomize_string( token ) );  }
+            }
+        }
+        // 9. Return the constructed tree
+        return rtnTree;
+    }else if( seqLen == 1 ){
+        return atomize_string( tokens[0] );
+    }else{ // 10. else there were no tokens, return Empty
+        return empty_atom();
+    }
+}
+
+
+Atom* expression_from_string( string expStr, dchar sepChar = ' ' ){
+    // Tokenize the `expStr`, express it as a nested cons struct, and return
+    string[] tokens = tokenize( expStr, sepChar );
+    // writeln( tokens );
+    return consify_token_sequence( tokens );
 }
 
 
@@ -665,6 +757,7 @@ void main(){
     // SPARROW Init //
     init_reserved();
     init_env();
+    init_primitives();
     
     // Structure Tests //
     Atom* list1 = make_list_of_2( make_number(2), make_number(3) );
@@ -698,5 +791,29 @@ void main(){
     append( list2, make_string( "tef" ) );
     writeln( flatten_string_list( list2 ) ); // ["foo", "bar", "baz", "xur", "tef"]
 
+    // Primitive Symbol Tests //
+    Atom* expr1 = expression_from_string( "true" );
+    prnt( expr1 );
+    expr1 = expression_from_string( "false" );
+    prnt( expr1 );
+    expr1 = expression_from_string( "#t" );
+    prnt( expr1 );
+    expr1 = expression_from_string( "#f" );
+    prnt( expr1 );
 
+    // Primitive Function Tests //
+    writeln( "Primitive Function Tests" );
+    Atom* run_primitive_function( Atom* schemeForm ){
+        string name = nameOf( schemeForm ).str;
+        Atom*  args = argsOf( schemeForm );
+        if( p_primitve_function( name ) ){
+            return primitiveFunctions[ name ]( args );
+        }else{
+            return empty_atom();
+        }
+    }
+    
+    Atom* expr2;
+    expr2 = expression_from_string( "(atom? 2.5)" );
+    prnt( run_primitive_function( expr2 ) );
 }
