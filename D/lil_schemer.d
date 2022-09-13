@@ -674,6 +674,13 @@ void init_primitives(){
         double[] ops = flatten_double_list( args );
         return make_bool( ge( ops ) );
     };
+
+    primitiveFunctions["cons"] = function Atom*( Atom* args ){
+        Atom*[] atoms = flatten_atom_list( args );
+        if( atoms.length >= 2 ) return make_cons( atoms[0], atoms[1] ); // Only takes 1st two args
+        if( atoms.length == 1 ) return make_cons( atoms[0] ); // --------- One arg is accepted, other empty
+        else /*--------------*/ return make_cons(); // ------------------- Two empty accepted
+    };
 }
 
 
@@ -764,6 +771,8 @@ Atom* expression_from_string( string expStr, dchar sepChar = ' ' ){
     // writeln( tokens );
     return consify_token_sequence( tokens );
 }
+
+// 2022-09-13: Tested all current primitive symbols and functions
 
 
 ////////// MAIN ////////////////////////////////////////////////////////////////////////////////////
@@ -937,6 +946,12 @@ void main(){
     expr2 = expression_from_string( "(>= 4 5 2)" ); // F
     prnt( run_primitive_function( expr2 ) );
 
-    prnt( expression_from_string( "(atom? (2 3))" ) );
-    prnt( expression_from_string( "(2 3)" ) );
+    expr2 = expression_from_string( "(cons 4 5 2)" ); // ( 4, 5 )
+    prnt( run_primitive_function( expr2 ) );
+    expr2 = expression_from_string( "(cons 4 5)" ); // ( 4, 5 )
+    prnt( run_primitive_function( expr2 ) );
+    expr2 = expression_from_string( "(cons 4)" ); // ( 4, ⧄ )
+    prnt( run_primitive_function( expr2 ) );
+    expr2 = expression_from_string( "(cons)" ); // ( ⧄, ⧄ )
+    prnt( run_primitive_function( expr2 ) );
 }
