@@ -10,11 +10,13 @@
 
 ////////// INIT ////////////////////////////////////////////////////////////////////////////////////
 
-import std.string; // `string` type
-import std.stdio; //- `writeln`
-import std.conv; // - string conversions
-import std.uni; // -- `strip`
+///// Imports /////
+import std.string; // -------- `string` type
+import std.stdio; // --------- `writeln`
+import std.conv; // ---------- string conversions
+import std.uni; // ----------- `strip`
 import std.math.operations; // `NaN`
+import std.typecons; // ------ Tuple
 
 ///// Env Vars /////
 bool _DEBUG_VERBOSE = false; // Set true for debug prints
@@ -778,6 +780,110 @@ Atom* expression_from_string( string expStr, dchar sepChar = ' ' ){
 }
 
 // 2022-09-13: Tested all current primitive symbols and functions
+
+
+////////// SPECIAL FORMS ///////////////////////////////////////////////////////////////////////////
+struct ExprInContext{
+    // Container struct for an expression and its context
+    Atom*  expr;
+    Env*   context;
+    string tag;
+}
+
+ExprInContext function( ExprInContext )[string] specialForms; // Dictionary of forms other than func applications, implemented in Dlang
+
+
+
+
+void init_specials(){
+    // Assign functions to handle special forms
+
+    specialForms["quote"] = function ExprInContext( ExprInContext eINc ){  
+        // Passthru for expression args 
+        return ExprInContext(
+            textOf( eINc.expr ),
+            eINc.context,
+            "quote"
+        );
+    };
+    
+    specialForms["lambda"] = function ExprInContext( ExprInContext eINc ){  
+        // Package anonymous function for eval
+        return ExprInContext(
+            get_cdr( eINc.expr ),
+            eINc.context,
+            "non-primitive"
+        );
+    };
+
+    specialForms["cond"] = function ExprInContext( ExprInContext eINc ){  
+        // Package cond for eval
+        return evcon( ExprInContext(
+            condLinesOf(eINc.expr),
+            eINc.context,
+            "cond"
+        ) );
+    };
+
+    specialForms["define"] = function ExprInContext( ExprInContext eINc ){  
+        // Bind expression result to a name
+        
+        // 1. Bind name
+        bind_atom( 
+            eINc.context, // ---------- Context to bind to
+            second( eINc.expr ).str, // Name to bind
+            meaning( ExprInContext( //- Expression result to bind
+                third( eINc.expr ), // Eval this
+                eINc.context, // ----- Context for eval
+                "meaning" // --------- Eval tag
+            ) 
+        ) )
+
+        // 2. Return modified context
+        return ExprInContext(
+            second( eINc.expr ), // Name that was bound
+            eINc.context, // ------ Modified context
+            "define" // ----------- Binding tag
+        );
+    };
+
+    // FIXME: START HERE
+	
+	// "and" //:    function (e, context){ return p_Null(get_cdr(e)) ? true: $and(get_cdr(e), context); }, // handle null case or recur
+	// "or" //:	    function (e, context){ return p_Null(get_cdr(e)) ? false: $or(get_cdr(e), context); }, // handle null case or recur
+	// "load"
+
+}
+
+////////// EVALUATION //////////////////////////////////////////////////////////////////////////////
+// 2022-09-13: `atomize_string` will fetch primitive symbols, these were together w/ primitve functions in Little JS
+
+Atom* apply_primitive_function( string name, Atom* args ){
+    // Invocation of primitive function
+    if( p_primitve_function( name ) ){
+        return primitiveFunctions[ name ]( args );
+    }else{
+        return empty_atom();
+    }
+}
+
+
+Atom* list_to_action( Atom* e ){
+    // Handle expressions more complex than literals
+    // Case Special Form
+    // Case Function Application
+    return empty_atom();
+}
+
+
+Atom* expression_to_action( Atom* e ){
+    // Attempt to assign appropriate action to the given expression 'e'
+    // Case Literal -OR- Case Empty: Pass thru
+    if( p_literal(e) || p_empty(e) ){  return e;  }
+    // Case Structure: More evaluation needed
+    else{  return list_to_action(e);  }
+}
+
 
 
 ////////// MAIN ////////////////////////////////////////////////////////////////////////////////////
