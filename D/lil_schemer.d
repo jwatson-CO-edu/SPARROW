@@ -712,65 +712,49 @@ Atom* atomize_string( string token ){
    /* else assume string -------------*/ return make_string( token );
 }
 
+ulong parsDex;
 
 // Atom* consify_token_sequence( string[] tokens, ulong i ){
-Atom* consify_token_sequence( string[] tokens, ulong i = 0 ){
+// Atom* consify_token_sequence( string[] tokens, ulong i = 0 ){
+Atom* consify_token_sequence( string[] tokens, ulong bgn = 0 ){
     // Recursively render tokens as a cons structure
     string token;
     ulong  seqLen  = tokens.length;
-    ulong  bgn     = i;
     Atom*  rtnTree = null;
-    // Base Case: There is nothing
-
-
-
-
-
-    // writeln( "Got a sequence of ", seqLen, " tokens, at index ", i, " ", (seqLen-i) > 1 ) ;
+    parsDex = bgn;
+    if( _DEBUG_VERBOSE )  writeln( "Sequence of ", seqLen, " tokens at index ", parsDex, ", sub-seq: ", tokens[parsDex..$] );
     
-    // 1. If there are one or more strings to process, then attempt to construct a token tree
-    if( (seqLen-i) == 1 ){
-        return atomize_string( tokens[i] );
-    }else if( (seqLen-i) > 1 ){
-        // writeln( "There are ", seqLen-i, " tokens to process." );
-        // 2. Start off by creating a cons list, if needed
+    // Base Case: There were no tokens, return Empty
+    if( (seqLen-parsDex) == 0 ){  return empty_atom();  }
+    
+    // Base Case: There was one token, Return it
+    if( (seqLen-parsDex) == 1 ){  return atomize_string( tokens[ parsDex ] );  }
+
+    // Recursive Case: There were 2 or more tokens
+    if( (seqLen-parsDex) > 2 ){
+        // 2. Start off by creating a cons list
         rtnTree = make_cons();
-        // 3. For each token in the vector
-        while( i < seqLen ){
-            // rtnTree = make_cons();
+        // 3. For each remaining token in the vector
+        while( parsDex < seqLen ){
             // 4. Fetch token at this index and update counter
-            token = tokens[i];
+            token = tokens[ parsDex ];
             // 5. Case Open Paren
             if( find_reserved( token ) == "open_parn" ){
-                if( (i-bgn)>0 ){  rtnTree = append(  rtnTree , consify_token_sequence( tokens, i+1 )  );  }
-                // else{  append(  rtnTree , consify_token_sequence( tokens, i+1 )  );  }
-                // rtnTree = make_cons();
-                // writeln( "Open Paren" );
-                // If there is a new level of depth to the existing structure, recur
-                // if( i>=1 ){  rtnTree = append(  rtnTree , consify_token_sequence( tokens, i+1 )  );  }  
-                // if( (i-bgn)>1 ){  rtnTree = append(  rtnTree , consify_token_sequence( tokens, i+1 )  );  }
-                
-                // if( (i-bgn)>0 ){  rtnTree = consify_token_sequence( tokens, i+1 );  }
-                // else{  rtnTree = make_cons();  }  
-                // rtnTree = append(  rtnTree , consify_token_sequence( tokens, i+1 )  );  
-                // else this is the first level, no action
+                // If the sequence begins with an open paren, do nothing, we have already begun a cons
+                // Else we are descending by one level
+                if( parsDex != bgn ){  rtnTree = append(  rtnTree , consify_token_sequence( tokens, parsDex+1 )  );  }
             // 6. Case Close Paren, ascend one level
             }else if( find_reserved( token ) == "clos_parn" ){  
                 return rtnTree;  
+            // 8. Case literal
             }else{
-                // // 7. Case Empty, is a list terminator
-                // if( p_empty_atom_string( token ) ){  rtnTree = append( rtnTree , empty_atom() );  }  
-                // // 8. Case literal
-                // else{  rtnTree = append( rtnTree , atomize_string( token ) );  }
                 rtnTree = append( rtnTree , atomize_string( token ) );
             }
-            i += 1;
+            parsDex += 1;
         }
-        // 9. Return the constructed tree
         return rtnTree;
-    }else{ // 10. else there were no tokens, return Empty
-        return empty_atom();
     }
+    return rtnTree;
 }
 
 
