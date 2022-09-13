@@ -17,7 +17,7 @@ import std.uni; // -- `strip`
 import std.math.operations; // `NaN`
 
 ///// Env Vars /////
-bool _DEBUG_VERBOSE = false;
+bool _DEBUG_VERBOSE = false; // Set true for debug prints
 
 
 ////////// ATOMS ///////////////////////////////////////////////////////////////////////////////////
@@ -106,7 +106,7 @@ Atom* make_error( F_Error code, string msg ){
 }
 
 Atom* make_bool( bool val ){
-    // Make an error
+    // Make a Boolean value
     return new Atom(
         F_Type.BOOL,
         null,
@@ -122,9 +122,6 @@ Atom* make_bool( bool val ){
 
 Atom* make_cons( Atom* car = null, Atom* cdr = null, ){
     // Make a pair
-    F_Error mtCode;
-    // if( (car != null) || (cdr != null) ){  mtCode = F_Error.OKAY; }
-    // else{  mtCode = F_Error.NOVALUE;  }
     return new Atom(
         F_Type.CONS,
         car,
@@ -161,7 +158,6 @@ Atom* bodyOf(      Atom* atm ){  return third( atm );     }
 // Basic Setters //
 bool set_car_B( Atom* atm, Atom* carAtm ){  
     // Set left  pair item
-    // if( carAtm != null ){  atm.err = F_Error.OKAY;  }
     atm.car = carAtm;  
     return true;  
 } 
@@ -169,7 +165,6 @@ bool set_car_B( Atom* atm, Atom* carAtm ){
 
 bool set_cdr_B( Atom* atm, Atom* cdrAtm ){  
     // Set right pair item
-    // if( cdrAtm != null ){  atm.err = F_Error.OKAY;  }
     atm.cdr = cdrAtm;  
     return true;  
 } 
@@ -190,7 +185,7 @@ bool p_bool( Atom* atm ){  return (atm.kind == F_Type.BOOL);  }
 bool p_zero( Atom* atm ){  return (atm.kind == F_Type.NMBR) && (atm.num == 0.0);  }
 
 
-////////// MATHEMATICS /////////////////////////////////////////////////////////////////////////////
+////////// MATHEMATIC PRIMITIVE HELPERS ////////////////////////////////////////////////////////////
 
 ///// Dlang Math /////
 double add1( double n ){  return n + 1.0;  }
@@ -249,6 +244,7 @@ double divide(double[] args){
 
 
 bool lt(double[] args){
+    // Less Than, 2 or more arguments, If insufficient arguments, then return False 
     if( args.length < 2 ){  return false;  }
     else{
         double last = args[0];
@@ -262,6 +258,7 @@ bool lt(double[] args){
 
 
 bool gt(double[] args){
+    // Greater Than, 2 or more arguments, If insufficient arguments, then return False 
     if( args.length < 2 ){  return false;  }
     else{
         double last = args[0];
@@ -275,6 +272,7 @@ bool gt(double[] args){
 
 
 bool le(double[] args){
+    // Less Than Or Equal To, 2 or more arguments, If insufficient arguments, then return False 
     if( args.length < 2 ){  return false;  }
     else{
         double last = args[0];
@@ -288,6 +286,7 @@ bool le(double[] args){
 
 
 bool ge(double[] args){
+    // Greater Than Or Equal To, 2 or more arguments, If insufficient arguments, then return False 
     if( args.length < 2 ){  return false;  }
     else{
         double last = args[0];
@@ -319,9 +318,6 @@ Atom* find_terminus( Atom* list ){
     if( list.kind == F_Type.CONS ){
         // 2. Iterate pointer to next `cdr` until we reach a pair that contains the terminating null, return pair
         while( !p_empty( curr.cdr ) ){  curr = curr.cdr;  }
-        // while( (curr.cdr.kind == F_Type.CONS) && (!p_empty( curr.cdr )) ){  curr = curr.cdr;  }
-        // while( curr.cdr.kind == F_Type.CONS  ){  curr = curr.cdr;  }
-        // return find_terminus( list.cdr );
         return curr;
     }else{ // Else atom was literal, it is its own terminus
         return list;
@@ -354,10 +350,12 @@ Atom* append( Atom* list, Atom* atm = null ){
     return rtnLst;
 }
 
+
 Atom* make_list_of_2( Atom* atm1, Atom* atm2 ){
     // return a two-item list with 's1' as the first item and 's2' as the second item
     return make_cons( atm1, make_cons(atm2, empty_atom));
 }
+
 
 
 ///// Printing ///////////////////////////////////
@@ -392,6 +390,7 @@ string str( Atom* item ){
 }
 
 void prnt( Atom* atm ){  writeln( str( atm ) );  } // Print a cons structure
+
 
 
 ////////// LEXING //////////////////////////////////////////////////////////////////////////////////
@@ -444,10 +443,6 @@ string[] tokenize( string expStr, dchar sepChar = ' ' ){
     return tokens;
 }
     
-
-
-
-
 
 
 ////////// ENVIRONMENT /////////////////////////////////////////////////////////////////////////////
@@ -524,42 +519,35 @@ Atom*[] flatten_atom_list( Atom* atomList ){
     return rtnArr;
 }
 
-///// D --to-> Scheme ////////////////////////////
-
-struct Payload{ // https://forum.dlang.org/post/tcnpomjpodsveowbzgdd@forum.dlang.org
-    // Container struct of interpreted data
-    double[] dbbls;
-    string[] strns;
-    Atom*[]  atoms;
-    // Probably others ...
-}
+///// Scheme --to-> D --to-> Scheme //////////////
 
 ///// Primitive Helpers /////
 
 
 ///// Primitives /////
 
-Atom* function( Atom* )[string] primitiveFunctions;
-Atom* function()[string] /*--*/ primitiveSymbols;
+Atom* function( Atom* )[string] primitiveFunctions; // Dictionary of foundational operations, implemented in Dlang
+Atom* function()[string] /*--*/ primitiveSymbols; // - Dictionary of text aliases of important symbols
 
 
-bool p_primitve_symbol( string token ){    return (token in primitiveSymbols) !is null;  }
-bool p_primitve_function( string token ){  return (token in primitiveFunctions) !is null;  }
+bool p_primitve_symbol( string token ){    return (token in primitiveSymbols) !is null;  } // - In the primitive sym dict?
+bool p_primitve_function( string token ){  return (token in primitiveFunctions) !is null;  } // In the primitive func dict?
 
 
 void init_primitives(){
 
     /// Zero Arguments ///
 
-    primitiveSymbols["true"]  = function Atom*(){  return make_bool(true);   };
-    primitiveSymbols["#t"]    = function Atom*(){  return make_bool(true);   };
-    primitiveSymbols["false"] = function Atom*(){  return make_bool(false);  };
-    primitiveSymbols["#f"]    = function Atom*(){  return make_bool(false);  };
+    primitiveSymbols["true"]  = function Atom*(){  return make_bool(true);   }; // Boolean True
+    primitiveSymbols["#t"]    = function Atom*(){  return make_bool(true);   }; // Boolean True
+    primitiveSymbols["false"] = function Atom*(){  return make_bool(false);  }; // Boolean False
+    primitiveSymbols["#f"]    = function Atom*(){  return make_bool(false);  }; // Boolean False
     
     /// One Argument ///
 
     primitiveFunctions["atom?"] = function Atom*( Atom* args ){
-        // Test if atom is a literal
+        // Predicate: Is this atom a literal?
+        // FIXME: CONVERT THIS FUNCTION TO HANDLE MANY ARGUMENTS WHERE ALL ATOMS TESTED
         if( p_literal( first( args ) ) ){  return make_bool(true);  }
         else{  return make_bool(false);  }
     };
@@ -567,6 +555,7 @@ void init_primitives(){
     /// Many Arguments ///
 
     primitiveFunctions["eq?"] = function Atom*( Atom* args ){
+        // Predicate: Are these atoms of the same type and value?
         Atom*[] atoms = flatten_atom_list( args );
         // writeln( "Number of atoms: ", atoms.length );
         if( atoms.length > 1 ){
@@ -596,44 +585,52 @@ void init_primitives(){
     };
 
     primitiveFunctions["empty?"] = function Atom*( Atom* args ){
+        // Predicate: Is this an empty atom?
         Atom*[] atoms = flatten_atom_list( args );
         foreach(Atom* atm; atoms){  if( !p_empty( atm ) ){  return make_bool(false);  }  }
         return make_bool(true);
     };
 
     primitiveFunctions["zero?"] = function Atom*( Atom* args ){
+        // Predicate: Is this a number atom wtih a zero value?
         Atom*[] atoms = flatten_atom_list( args );
         foreach(Atom* atm; atoms){  if( !p_zero( atm ) ){  return make_bool(false);  }  }
         return make_bool(true);
     };
     
     primitiveFunctions["number?"] = function Atom*( Atom* args ){
+        // Predicate: Is this atom of number type?
         Atom*[] atoms = flatten_atom_list( args );
         foreach(Atom* atm; atoms){  if( !p_zero( atm ) ){  return make_bool(false);  }  }
         return make_bool(true);
     };
 
     primitiveFunctions["+"] = function Atom*( Atom* args ){
+        // Add 1 or more number atoms
         double[] ops = flatten_double_list( args );
         return make_number( add( ops ) );
     };
 
     primitiveFunctions["-"] = function Atom*( Atom* args ){
+        // Negate 1 or subtract more number atoms
         double[] ops = flatten_double_list( args );
         return make_number( minus( ops ) );
     };
 
     primitiveFunctions["*"] = function Atom*( Atom* args ){
+        // Multiply 1 or more number atoms
         double[] ops = flatten_double_list( args );
         return make_number( multiply( ops ) );
     };
 
     primitiveFunctions["/"] = function Atom*( Atom* args ){
+        // Inverse 1 or divide more number atoms
         double[] ops = flatten_double_list( args );
         return make_number( divide( ops ) );
     };
 
     primitiveFunctions["1+"] = function Atom*( Atom* args ){
+        // Increment 1 or more number atoms by 1
         Atom*[] ops = flatten_atom_list( args );
         Atom* rtnLst;
         if( ops.length > 1 ){
@@ -645,6 +642,7 @@ void init_primitives(){
     };
 
     primitiveFunctions["1-"] = function Atom*( Atom* args ){
+        // Decrement 1 or more number atoms by 1
         Atom*[] ops = flatten_atom_list( args );
         Atom* rtnLst;
         if( ops.length > 1 ){
@@ -656,26 +654,31 @@ void init_primitives(){
     };
 
     primitiveFunctions["<"] = function Atom*( Atom* args ){
+        // Less Than, for 2 or more Number atoms
         double[] ops = flatten_double_list( args );
         return make_bool( lt( ops ) );
     };
 
     primitiveFunctions[">"] = function Atom*( Atom* args ){
+        // Greater Than, for 2 or more Number atoms
         double[] ops = flatten_double_list( args );
         return make_bool( gt( ops ) );
     };
 
     primitiveFunctions["<="] = function Atom*( Atom* args ){
+        // Less Than Or Equal To, for 2 or more Number atoms
         double[] ops = flatten_double_list( args );
         return make_bool( le( ops ) );
     };
 
     primitiveFunctions[">="] = function Atom*( Atom* args ){
+        // Greater Than Or Equal To, for 2 or more Number atoms
         double[] ops = flatten_double_list( args );
         return make_bool( ge( ops ) );
     };
 
     primitiveFunctions["cons"] = function Atom*( Atom* args ){
+        // Cons up to 2 atoms together into a pair. Missing params filled with `empty`
         Atom*[] atoms = flatten_atom_list( args );
         if( atoms.length >= 2 ) return make_cons( atoms[0], atoms[1] ); // Only takes 1st two args
         if( atoms.length == 1 ) return make_cons( atoms[0] ); // --------- One arg is accepted, other empty
@@ -689,6 +692,7 @@ void init_primitives(){
 ///// Predicates /////
 
 bool p_float_string( string inputStr ){
+    // Predicate: Is this string suitable to be converted to a (double) number?
     string slimStr = strip( inputStr );
     try{
         slimStr.to!double();
@@ -719,10 +723,11 @@ Atom* atomize_string( string token ){
    /* else assume string -------------*/ return make_string( token );
 }
 
-ulong parsDex;
 
-// Atom* consify_token_sequence( string[] tokens, ulong i ){
-// Atom* consify_token_sequence( string[] tokens, ulong i = 0 ){
+ulong parsDex; // Global index for parsing an expression, preserves state across recursive calls
+// 2022-09-13: This global var was to avoid requiring `consify_token_sequence` to return a tuple
+
+
 Atom* consify_token_sequence( string[] tokens, ulong bgn = 0 ){
     // Recursively render tokens as a cons structure
     string token;
@@ -779,6 +784,7 @@ Atom* expression_from_string( string expStr, dchar sepChar = ' ' ){
 
 void main(){
     // SPARROW Init //
+    // FIXME: WRAP ALL OF THESE IN A SINGLE INIT FUNCTION
     init_reserved();
     init_env();
     init_primitives();
@@ -828,6 +834,7 @@ void main(){
     // Primitive Function Tests //
     writeln( "Primitive Function Tests" );
     Atom* run_primitive_function( Atom* schemeForm ){
+        // Fake the invocation of primitives by the interpreter
         string name = nameOf( schemeForm ).str;
         Atom*  args = argsOf( schemeForm );
         // prnt( args );
