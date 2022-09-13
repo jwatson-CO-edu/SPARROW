@@ -210,7 +210,7 @@ double minus(double[] args){
     if( args.length == 0 ){
         return NaN(0);
     }else if( args.length == 1 ){
-        return args[0];
+        return -args[0];
     }else{
         double total = args[0];
         foreach (double x; args[1..$])
@@ -234,10 +234,17 @@ double multiply(double[] args){
 double divide(double[] args){ 
     // returns the quotient of the first agument divided by every subsequent argument, returns 1 if no args given
     // typesafe variadic function: https://dlang.org/spec/function.html#typesafe_variadic_functions
-    double quot = 1.0;
-    foreach (double x; args)
-        quot /= x;
-    return quot;
+    if( args.length == 0 ){
+        return NaN(0);
+    }else if( args.length == 1 ){
+        return 1.0/args[0];
+    }else{
+        double total = args[0];
+        foreach (double x; args[1..$])
+            total /= x;
+        return total;
+    }
+    return NaN(0);
 }
 
 
@@ -312,6 +319,9 @@ Atom* find_terminus( Atom* list ){
     if( list.kind == F_Type.CONS ){
         // 2. Iterate pointer to next `cdr` until we reach a pair that contains the terminating null, return pair
         while( !p_empty( curr.cdr ) ){  curr = curr.cdr;  }
+        // while( (curr.cdr.kind == F_Type.CONS) && (!p_empty( curr.cdr )) ){  curr = curr.cdr;  }
+        // while( curr.cdr.kind == F_Type.CONS  ){  curr = curr.cdr;  }
+        // return find_terminus( list.cdr );
         return curr;
     }else{ // Else atom was literal, it is its own terminus
         return list;
@@ -321,22 +331,22 @@ Atom* find_terminus( Atom* list ){
 
 Atom* append( Atom* list, Atom* atm = null ){
     // Append an atom to the end of a conslist, Create a conslist if none exists, return pointer to list head
-    Atom* rtnLst = list;
+    Atom* rtnLst = null;
     Atom* endCns = null;
     // 1. If the given list is a cons list, it is either an empty cons or the head of a LISP list
-    if( rtnLst.kind == F_Type.CONS ){
+    if( list.kind == F_Type.CONS ){
         /* 2. If we were given an atom to append, it either belongs in the `car` of the empty cons,
               or in the `car` of a new terminal cons */
-        if( !p_empty( atm ) ){
-             if( p_empty( rtnLst.car ) ){
-                rtnLst = make_cons( atm, empty_atom() );
-             }else{
-                endCns = find_terminus( rtnLst );
-                set_cdr_B( endCns, consify_atom( atm ) );
-             }
+        if( p_empty( list.car ) ){
+            set_car_B( list, atm );
+        }else{
+            endCns = find_terminus( list );
+            set_cdr_B( endCns, consify_atom( atm ) );
         }
-    }else{ // 3. Else we either have one or two non-cons atoms
-        rtnLst = consify_atom( rtnLst ); // --------------- ( `list` , [X] )
+        rtnLst = list;
+    // 3. Else we either have one or two non-cons atoms
+    }else{ 
+        rtnLst = consify_atom( list ); // --------------- ( `list` , [X] )
         if( !p_empty( atm ) ){
             set_cdr_B( rtnLst, consify_atom( atm ) ); // ( `list` , ( `atom` , [X] ) )
         }
@@ -508,7 +518,7 @@ Atom*[] flatten_atom_list( Atom* atomList ){
     Atom*   currCons = atomList;
     Atom*[] rtnArr;
     while( !p_empty( currCons ) ){
-        if( p_string( currCons.car ) ){  rtnArr ~= currCons.car;  }
+        rtnArr ~= currCons.car;
         currCons = currCons.cdr;
     }
     return rtnArr;
@@ -554,14 +564,16 @@ void init_primitives(){
         else{  return make_bool(false);  }
     };
 
-
     /// Many Arguments ///
 
     primitiveFunctions["eq?"] = function Atom*( Atom* args ){
         Atom*[] atoms = flatten_atom_list( args );
+        // writeln( "Number of atoms: ", atoms.length );
         if( atoms.length > 1 ){
             F_Type typ0 = atoms[0].kind;
+            // writeln( "First atom was of type ", typ0, ". Number of atoms: ", atoms.length );
             foreach(Atom* atm; atoms[1..$]){  if(atm.kind != typ0){  return make_bool(false);  }  }
+            // writeln( "First atom was of type ", typ0 );
             // NOTE: WOULD BE NICE TO USE A `Variant` HERE? (loops) (Algebraic?)
             switch( typ0 ){
                 case F_Type.STRN:
@@ -626,9 +638,9 @@ void init_primitives(){
         Atom* rtnLst;
         if( ops.length > 1 ){
             rtnLst = make_cons();
-            foreach(Atom* atm; ops){  if( p_number( atm ) ){  append( rtnLst, make_number( add1( atm.num ) ) );  }  }
+            foreach(Atom* atm; ops){  if( p_number( atm ) ){  rtnLst = append( rtnLst, make_number( add1( atm.num ) ) );  }  }
         }else if( ops.length == 1 )
-            rtnLst = make_cons( make_number( add1( ops[0].num ) ) );
+            rtnLst = make_number( add1( ops[0].num ) );
         return rtnLst;
     };
 
@@ -637,9 +649,9 @@ void init_primitives(){
         Atom* rtnLst;
         if( ops.length > 1 ){
             rtnLst = make_cons();
-            foreach(Atom* atm; ops){  if( p_number( atm ) ){  append( rtnLst, make_number( sub1( atm.num ) ) );  }  }
+            foreach(Atom* atm; ops){  if( p_number( atm ) ){  rtnLst = append( rtnLst, make_number( sub1( atm.num ) ) );  }  }
         }else if( ops.length == 1 )
-            rtnLst = make_cons( make_number( sub1( ops[0].num ) ) );
+            rtnLst = make_number( sub1( ops[0].num ) );
         return rtnLst;
     };
 
@@ -706,37 +718,56 @@ Atom* consify_token_sequence( string[] tokens, ulong i = 0 ){
     // Recursively render tokens as a cons structure
     string token;
     ulong  seqLen  = tokens.length;
-    // writeln( "Got a sequence of ", seqLen, " tokens, at index ", i, " ", (seqLen-i) > 1 ) ;
+    ulong  bgn     = i;
     Atom*  rtnTree = null;
+    // Base Case: There is nothing
+
+
+
+
+
+    // writeln( "Got a sequence of ", seqLen, " tokens, at index ", i, " ", (seqLen-i) > 1 ) ;
+    
     // 1. If there are one or more strings to process, then attempt to construct a token tree
-    if( (seqLen-i) > 1 ){
+    if( (seqLen-i) == 1 ){
+        return atomize_string( tokens[i] );
+    }else if( (seqLen-i) > 1 ){
         // writeln( "There are ", seqLen-i, " tokens to process." );
         // 2. Start off by creating a cons list, if needed
         rtnTree = make_cons();
         // 3. For each token in the vector
         while( i < seqLen ){
+            // rtnTree = make_cons();
             // 4. Fetch token at this index and update counter
             token = tokens[i];
-            i += 1;
             // 5. Case Open Paren
             if( find_reserved( token ) == "open_parn" ){
+                if( (i-bgn)>0 ){  rtnTree = append(  rtnTree , consify_token_sequence( tokens, i+1 )  );  }
+                // else{  append(  rtnTree , consify_token_sequence( tokens, i+1 )  );  }
+                // rtnTree = make_cons();
                 // writeln( "Open Paren" );
                 // If there is a new level of depth to the existing structure, recur
-                if( i>1 ){  rtnTree = append(  rtnTree , consify_token_sequence( tokens, i )  );  }  
+                // if( i>=1 ){  rtnTree = append(  rtnTree , consify_token_sequence( tokens, i+1 )  );  }  
+                // if( (i-bgn)>1 ){  rtnTree = append(  rtnTree , consify_token_sequence( tokens, i+1 )  );  }
+                
+                // if( (i-bgn)>0 ){  rtnTree = consify_token_sequence( tokens, i+1 );  }
+                // else{  rtnTree = make_cons();  }  
+                // rtnTree = append(  rtnTree , consify_token_sequence( tokens, i+1 )  );  
                 // else this is the first level, no action
+            // 6. Case Close Paren, ascend one level
+            }else if( find_reserved( token ) == "clos_parn" ){  
+                return rtnTree;  
             }else{
-                // 6. Case Close Paren, ascend one level
-                if( find_reserved( token ) == "clos_parn" ){  return rtnTree;  }  
-                // 7. Case Empty, is a list terminator
-                else if( p_empty_atom_string( token ) ){  rtnTree = append( rtnTree , empty_atom() );  }  
-                // 8. Case literal
-                else{  rtnTree = append( rtnTree , atomize_string( token ) );  }
+                // // 7. Case Empty, is a list terminator
+                // if( p_empty_atom_string( token ) ){  rtnTree = append( rtnTree , empty_atom() );  }  
+                // // 8. Case literal
+                // else{  rtnTree = append( rtnTree , atomize_string( token ) );  }
+                rtnTree = append( rtnTree , atomize_string( token ) );
             }
+            i += 1;
         }
         // 9. Return the constructed tree
         return rtnTree;
-    }else if( seqLen == 1 ){
-        return atomize_string( tokens[0] );
     }else{ // 10. else there were no tokens, return Empty
         return empty_atom();
     }
@@ -806,6 +837,7 @@ void main(){
     Atom* run_primitive_function( Atom* schemeForm ){
         string name = nameOf( schemeForm ).str;
         Atom*  args = argsOf( schemeForm );
+        // prnt( args );
         if( p_primitve_function( name ) ){
             return primitiveFunctions[ name ]( args );
         }else{
@@ -814,6 +846,113 @@ void main(){
     }
     
     Atom* expr2;
-    expr2 = expression_from_string( "(atom? 2.5)" );
+    expr2 = expression_from_string( "(atom? 2.5)" ); // T
     prnt( run_primitive_function( expr2 ) );
+    expr2 = expression_from_string( "(atom? (2 3))" ); // F
+    prnt( run_primitive_function( expr2 ) );
+    
+    expr2 = expression_from_string( "(eq? 3 3 3)" ); // T
+    prnt( run_primitive_function( expr2 ) );
+    expr2 = expression_from_string( "(eq? 3 3 4)" ); // F
+    prnt( run_primitive_function( expr2 ) );
+
+    expr2 = expression_from_string( "(empty? [/])" ); // T
+    prnt( run_primitive_function( expr2 ) );
+    expr2 = expression_from_string( "(empty? 42)" ); // F
+    prnt( run_primitive_function( expr2 ) );
+
+    expr2 = expression_from_string( "(zero? 0.0)" ); // T
+    prnt( run_primitive_function( expr2 ) );
+    expr2 = expression_from_string( "(zero? 0.0 0.0 0.0)" ); // T
+    prnt( run_primitive_function( expr2 ) );
+    expr2 = expression_from_string( "(zero? 0.0 0.0 0.5)" ); // F
+    prnt( run_primitive_function( expr2 ) );
+
+    expr2 = expression_from_string( "(number? 0.0)" ); // T
+    prnt( run_primitive_function( expr2 ) );
+    expr2 = expression_from_string( "(number? 0.0 0.0 0.0)" ); // T
+    prnt( run_primitive_function( expr2 ) );
+    expr2 = expression_from_string( "(number? 0.0 0.0 foo)" ); // F
+    prnt( run_primitive_function( expr2 ) );
+
+    expr2 = expression_from_string( "(+ 2)" ); // 2
+    prnt( run_primitive_function( expr2 ) );
+    expr2 = expression_from_string( "(+ 2 3)" ); // 5
+    prnt( run_primitive_function( expr2 ) );
+    expr2 = expression_from_string( "(+ 2 3 4)" ); // 9
+    prnt( run_primitive_function( expr2 ) );
+
+    expr2 = expression_from_string( "(- 2)" ); // -2
+    prnt( run_primitive_function( expr2 ) );
+    expr2 = expression_from_string( "(- 2 3)" ); // -1
+    prnt( run_primitive_function( expr2 ) );
+    expr2 = expression_from_string( "(- 2 3 4)" ); // -5
+    prnt( run_primitive_function( expr2 ) );
+
+    expr2 = expression_from_string( "(* 2)" ); // 2
+    prnt( run_primitive_function( expr2 ) );
+    expr2 = expression_from_string( "(* 2 3)" ); // 6
+    prnt( run_primitive_function( expr2 ) );
+    expr2 = expression_from_string( "(* 2 3 4)" ); // 24
+    prnt( run_primitive_function( expr2 ) );
+
+    expr2 = expression_from_string( "(/ 2)" ); // 0.5
+    prnt( run_primitive_function( expr2 ) );
+    expr2 = expression_from_string( "(/ 2 3)" ); // 0.666667
+    prnt( run_primitive_function( expr2 ) );
+    expr2 = expression_from_string( "(/ 2 3 4)" ); // 0.166667
+    prnt( run_primitive_function( expr2 ) );
+
+    expr2 = expression_from_string( "(1+ 2)" ); // 3
+    prnt( run_primitive_function( expr2 ) );
+    expr2 = expression_from_string( "(1+ 2 3)" ); // ( 3, ( 4, ⧄ ) )
+    prnt( run_primitive_function( expr2 ) );
+    expr2 = expression_from_string( "(1+ 2 3 4)" ); // ( 3, ( 4, ( 5, ⧄ ) ) )
+    prnt( run_primitive_function( expr2 ) );
+
+    expr2 = expression_from_string( "(1- 2)" ); // 1
+    prnt( run_primitive_function( expr2 ) );
+    expr2 = expression_from_string( "(1- 2 3)" ); // ( 1, ( 2, ⧄ ) )
+    prnt( run_primitive_function( expr2 ) );
+    expr2 = expression_from_string( "(1- 2 3 4)" ); // ( 1, ( 2, ( 3, ⧄ ) ) )
+    prnt( run_primitive_function( expr2 ) );
+
+    expr2 = expression_from_string( "(< 2)" ); // F
+    prnt( run_primitive_function( expr2 ) );
+    expr2 = expression_from_string( "(< 2 3)" ); // T
+    prnt( run_primitive_function( expr2 ) );
+    expr2 = expression_from_string( "(< 2 3 4)" ); // T
+    prnt( run_primitive_function( expr2 ) );
+    expr2 = expression_from_string( "(< 2 5 4)" ); // F
+    prnt( run_primitive_function( expr2 ) );
+
+    expr2 = expression_from_string( "(> 2)" ); // F
+    prnt( run_primitive_function( expr2 ) );
+    expr2 = expression_from_string( "(> 3 2)" ); // T
+    prnt( run_primitive_function( expr2 ) );
+    expr2 = expression_from_string( "(> 4 3 2)" ); // T
+    prnt( run_primitive_function( expr2 ) );
+    expr2 = expression_from_string( "(> 4 5 2)" ); // F
+    prnt( run_primitive_function( expr2 ) );
+
+    expr2 = expression_from_string( "(<= 2)" ); // F
+    prnt( run_primitive_function( expr2 ) );
+    expr2 = expression_from_string( "(<= 2 3)" ); // T
+    prnt( run_primitive_function( expr2 ) );
+    expr2 = expression_from_string( "(<= 2 3 3)" ); // T
+    prnt( run_primitive_function( expr2 ) );
+    expr2 = expression_from_string( "(<= 2 5 4)" ); // F
+    prnt( run_primitive_function( expr2 ) );
+
+    expr2 = expression_from_string( "(>= 2)" ); // F
+    prnt( run_primitive_function( expr2 ) );
+    expr2 = expression_from_string( "(>= 3 2)" ); // T
+    prnt( run_primitive_function( expr2 ) );
+    expr2 = expression_from_string( "(>= 4 3 3)" ); // T
+    prnt( run_primitive_function( expr2 ) );
+    expr2 = expression_from_string( "(>= 4 5 2)" ); // F
+    prnt( run_primitive_function( expr2 ) );
+
+    prnt( expression_from_string( "(atom? (2 3))" ) );
+    prnt( expression_from_string( "(2 3)" ) );
 }
