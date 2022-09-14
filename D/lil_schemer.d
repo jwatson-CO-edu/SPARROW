@@ -25,9 +25,10 @@ bool _DEBUG_VERBOSE = false; // Set true for debug prints
 ////////// ATOMS ///////////////////////////////////////////////////////////////////////////////////
 
 enum F_Error{ 
-    OKAY    = "OKAY",    // No error code applicable
+    OKAY    = "OKAY", // -- No error code applicable
     NOVALUE = "NOVALUE", // There is no value held in this atom
-    NAN     = "NAN",     // Not A Number
+    NAN     = "NAN", // --- Not A Number
+    DNE     = "DNE", // --- Does Not Exist
 }
 
 enum F_Type{ 
@@ -143,7 +144,6 @@ Atom* get_cdr( Atom* atm ){  return atm.cdr;  } // ---------------------- Get ri
 Atom* first(   Atom* atm ){  return get_car(atm);  } // ----------------- Return the first item of an LS pair
 Atom* second(  Atom* atm ){  return get_car(get_cdr(atm));  } // -------- Return the second item in a list, (cadr l)
 Atom* third(   Atom* atm ){  return get_car(get_cdr(get_cdr(atm)));  } // Return the third item of 'l', (caddr l)
-
 
 // Aliased Getters //
 Atom* condLinesOf( Atom* atm ){  return get_cdr( atm );   }
@@ -793,6 +793,29 @@ struct ExprInContext{
 ExprInContext function( ExprInContext )[string] specialForms; // Dictionary of forms other than func applications, implemented in Dlang
 
 
+bool truthiness( Atom* atm ){
+    // Determine the truth value of an atom
+    switch( atm.kind ){
+        case F_Type.STRN:
+            // A string is true if it has length
+            return (atm.str.length > 0)
+        case F_Type.BOOL:
+            // A Boolean is already a truth value
+            return atm.bool;
+        case F_Type.NMBR:
+            // A number is true if it above zero
+            return (atm.num > 0.0);
+        case F_Type.CONS:
+            // A cons is true if either side is non-empty
+            return (!p_empty(atm.car)) || (!p_empty(atm.cdr));
+        case F_Type.EROR:
+            // An error is always false
+            return false;
+        default: 
+            // This should not happen, return false
+            return false;
+    }
+}
 
 
 void init_specials(){
@@ -847,12 +870,67 @@ void init_specials(){
         );
     };
 
-    // FIXME: START HERE
-	
-	// "and" //:    function (e, context){ return p_Null(get_cdr(e)) ? true: $and(get_cdr(e), context); }, // handle null case or recur
-	// "or" //:	    function (e, context){ return p_Null(get_cdr(e)) ? false: $or(get_cdr(e), context); }, // handle null case or recur
-	// "load"
+    specialForms["and"] = function ExprInContext( ExprInContext eINc ){  
 
+        // fetch first item 'meaning',
+        ExprInContext current = meaning( ExprInContext( //- Expression result to bind
+            get_car( eINc.expr ), // Eval this
+            eINc.context, // ------- Context for eval
+            "meaning" // --------- Eval tag
+        );
+
+        if( !truthiness( current.expr ) ){
+            return ExprInContext(
+                make_bool(false), // Truthiness of the element
+                current.context, //- Original context
+                "truthiness" // ---- Tag
+            );
+        }else if( p_empty( get_cdr( eINc.expr ) ) ){
+            return ExprInContext(
+                make_bool(true), // Truthiness of the element
+                current.context, // Original context
+                "truthiness" // --- Tag
+            );
+        }else{
+            return specialForms["and"]( ExprInContext(
+                get_cdr( eINc.expr ), // Balance of arguments
+                current.context, // ---- Original context
+                "`and` recur" // ------- Tag
+            ) )
+        }
+    }
+
+    specialForms["or"] = function ExprInContext( ExprInContext eINc ){  
+
+        // fetch first item 'meaning',
+        ExprInContext current = meaning( ExprInContext( //- Expression result to bind
+            get_car( eINc.expr ), // Eval this
+            eINc.context, // ------- Context for eval
+            "meaning" // --------- Eval tag
+        );
+
+        if( truthiness( current.expr ) ){
+            return ExprInContext(
+                make_bool(true), // Truthiness of the element
+                current.context, //- Original context
+                "truthiness" // ---- Tag
+            );
+        }else if( p_empty( get_cdr( eINc.expr ) ) ){
+            return ExprInContext(
+                make_bool(false), // Truthiness of the element
+                current.context, // Original context
+                "truthiness" // --- Tag
+            );
+        }else{
+            return specialForms["or"]( ExprInContext(
+                get_cdr( eINc.expr ), // Balance of arguments
+                current.context, // ---- Original context
+                "`or` recur" // ------- Tag
+            ) )
+        }
+    }
+
+    // specialForms["load"] = function ExprInContext( ExprInContext eINc ){ /* LOAD FILE */ } // FIXME: LOAD FILE
 }
 
 ////////// EVALUATION //////////////////////////////////////////////////////////////////////////////
@@ -863,8 +941,16 @@ Atom* apply_primitive_function( string name, Atom* args ){
     if( p_primitve_function( name ) ){
         return primitiveFunctions[ name ]( args );
     }else{
-        return empty_atom();
+        return make_error(
+            F_Error.DNE,
+            "Oops, \"" ~ name ~ "\" is NOT a primitive function in SPARROW!"
+        );
     }
+}
+
+
+Atom* apply_closure(  ExprInContext foo  ){ // FIXME: START HERE
+
 }
 
 
@@ -894,6 +980,7 @@ void main(){
     init_reserved();
     init_env();
     init_primitives();
+    init_specials();
     
     // Structure Tests //
     Atom* list1 = make_list_of_2( make_number(2), make_number(3) );
