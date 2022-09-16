@@ -83,18 +83,22 @@ Completion Key:
     [Y] All Functions Implemented - 2022-09-08: COMPLETE
     [Y] All tests pass - 2022-09-08: Environment bound and unbound variables implemented, are ref counts needed?
 
-[ ] Translate "The Little Javascripter" by Douglas Crockford
+[>] Translate "The Little Javascripter" by Douglas Crockford
     https://www.crockford.com/little.html (See `JS` folder for reference implementation)
     [ ] T: All REPLacement tests pass
+    [ ] T: Ask Dlang forum for feedback
+    [ ] T: Ask StackOverflow for feedback
     
 [ ] Parse "Easy S-Expressions" instead: 2022-04-19, Ignore whitespace except to separate symbols
     [ ] Implicit open paren, `;` is close paren
     [ ] <funcName> <arg1> ... <argN>;
+        [ ] E: What is the most ergonimic way to handle nested expressions?
     [ ] T: Parse and run a plaintext file
-        [ ] E: File extension: .BRD, .SPW, .FNC,
+        [ ] E: File extension: .BRD, .SPRW, .FNC,
     [ ] Program Blocks:
         [ ] Curly Braces {}
         [ ] Pythonic / Implicit
+        [ ] New block == new context
     [ ] T: Verify that statement precedence with block brackets already exists in evaluator, If not then Implement it! 
     [ ] T: Make sure that nested statements and blocks do not cause ambiguity
     [ ] Line Continuation: `\+`    
@@ -115,6 +119,9 @@ Completion Key:
     [ ] Q: Can a block of "null pointer" memory be allocated?
     [ ] Q: Can a large array of `Atoms` be allocated? 
     [ ] T: Which is faster; (Pre-allocated block -vs- Dynamic vars); Create 1000 vars and assign randomly for 10k steps
+[ ] Small Optimizations
+    [ ] Iterate LISP lists instead of converting to dyn arrays
+    [ ] Unify and/or streamline `ExprInContext` usage
 [ ] E: Evaluate "Practical Common Lisp" (PCL) for useful features and structures (If yes, then expand this bullet with REQUIRED topics ONLY )
 [ ] E: R6RS, Complete Scheme without Error System
 [ ] E: R7RS, Complete Scheme *with*  Error System
@@ -122,7 +129,16 @@ Completion Key:
     [ ] Identify Dynamic Typing, Where does the language burn time matching?
     [ ] Identify where value history can be built
 [ ] T: Will SPARROW compile & run in Windows without modification?
-
+[ ] Allow SPARROW to either run a file or run a REPL, depending on how it is called
+    [ ] Execute file: `sparrow <FILENAME>`
+    [ ] Run REPL: `sparrow`
+[ ] E: Single-threaded Efficiency and Readability
+    [ ] T: Ask Dlang forum for feedback
+    [ ] T: Ask StackOverflow for feedback
+[ ] E: Read the next phase's goals.  
+    [ ] E: Do they make match your purpose in creating FINCH?
+    [ ] E: Do they make sense to you?
+    [ ] E: What is FINCH's value to you?
 
 ```
 ## Phase 2: Learn Flow-Based Programming -- FINCH

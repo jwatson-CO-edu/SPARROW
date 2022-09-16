@@ -475,6 +475,20 @@ Atom* get_bound_atom( Env* env, string name ){
 }
 
 
+Env* enclose( Env* parent, Atom* names, Atom* values ){
+    // Create a child `Env` of `parent`, then bind `values` to `names` in the child context
+    Env* rtnEnv = new Env( parent );
+    string[] nams = flatten_string_list( names  );
+    Atom*[]  vals = flatten_atom_list(   values );
+    if( nams.length == vals.length ){
+        foreach( i, nam; nams ){
+            bind_atom( rtnEnv, nam, vals[i] );
+        }
+    }
+    return rtnEnv;
+}
+
+
 Env* baseEnv;
 
 
@@ -936,8 +950,14 @@ void init_specials(){
 ////////// EVALUATION //////////////////////////////////////////////////////////////////////////////
 // 2022-09-13: `atomize_string` will fetch primitive symbols, these were together w/ primitve functions in Little JS
 
+// FIXME: REALLY UNDERSTAND THE FLOW OF INFORMATION AND CONTEXT IN THIS SECTION AND COMMENT YOUR UNDERSTANDING
+
 Atom* apply_primitive_function( string name, Atom* args ){
     // Invocation of primitive function
+
+    // FIXME, START HERE: CONVERT TO `ExprInContext`
+    // FIXME: ?? RETURN `ExprInContext` ??
+
     if( p_primitve_function( name ) ){
         return primitiveFunctions[ name ]( args );
     }else{
@@ -949,8 +969,8 @@ Atom* apply_primitive_function( string name, Atom* args ){
 }
 
 
-Atom* apply_closure(  ExprInContext foo  ){ // FIXME: START HERE
-
+Atom* apply_closure( ExprInContext input ){ 
+    // FIXME: WRITE AS ABOVE, RETURN `ExprInContext`
 }
 
 
@@ -971,8 +991,9 @@ Atom* expression_to_action( Atom* e ){
 }
 
 
-
-////////// MAIN ////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// MAIN  MAIN  MAIN  MAIN  MAIN  MAIN  MAIN  MAIN  MAIN  MAIN  MAIN  MAIN  MAIN  MAIN  MAIN  MAIN //
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void main(){
     // SPARROW Init //
