@@ -58,6 +58,12 @@ Possible options:
 **ALERT: USE ONLY IF THERE ARE JUSTIFIABLE ADVANTAGES**
 1. A simulation-focused dialect of CORVID
 
+## Phase 7: Learn Compiler Design -- FINCH
+**ALERT: USE ONLY IF THERE ARE JUSTIFIABLE ADVANTAGES**
+1. https://www.cs.umd.edu/class/fall2022/cmsc430/Notes.html
+1. https://htdp.org/2018-01-06/Book/index.html
+1. "Principles of Compiler Design", Aho, Ullman
+
 ## Phase N: Far Future -- ???
 
 # `DEV PLAN` 
