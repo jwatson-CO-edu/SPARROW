@@ -8,6 +8,18 @@
    https://github.com/jwatson-CO-edu/FINCH/blob/main/JS/JS_Scheme_f_rename.js
    James Watson, 2022-09 */
 
+/*
+///// DEV THOUGHTS & PLANS /////
+
+/// Comparison of SPARROW and FINCH ///
+Feature/Structure | SPARROW | FINCH
+-----------------------------------
+Structure           Cons      Object
+Unit                Atom      Atom
+Context             Scoped    Flow/Fragmented
+
+*/
+
 ////////// INIT ////////////////////////////////////////////////////////////////////////////////////
 
 ///// Imports /////
@@ -37,6 +49,7 @@ enum F_Type{
     NMBR, // Number
     EROR, // Error object
     BOOL, // Boolean value
+    FUNC, // Function
     // NULL, // Null // 2022-09-03: Trying it w/o NULL
 }
 
@@ -133,6 +146,21 @@ Atom* make_cons( Atom* car = null, Atom* cdr = null, ){
         "",
         true,
         F_Error.OKAY
+    );
+}
+
+///// Function /////
+
+Atom* make_funct( string name, Atom* definition = null, ){
+    // Make a function
+    return new Atom(
+        F_Type.FUNC, // ------- Function
+        make_string( name ), // Name as an atom
+        definition, // -------- Const structure containing code
+        double.nan, // -------- No number interpretation
+        name, // -------------- Name as a string
+        true, // -------------- Assume truthiness
+        F_Error.OKAY // ------- Assume okay
     );
 }
 
@@ -948,15 +976,13 @@ void init_specials(){
 }
 
 ////////// EVALUATION //////////////////////////////////////////////////////////////////////////////
+// This is the real living mechanism of the SPARROW interpreted language
 // 2022-09-13: `atomize_string` will fetch primitive symbols, these were together w/ primitve functions in Little JS
 
 // FIXME: REALLY UNDERSTAND THE FLOW OF INFORMATION AND CONTEXT IN THIS SECTION AND COMMENT YOUR UNDERSTANDING
 
 ExprInContext apply_primitive_function( ExprInContext eINc ){
-    // Invocation of primitive function
-
-    // FIXME, START HERE: CONVERT TO `ExprInContext`
-    // FIXME: ?? RETURN `ExprInContext` ??
+    // Invocation of primitive function in a context
 
     if( p_primitve_function( get_car( eINc.expr ) ) ){
 
@@ -974,8 +1000,25 @@ ExprInContext apply_primitive_function( ExprInContext eINc ){
 }
 
 
-Atom* apply_closure( ExprInContext input ){ 
-    // FIXME: WRITE AS ABOVE, RETURN `ExprInContext`
+// function applyClosure(closure, vals){ return meaning(bodyOf(closure), newContext(formalsOf(closure), vals, tableOf(closure))); } 
+
+/*
+##### TODO #####
+* How are functions stored?
+* How do I get the args of a function?
+*/
+
+ExprInContext apply_closure( ExprInContext input ){ 
+    // FIXME, START HERE: WRITE AS ABOVE, RETURN `ExprInContext`
+
+    // 1. Create a new context with the arguments given values as a child of the containing context
+    Env* nuEnv = enclose( 
+        input.context, // parent 
+        formalsOf( input.expr ), 
+        Atom* values 
+    )
+
+    // 2. Evaluate the function within the new context
 }
 
 
