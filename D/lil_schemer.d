@@ -992,10 +992,14 @@ ExprInContext apply_primitive_function( ExprInContext eINc ){
             "primitive: " ~ get_car( eINc.expr ) // ------- Tag
         );
     }else{
-        return make_error(
-            F_Error.DNE,
-            "Oops, \"" ~ get_car( eINc.expr ) ~ "\" is NOT a primitive function in SPARROW!"
-        );
+        return ExprInContext(
+            make_error(
+                F_Error.DNE,
+                "Oops, \"" ~ get_car( eINc.expr ) ~ "\" is NOT a primitive function in SPARROW!"
+            ),
+            eINc.context, // ---- Original context
+            "ERROR"
+        )
     }
 }
 
@@ -1008,15 +1012,33 @@ ExprInContext apply_primitive_function( ExprInContext eINc ){
 * How do I get the args of a function?
 */
 
+bool p_func( Atom* atm ){  return atm.kind == F_Type.FUNC;  }
+
+bool p_user_def_function( Env* env, string funcName ){
+    // Return true if this is the name of a user-defined function that exists in the environment under given name
+    if(  p_binding_exists( env, funcName )  ){
+        return p_func( get_bound_atom( env, funcName ) );
+    }else{  return false;  }
+}
+
 ExprInContext apply_closure( ExprInContext input ){ 
     // FIXME, START HERE: WRITE AS ABOVE, RETURN `ExprInContext`
 
-    // 1. Create a new context with the arguments given values as a child of the containing context
-    Env* nuEnv = enclose( 
-        input.context, // parent 
-        formalsOf( input.expr ), 
-        Atom* values 
-    )
+    Env*  nuEnv = null;
+    Atom* func  = null;
+
+    // 0. Determine if the function exists
+    if(  p_user_def_function( input.context, nameOf( input.expr ) )  ){
+        // 1. Create a new context with the arguments given values as a child of the containing context
+        func  = get_bound_atom( input.context, nameOf( input.expr ) )
+        nuEnv = enclose( 
+            input.context, // parent 
+            formalsOf( func ), 
+            answerOf( input.expr )
+        )
+    }
+
+    
 
     // 2. Evaluate the function within the new context
 }
