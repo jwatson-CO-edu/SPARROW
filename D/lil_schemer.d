@@ -891,7 +891,7 @@ void init_specials(){
             get_car( eINc.expr ), // Eval this
             eINc.context, // ------- Context for eval
             "meaning" // --------- Eval tag
-        );
+        ));
 
         if( !truthiness( current.expr ) ){
             return ExprInContext(
@@ -921,7 +921,7 @@ void init_specials(){
             get_car( eINc.expr ), // Eval this
             eINc.context, // ------- Context for eval
             "meaning" // --------- Eval tag
-        );
+        ));
 
         if( truthiness( current.expr ) ){
             return ExprInContext(
@@ -952,18 +952,23 @@ void init_specials(){
 
 // FIXME: REALLY UNDERSTAND THE FLOW OF INFORMATION AND CONTEXT IN THIS SECTION AND COMMENT YOUR UNDERSTANDING
 
-Atom* apply_primitive_function( string name, Atom* args ){
+ExprInContext apply_primitive_function( ExprInContext eINc ){
     // Invocation of primitive function
 
     // FIXME, START HERE: CONVERT TO `ExprInContext`
     // FIXME: ?? RETURN `ExprInContext` ??
 
-    if( p_primitve_function( name ) ){
-        return primitiveFunctions[ name ]( args );
+    if( p_primitve_function( get_car( eINc.expr ) ) ){
+
+        return ExprInContext(
+            primitiveFunctions[ get_car( eINc.expr ) ]( get_cdr( eINc.expr ) ), // Balance of arguments
+            eINc.context, // ---- Original context
+            "primitive: " ~ get_car( eINc.expr ) // ------- Tag
+        );
     }else{
         return make_error(
             F_Error.DNE,
-            "Oops, \"" ~ name ~ "\" is NOT a primitive function in SPARROW!"
+            "Oops, \"" ~ get_car( eINc.expr ) ~ "\" is NOT a primitive function in SPARROW!"
         );
     }
 }
