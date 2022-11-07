@@ -12,11 +12,12 @@
 ///// DEV THOUGHTS & PLANS /////
 
 /// Comparison of SPARROW and FINCH ///
-Feature/Structure | SPARROW | FINCH
------------------------------------
-Structure           Cons      Object
-Unit                Atom      Atom
-Context             Scoped    Flow/Fragmented
+Feature/Structure | SPARROW      | FINCH
+-------------------------------------------
+Structure           Cons           Object   // Can an object be versatile, lightweight, and fast?  Needs study
+Syntax Unit         Atom           Atom     // Would like to have a lightweight atom for FINCH
+Eval Unit           ExprInContext  Fragment // `ExprInContext` was a happy accident in partially modelling a Fragment
+Context             Scoped         Flow     // Is flow based programming relevant outside of an event loop?
 
 */
 
@@ -840,10 +841,10 @@ bool truthiness( Atom* atm ){
     switch( atm.kind ){
         case F_Type.STRN:
             // A string is true if it has length
-            return (atm.str.length > 0)
+            return (atm.str.length > 0);
         case F_Type.BOOL:
             // A Boolean is already a truth value
-            return atm.bool;
+            return atm.bul;
         case F_Type.NMBR:
             // A number is true if it above zero
             return (atm.num > 0.0);
@@ -902,7 +903,7 @@ void init_specials(){
                 eINc.context, // ----- Context for eval
                 "meaning" // --------- Eval tag
             ) 
-        ) )
+        ) );
 
         // 2. Return modified context
         return ExprInContext(
@@ -938,9 +939,9 @@ void init_specials(){
                 get_cdr( eINc.expr ), // Balance of arguments
                 current.context, // ---- Original context
                 "`and` recur" // ------- Tag
-            ) )
+            ) );
         }
-    }
+    };
 
     specialForms["or"] = function ExprInContext( ExprInContext eINc ){  
 
@@ -968,9 +969,9 @@ void init_specials(){
                 get_cdr( eINc.expr ), // Balance of arguments
                 current.context, // ---- Original context
                 "`or` recur" // ------- Tag
-            ) )
+            ) );
         }
-    }
+    };
 
     // specialForms["load"] = function ExprInContext( ExprInContext eINc ){ /* LOAD FILE */ } // FIXME: LOAD FILE
 }
@@ -980,6 +981,23 @@ void init_specials(){
 // 2022-09-13: `atomize_string` will fetch primitive symbols, these were together w/ primitve functions in Little JS
 
 // FIXME: REALLY UNDERSTAND THE FLOW OF INFORMATION AND CONTEXT IN THIS SECTION AND COMMENT YOUR UNDERSTANDING
+
+bool p_eq( Atom* op1, Atom* op2 ){  primitiveFunctions["eq?"]( make_list_of_2( op1, op2 ) );  }
+
+bool p_else( Atom* x ){  return p_literal( x ) && p_eq( x, make_string( 'else' ) );  } // is the arg an 'else symbol?
+
+function evcon(lines, context){ 
+	return p_else(questionOf(get_car(lines))) ? meaning(answerOf(get_car(lines)), context) : // item question is 'else, eval item answer
+		meaning(questionOf(get_car(lines)), context) ? meaning(answerOf(get_car(lines)), context) : //eval item question -> is true, eval item answer
+			evcon(get_cdr(lines), context); // else, recur on sublist lines and table
+} // note there was no action for the 'null?' case, one of the above conditions better be true!
+
+ExprInContext evcon( ExprInContext eINc ){
+    // evaluate cond form by form, this is the guts of cond
+    Atom* lines   = eINc.expr; // ------------------------------ Fetch cond lines from the expression
+    bool  hasElse = p_else( questionOf( get_car( lines ) ) ); // bool: Item question is 'else
+    // FIXME, START HERE: Translate the rest of `evcon`
+}
 
 ExprInContext apply_primitive_function( ExprInContext eINc ){
     // Invocation of primitive function in a context
@@ -999,7 +1017,7 @@ ExprInContext apply_primitive_function( ExprInContext eINc ){
             ),
             eINc.context, // ---- Original context
             "ERROR"
-        )
+        );
     }
 }
 
@@ -1030,12 +1048,12 @@ ExprInContext apply_closure( ExprInContext input ){
     // 0. Determine if the function exists, then construct a new context
     if(  p_user_def_function( input.context, nameOf( input.expr ) )  ){
         // 1. Create a new context with the arguments given values as a child of the containing context
-        func  = get_bound_atom( input.context, nameOf( input.expr ) )
+        func  = get_bound_atom( input.context, nameOf( input.expr ) );
         nuEnv = enclose( 
             input.context, // ------- parent 
             formalsOf( func ), // --- parameters
             answerOf( input.expr ) // arguments 
-        )
+        );
     }
 
     // 2. Evaluate the function within the new context
@@ -1068,13 +1086,29 @@ ExprInContext list_to_action( ExprInContext eINc ){ // Return one of ...
 }
 
 
-Atom* expression_to_action( Atom* e ){
+ExprInContext meaning( ExprInContext eINc ){
     // Attempt to assign appropriate action to the given expression 'e'
     // Case Literal -OR- Case Empty: Pass thru
-    if( p_literal(e) || p_empty(e) ){  return e;  }
+    Atom* e = eINc.expr;
+    if( p_literal(e) || p_empty(e) ){  return eINc;  }
     // Case Structure: More evaluation needed
-    else{  return list_to_action(e);  }
+    else{  return list_to_action( eINc );  }
 }
+
+// function value(e){ return meaning(e, $global); } // this function, together with all the functions it uses, is an interpreter
+// call meaning on expression in the '$global' context
+
+Atom* value( Atom* expression ){
+    ExprInContext result = meaning(
+        ExprInContext(
+            expression, // ----- Expression to be evaluated
+            baseEnv, // -------- Global context
+            str( expression ) // String representation of the original expression
+        )
+    );
+    return result.expr;
+}
+
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
