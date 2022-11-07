@@ -994,8 +994,9 @@ function evcon(lines, context){
 
 ExprInContext evcon( ExprInContext eINc ){
     // evaluate cond form by form, this is the guts of cond
-    Atom* lines   = eINc.expr; // ------------------------------ Fetch cond lines from the expression
-    bool  hasElse = p_else( questionOf( get_car( lines ) ) ); // bool: Item question is 'else
+    Atom* /*---*/ lines   = eINc.expr; // ------------------------------ Fetch cond lines from the expression
+    bool /*----*/ hasElse = p_else( questionOf( get_car( lines ) ) ); // bool: Item question is 'else
+    ExprInContext result; // ------------------------------------------- Evaluation result
     // FIXME, START HERE: Translate the rest of `evcon`
 }
 
