@@ -827,7 +827,7 @@ Atom* expression_from_string( string expStr, dchar sepChar = ' ' ){
 
 ////////// SPECIAL FORMS ///////////////////////////////////////////////////////////////////////////
 struct ExprInContext{
-    // Container struct for an expression and its context
+    // Container struct for an expression and its context, Used to simultaneously return expression and context
     Atom*  expr;
     Env*   context;
     string tag;
