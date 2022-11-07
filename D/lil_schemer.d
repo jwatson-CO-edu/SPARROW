@@ -1022,33 +1022,49 @@ bool p_user_def_function( Env* env, string funcName ){
 }
 
 ExprInContext apply_closure( ExprInContext input ){ 
-    // FIXME, START HERE: WRITE AS ABOVE, RETURN `ExprInContext`
+    // apply a non-primitive function
 
     Env*  nuEnv = null;
     Atom* func  = null;
 
-    // 0. Determine if the function exists
+    // 0. Determine if the function exists, then construct a new context
     if(  p_user_def_function( input.context, nameOf( input.expr ) )  ){
         // 1. Create a new context with the arguments given values as a child of the containing context
         func  = get_bound_atom( input.context, nameOf( input.expr ) )
         nuEnv = enclose( 
-            input.context, // parent 
-            formalsOf( func ), 
-            answerOf( input.expr )
+            input.context, // ------- parent 
+            formalsOf( func ), // --- parameters
+            answerOf( input.expr ) // arguments 
         )
     }
 
-    
-
     // 2. Evaluate the function within the new context
+    return meaning(
+        ExprInContext(
+            bodyOf( func ),
+            nuEnv,
+            "closure"
+        )
+    );
+}
+
+bool p_special_form( string name ){
+    // Return true if there is a special form with `name`
+    return (name in specialForms) !is null;
 }
 
 
-Atom* list_to_action( Atom* e ){
+ExprInContext list_to_action( ExprInContext eINc ){ // Return one of ...
+	// special form action OR a function that returns the result of applying the form assuming the first item is a func name
     // Handle expressions more complex than literals
+    
     // Case Special Form
+    if( p_special_form( get_car( e ) ) ){
+        return specialForms[ get_car( e ) ]( eINc );
     // Case Function Application
-    return empty_atom();
+    }else{
+        return apply_closure( eINc );
+    }
 }
 
 
