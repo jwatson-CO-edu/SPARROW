@@ -902,8 +902,8 @@ void init_specials(){
                 third( eINc.expr ), // Eval this
                 eINc.context, // ----- Context for eval
                 "meaning" // --------- Eval tag
-            ) 
-        ) );
+            ) ).expr 
+        );
 
         // 2. Return modified context
         return ExprInContext(
@@ -982,39 +982,59 @@ void init_specials(){
 
 // FIXME: REALLY UNDERSTAND THE FLOW OF INFORMATION AND CONTEXT IN THIS SECTION AND COMMENT YOUR UNDERSTANDING
 
-bool p_eq( Atom* op1, Atom* op2 ){  primitiveFunctions["eq?"]( make_list_of_2( op1, op2 ) );  }
+bool p_eq( Atom* op1, Atom* op2 ){  return primitiveFunctions["eq?"]( make_list_of_2( op1, op2 ) ).bul;  }
 
-bool p_else( Atom* x ){  return p_literal( x ) && p_eq( x, make_string( 'else' ) );  } // is the arg an 'else symbol?
+bool p_else( Atom* x ){  return p_literal( x ) && p_eq( x, make_string( "else" ) );  } // is the arg an 'else symbol?
 
-function evcon(lines, context){ 
-	return p_else(questionOf(get_car(lines))) ? meaning(answerOf(get_car(lines)), context) : // item question is 'else, eval item answer
-		meaning(questionOf(get_car(lines)), context) ? meaning(answerOf(get_car(lines)), context) : //eval item question -> is true, eval item answer
-			evcon(get_cdr(lines), context); // else, recur on sublist lines and table
-} // note there was no action for the 'null?' case, one of the above conditions better be true!
 
 ExprInContext evcon( ExprInContext eINc ){
     // evaluate cond form by form, this is the guts of cond
     Atom* /*---*/ lines   = eINc.expr; // ------------------------------ Fetch cond lines from the expression
     bool /*----*/ hasElse = p_else( questionOf( get_car( lines ) ) ); // bool: Item question is 'else
     ExprInContext result; // ------------------------------------------- Evaluation result
-    // FIXME, START HERE: Translate the rest of `evcon`
+    if( hasElse ){
+        return meaning( ExprInContext( 
+            answerOf(get_car(lines)),
+            eINc.context,
+            str( answerOf(get_car(lines)) )
+        ) );
+    }else{
+        result = meaning( ExprInContext( 
+            questionOf(get_car(lines)),
+            eINc.context,
+            str( answerOf(get_car(lines)) )
+        ) );
+        if( truthiness( result.expr ) ){
+            return meaning( ExprInContext( 
+                answerOf(get_car(lines)),
+                eINc.context,
+                str( answerOf(get_car(lines)) )
+            ) );
+        }else{
+            return evcon( ExprInContext(
+                get_cdr(lines),
+                eINc.context,
+                str( get_cdr(lines) )
+            ) );
+        }
+    }
 }
 
 ExprInContext apply_primitive_function( ExprInContext eINc ){
     // Invocation of primitive function in a context
 
-    if( p_primitve_function( get_car( eINc.expr ) ) ){
+    if( p_primitve_function( get_car( eINc.expr ).str ) ){
 
         return ExprInContext(
-            primitiveFunctions[ get_car( eINc.expr ) ]( get_cdr( eINc.expr ) ), // Balance of arguments
+            primitiveFunctions[ get_car( eINc.expr ).str ]( get_cdr( eINc.expr ) ), // Balance of arguments
             eINc.context, // ---- Original context
-            "primitive: " ~ get_car( eINc.expr ) // ------- Tag
+            "primitive: " ~ get_car( eINc.expr ).str // ------- Tag
         );
     }else{
         return ExprInContext(
             make_error(
                 F_Error.DNE,
-                "Oops, \"" ~ get_car( eINc.expr ) ~ "\" is NOT a primitive function in SPARROW!"
+                "Oops, \"" ~ get_car( eINc.expr ).str ~ "\" is NOT a primitive function in SPARROW!"
             ),
             eINc.context, // ---- Original context
             "ERROR"
@@ -1047,9 +1067,9 @@ ExprInContext apply_closure( ExprInContext input ){
     Atom* func  = null;
 
     // 0. Determine if the function exists, then construct a new context
-    if(  p_user_def_function( input.context, nameOf( input.expr ) )  ){
+    if(  p_user_def_function( input.context, nameOf( input.expr ).str )  ){
         // 1. Create a new context with the arguments given values as a child of the containing context
-        func  = get_bound_atom( input.context, nameOf( input.expr ) );
+        func  = get_bound_atom( input.context, nameOf( input.expr ).str );
         nuEnv = enclose( 
             input.context, // ------- parent 
             formalsOf( func ), // --- parameters
@@ -1076,10 +1096,10 @@ bool p_special_form( string name ){
 ExprInContext list_to_action( ExprInContext eINc ){ // Return one of ...
 	// special form action OR a function that returns the result of applying the form assuming the first item is a func name
     // Handle expressions more complex than literals
-    
+    Atom* e = eINc.expr;
     // Case Special Form
-    if( p_special_form( get_car( e ) ) ){
-        return specialForms[ get_car( e ) ]( eINc );
+    if( p_special_form( get_car( e ).str ) ){
+        return specialForms[ get_car( e ).str ]( eINc );
     // Case Function Application
     }else{
         return apply_closure( eINc );
