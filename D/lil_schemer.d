@@ -854,6 +854,9 @@ bool truthiness( Atom* atm = null ){
             case F_Type.EROR:
                 // An error is always false
                 return false;
+            case F_Type.FUNC:
+                // A function is always true
+                return true;
             default: 
                 // This should not happen, return false
                 return false;
@@ -862,6 +865,7 @@ bool truthiness( Atom* atm = null ){
     // No arg or null arg, returh false
     return false;
 }
+// 2022-11-08: Tested truthiness of various atom types
 
 
 void init_specials(){
@@ -1334,5 +1338,41 @@ void main(){
     writeln( truthiness( make_cons( make_number(4) ) ) ); // true
     writeln( truthiness( make_error( F_Error.DNE, "All errors are FALSE!" ) ) ); // false
     writeln( truthiness() ); // false
+
+    writeln( "\nSpecial Forms Tests" ); //////////////////////////////
+    
+    Atom* run_special_form( string strForm ){
+        // Fake the invocation of primitives by the interpreter
+
+        Atom*  schemeForm = expression_from_string( strForm );
+        string name /*-*/ = nameOf( schemeForm ).str;
+        // Atom*  args    = argsOf( schemeForm );
+
+        ExprInContext input = ExprInContext(
+            schemeForm,
+            baseEnv,
+            strForm
+        ); 
+        ExprInContext output;
+        Atom* /*---*/ outLst;
+        
+        // prnt( args );
+        if( p_special_form( name ) ){
+            output = specialForms[ name ]( input );
+            outLst = output.expr;
+            writeln( strForm ~ " --"~name~"-> " ~ str( outLst ) );
+            return outLst;
+        }else{
+            return empty_atom();
+        }
+    }
+
+    run_special_form( "(quote (+ 2 3))" ); // ( +, ( 2, ( 3, ⧄ ) ) )
+    run_special_form( "(lambda (n) (+ n 2))" ); // ( ( n, ⧄ ), ( (  +, ( n, ( 2, ⧄ ) ) ), ⧄ ) )
+    run_special_form( "(define n 5)" ); // n
+    run_special_form( "(define m 6)" ); // m
+    prnt( get_bound_atom( baseEnv, "n" ) ); // 5
+    prnt( get_bound_atom( baseEnv, "m" ) ); // 6
+    run_special_form( "(cond 0.0)" ); // FIXME: "Segmentation fault (core dumped)"
 
 }
