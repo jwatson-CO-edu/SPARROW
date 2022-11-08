@@ -384,7 +384,7 @@ Atom* append( Atom* list, Atom* atm = null ){
 
 Atom* make_list_of_2( Atom* atm1, Atom* atm2 ){
     // return a two-item list with 's1' as the first item and 's2' as the second item
-    return make_cons( atm1, make_cons(atm2, empty_atom));
+    return make_cons( atm1, make_cons( atm2, empty_atom() ) );
 }
 
 
