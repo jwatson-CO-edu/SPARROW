@@ -564,6 +564,18 @@ Atom*[] flatten_atom_list( Atom* atomList ){
     return rtnArr;
 }
 
+Atom*[] flatten_cons_list( Atom* atomList ){
+    // Take a LISP list of Atoms and convert to a Dlang dyn. array
+    Atom*   currCons = atomList;
+    Atom*[] rtnArr;
+    ulong   depth = 0;
+    while( !p_empty( currCons ) ){
+        rtnArr ~= currCons.car;
+        currCons = currCons.cdr;
+    }
+    return rtnArr;
+}
+
 ///// Scheme --to-> D --to-> Scheme //////////////
 
 ///// Primitive Helpers /////
@@ -996,35 +1008,68 @@ bool p_else( Atom* x ){  return p_literal( x ) && p_eq( x, make_string( "else" )
 
 ExprInContext evcon( ExprInContext eINc ){
     // evaluate cond form by form, this is the guts of cond
-    Atom* /*---*/ lines   = eINc.expr; // ------------------------------ Fetch cond lines from the expression
-    bool /*----*/ hasElse = p_else( questionOf( get_car( lines ) ) ); // bool: Item question is 'else
+    Atom* /*---*/ forms   = eINc.expr; // ------------------------------ Fetch cond lines from the expression
+    // bool /*----*/ hasElse = p_else( questionOf( get_car( lines ) ) ); // bool: Item question is 'else
     ExprInContext result; // ------------------------------------------- Evaluation result
-    if( hasElse ){
-        return meaning( ExprInContext( 
-            answerOf(get_car(lines)),
-            eINc.context,
-            str( answerOf(get_car(lines)) )
-        ) );
-    }else{
-        result = meaning( ExprInContext( 
-            questionOf(get_car(lines)),
-            eINc.context,
-            str( answerOf(get_car(lines)) )
-        ) );
-        if( truthiness( result.expr ) ){
-            return meaning( ExprInContext( 
-                answerOf(get_car(lines)),
-                eINc.context,
-                str( answerOf(get_car(lines)) )
-            ) );
-        }else{
-            return evcon( ExprInContext(
-                get_cdr(lines),
-                eINc.context,
-                str( get_cdr(lines) )
-            ) );
-        }
+
+    writeln( "\t`evcon`: received the following forms: " ~ str( forms ) );
+
+    Atom*[] formLst = flatten_atom_list( forms );
+
+    foreach (Atom* form; formLst){
+        writeln( "\tevcon: " ~ "Working on form - " ~ str(form) );
     }
+
+    return meaning( ExprInContext( 
+        make_bool( true ),
+        baseEnv,
+        "REMOVE"
+    ) );
+
+    // if( hasElse ){
+
+        
+
+    //     return meaning( ExprInContext( 
+    //         answerOf(get_car(lines)),
+    //         eINc.context,
+    //         str( answerOf(get_car(lines)) )
+    //     ) );
+
+        
+
+    // }else{
+
+    //     writeln( "\tevcon: " ~ "No else" );
+
+    //     result = meaning( ExprInContext( 
+    //         questionOf(get_car(lines)),
+    //         eINc.context,
+    //         str( answerOf(get_car(lines)) )
+    //     ) );
+
+    //     writeln( "\tevcon: " ~ "Expression means - " ~ str(result.expr) );
+
+    //     if( truthiness( result.expr ) ){
+
+    //         writeln( "\tevcon: " ~ "Expression was TRUE" );
+
+    //         return meaning( ExprInContext( 
+    //             answerOf(get_car(lines)),
+    //             eINc.context,
+    //             str( answerOf(get_car(lines)) )
+    //         ) );
+    //     }else{
+
+    //         writeln( "\tevcon: " ~ "Expression was FALSE" );
+
+    //         return evcon( ExprInContext(
+    //             get_cdr(lines),
+    //             eINc.context,
+    //             str( get_cdr(lines) )
+    //         ) );
+    //     }
+    // }
 }
 
 ExprInContext apply_primitive_function( ExprInContext eINc ){
@@ -1348,6 +1393,8 @@ void main(){
         string name /*-*/ = nameOf( schemeForm ).str;
         // Atom*  args    = argsOf( schemeForm );
 
+        writeln( "Attempt to evaluate: " ~ str( schemeForm ) );
+
         ExprInContext input = ExprInContext(
             schemeForm,
             baseEnv,
@@ -1373,6 +1420,8 @@ void main(){
     run_special_form( "(define m 6)" ); // m
     prnt( get_bound_atom( baseEnv, "n" ) ); // 5
     prnt( get_bound_atom( baseEnv, "m" ) ); // 6
-    run_special_form( "(cond 0.0)" ); // FIXME: "Segmentation fault (core dumped)"
+    run_special_form( "(cond ((> 3 3) greater)
+                             ((< 3 3) less)
+                             (else equal))" ); // FIXME: "Segmentation fault (core dumped)"
 
 }
