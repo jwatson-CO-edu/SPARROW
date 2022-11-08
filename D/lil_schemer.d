@@ -731,7 +731,6 @@ void init_primitives(){
     };
 }
 
-
 ////////// PARSING /////////////////////////////////////////////////////////////////////////////////
 
 ///// Predicates /////
@@ -836,28 +835,32 @@ struct ExprInContext{
 ExprInContext function( ExprInContext )[string] specialForms; // Dictionary of forms other than func applications, implemented in Dlang
 
 
-bool truthiness( Atom* atm ){
+bool truthiness( Atom* atm = null ){
     // Determine the truth value of an atom
-    switch( atm.kind ){
-        case F_Type.STRN:
-            // A string is true if it has length
-            return (atm.str.length > 0);
-        case F_Type.BOOL:
-            // A Boolean is already a truth value
-            return atm.bul;
-        case F_Type.NMBR:
-            // A number is true if it above zero
-            return (atm.num > 0.0);
-        case F_Type.CONS:
-            // A cons is true if either side is non-empty
-            return (!p_empty(atm.car)) || (!p_empty(atm.cdr));
-        case F_Type.EROR:
-            // An error is always false
-            return false;
-        default: 
-            // This should not happen, return false
-            return false;
+    if( !(atm is null) ){
+        switch( atm.kind ){
+            case F_Type.STRN:
+                // A string is true if it has length
+                return (atm.str.length > 0);
+            case F_Type.BOOL:
+                // A Boolean is already a truth value
+                return atm.bul;
+            case F_Type.NMBR:
+                // A number is true if it above zero
+                return (atm.num > 0.0);
+            case F_Type.CONS:
+                // A cons is true if either side is non-empty
+                return (!p_empty(atm.car)) || (!p_empty(atm.cdr));
+            case F_Type.EROR:
+                // An error is always false
+                return false;
+            default: 
+                // This should not happen, return false
+                return false;
+        }
     }
+    // No arg or null arg, returh false
+    return false;
 }
 
 
@@ -1144,7 +1147,7 @@ void main(){
     init_primitives();
     init_specials();
     
-    // Structure Tests //
+    writeln( "\nStructure Tests" ); //////////////////////////////////////
     Atom* list1 = make_list_of_2( make_number(2), make_number(3) );
     writeln( str( list1 ) );
     append( list1, make_number(4) );
@@ -1154,7 +1157,7 @@ void main(){
     prnt( second( list1 ) );
     prnt( third( list1 ) );
 
-    // Math Tests //
+    writeln( "\nMath Tests" ); ////////////////////////////////////////////
     writeln( add1(2) ); // 3
     writeln( sub1(2) ); // 1
     writeln( add([2.0,3.0,4.0]) ); // 9
@@ -1168,7 +1171,7 @@ void main(){
     writeln( ge([4,3,3]) ); // true
     writeln( ge([4,3,5]) ); // false
 
-    // Interpreter Tests //
+    writeln( "\nInterpreter Tests" ); /////////////////////////////////////
     writeln( flatten_double_list( list1 ) ); // [2, 3, 4, 5]
     Atom* list2 = make_list_of_2( make_string( "foo" ), make_string( "bar" ) );
     append( list2, make_string( "baz" ) );
@@ -1176,7 +1179,7 @@ void main(){
     append( list2, make_string( "tef" ) );
     writeln( flatten_string_list( list2 ) ); // ["foo", "bar", "baz", "xur", "tef"]
 
-    // Primitive Symbol Tests //
+    writeln( "\nPrimitive Symbol Tests" ); ////////////////////////////////
     Atom* expr1 = expression_from_string( "true" );
     prnt( expr1 );
     expr1 = expression_from_string( "false" );
@@ -1186,8 +1189,9 @@ void main(){
     expr1 = expression_from_string( "#f" );
     prnt( expr1 );
 
-    // Primitive Function Tests //
-    writeln( "Primitive Function Tests" );
+    
+    writeln( "\nPrimitive Function Tests" ); //////////////////////////////
+    
     Atom* run_primitive_function( Atom* schemeForm ){
         // Fake the invocation of primitives by the interpreter
         string name = nameOf( schemeForm ).str;
@@ -1316,4 +1320,19 @@ void main(){
     prnt( run_primitive_function( expr2 ) );
     expr2 = expression_from_string( "(cons)" ); // ( ⧄, ⧄ )
     prnt( run_primitive_function( expr2 ) );
+
+    writeln( "\nTruthiness Tests" ); //////////////////////////////////////
+
+    writeln( truthiness( make_string( ""    ) ) ); // false
+    writeln( truthiness( make_string( "Foo" ) ) ); // true
+    writeln( truthiness( make_bool( false ) ) ); // false
+    writeln( truthiness( make_bool( true  ) ) ); // true
+    writeln( truthiness( make_number( -1.5 ) ) ); // false
+    writeln( truthiness( make_number(  0.0 ) ) ); // false
+    writeln( truthiness( make_number( 28.7 ) ) ); // true
+    writeln( truthiness( make_cons() ) ); // false
+    writeln( truthiness( make_cons( make_number(4) ) ) ); // true
+    writeln( truthiness( make_error( F_Error.DNE, "All errors are FALSE!" ) ) ); // false
+    writeln( truthiness() ); // false
+
 }
