@@ -178,6 +178,7 @@ Atom* third(   Atom* atm ){  return get_car(get_cdr(get_cdr(atm)));  } // Return
 
 // Aliased Getters //
 Atom* condLinesOf( Atom* atm ){  return get_cdr( atm );   }
+Atom* formLinesOf( Atom* atm ){  return get_cdr( atm );   }
 Atom* argsOf(      Atom* atm ){  return get_cdr( atm );   }
 Atom* tableOf(     Atom* atm ){  return first( atm );     }
 Atom* nameOf(      Atom* atm ){  return first( atm );     }
@@ -1163,7 +1164,7 @@ ExprInContext list_to_action( ExprInContext eINc ){ // Return one of ...
             "primitive: " ~ get_car( eINc.expr ).str // ------- Tag
         );
     // Case Special Form
-    } else if( p_special_form(  name) ){
+    } else if( p_special_form( name ) ){
         return specialForms[ get_car( e ).str ]( eINc );
     // Case Function Application
     }else{
