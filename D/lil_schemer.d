@@ -30,9 +30,11 @@ import std.conv; // ---------- string conversions
 import std.uni; // ----------- `strip`
 import std.math.operations; // `NaN`
 import std.typecons; // ------ Tuple
+import std.ascii; // --------- Whitespace test
+alias  is_white = std.ascii.isWhite; 
 
 ///// Env Vars /////
-bool _DEBUG_VERBOSE = true; // Set true for debug prints
+bool _DEBUG_VERBOSE = false; // Set true for debug prints
 
 
 ////////// ATOMS ///////////////////////////////////////////////////////////////////////////////////
@@ -452,6 +454,9 @@ string[] tokenize( string expStr, dchar sepChar = ' ' ){
     dchar    c      = ' ';
     string   token  = "";
     ulong    expLen = expStr.length;
+    bool     testWhite = false;
+    if( sepChar == ' ' ) testWhite = true;
+
 
     // Helpers //
     void stow_token(){  tokens ~= token;  token = "";  }
@@ -473,9 +478,10 @@ string[] tokenize( string expStr, dchar sepChar = ' ' ){
             stow_char();  
         }
         // C. Case separator
-        else if( (c == sepChar) && (token.length > 0) ){  stow_token();  }
+        else if( (testWhite && is_white(c)) || (c == sepChar)){
+            if(token.length > 0){  stow_token();  }
         // D. Case any other char
-        else{  cache_char();  }
+        }else{  cache_char();  } 
     }
     // N. Return the vector of tokens
     return tokens;
@@ -822,7 +828,7 @@ Atom* consify_token_sequence( string[] tokens, ulong bgn = 0 ){
                 // If the sequence begins with an open paren, do nothing, we have already begun a cons
                 
                 // Else we are descending by one level
-                if( parsDex != bgn ){  rtnTree = append(  rtnTree , consify_token_sequence( tokens, parsDex+1 )  );  }
+                if( parsDex > 0 ){  rtnTree = append(  rtnTree , consify_token_sequence( tokens, parsDex+1 )  );  }
             // 6. Case Close Paren, ascend one level
             }else if( find_reserved( token ) == "clos_parn" ){  
                 return rtnTree;  
@@ -1021,68 +1027,53 @@ bool p_else( Atom* x ){  return p_literal( x ) && p_eq( x, make_string( "else" )
 
 ExprInContext evcon( ExprInContext eINc ){
     // evaluate cond form by form, this is the guts of cond
-    Atom* /*---*/ forms   = eINc.expr; // ------------------------------ Fetch cond lines from the expression
-    // bool /*----*/ hasElse = p_else( questionOf( get_car( lines ) ) ); // bool: Item question is 'else
+    Atom* /*---*/ forms     = eINc.expr; // ------------------------------ Fetch cond lines from the expression
+    Atom* /*---*/ condition = null;
+    Atom* /*---*/ answer    = null;
     ExprInContext result; // ------------------------------------------- Evaluation result
 
-    writeln( "\t`evcon`: received the following forms: " ~ str( forms ) );
+
+    if( _DEBUG_VERBOSE ) writeln( "\t`evcon`: received the following forms: " ~ str( forms ) );
 
     Atom*[] formLst = flatten_atom_list( forms );
 
     foreach (Atom* form; formLst){
-        writeln( "\tevcon: " ~ "Working on form - " ~ str(form) );
+        if( _DEBUG_VERBOSE ) writeln( "\tevcon: " ~ "Working on form - " ~ str(form) );
+        condition = questionOf( form );
+        answer    = answerOf( form );
+        if( _DEBUG_VERBOSE ) writeln( "\tevcon: " ~ "evaluate ..." );
+        if( p_else( condition ) ){
+            if( _DEBUG_VERBOSE ) writeln( "\tevcon: " ~ "Default to else" );
+            return meaning( ExprInContext( 
+                answer,
+                eINc.context,
+                str( answer )
+            ) );
+        }else{
+            if( _DEBUG_VERBOSE ) writeln( "\tevcon: " ~ "Regular condition" );
+            result = meaning( ExprInContext( 
+                condition,
+                eINc.context,
+                str( condition )
+            ) );
+            if( truthiness( result.expr ) ){
+
+                if( _DEBUG_VERBOSE ) writeln( "\tevcon: " ~ "Expression was TRUE" );
+
+                return meaning( ExprInContext( 
+                    answer,
+                    eINc.context,
+                    str( answer )
+                ) );
+            }
+        }
     }
 
     return meaning( ExprInContext( 
-        make_bool( true ),
+        make_bool( false ),
         baseEnv,
-        "REMOVE"
+        "No Cond True"
     ) );
-
-    // if( hasElse ){
-
-        
-
-    //     return meaning( ExprInContext( 
-    //         answerOf(get_car(lines)),
-    //         eINc.context,
-    //         str( answerOf(get_car(lines)) )
-    //     ) );
-
-        
-
-    // }else{
-
-    //     writeln( "\tevcon: " ~ "No else" );
-
-    //     result = meaning( ExprInContext( 
-    //         questionOf(get_car(lines)),
-    //         eINc.context,
-    //         str( answerOf(get_car(lines)) )
-    //     ) );
-
-    //     writeln( "\tevcon: " ~ "Expression means - " ~ str(result.expr) );
-
-    //     if( truthiness( result.expr ) ){
-
-    //         writeln( "\tevcon: " ~ "Expression was TRUE" );
-
-    //         return meaning( ExprInContext( 
-    //             answerOf(get_car(lines)),
-    //             eINc.context,
-    //             str( answerOf(get_car(lines)) )
-    //         ) );
-    //     }else{
-
-    //         writeln( "\tevcon: " ~ "Expression was FALSE" );
-
-    //         return evcon( ExprInContext(
-    //             get_cdr(lines),
-    //             eINc.context,
-    //             str( get_cdr(lines) )
-    //         ) );
-    //     }
-    // }
 }
 
 ExprInContext apply_primitive_function( ExprInContext eINc ){
@@ -1161,9 +1152,18 @@ bool p_special_form( string name ){
 ExprInContext list_to_action( ExprInContext eINc ){ // Return one of ...
 	// special form action OR a function that returns the result of applying the form assuming the first item is a func name
     // Handle expressions more complex than literals
-    Atom* e = eINc.expr;
+    if( _DEBUG_VERBOSE ) writeln( "`list_to_action`" );
+    Atom*  e    = eINc.expr;
+    string name = get_car( e ).str;
+    // Case Primitive
+    if( p_primitve_function( name ) ){
+        return ExprInContext(
+            primitiveFunctions[ get_car( eINc.expr ).str ]( get_cdr( eINc.expr ) ), // Balance of arguments
+            eINc.context, // ---- Original context
+            "primitive: " ~ get_car( eINc.expr ).str // ------- Tag
+        );
     // Case Special Form
-    if( p_special_form( get_car( e ).str ) ){
+    } else if( p_special_form(  name) ){
         return specialForms[ get_car( e ).str ]( eINc );
     // Case Function Application
     }else{
@@ -1174,11 +1174,24 @@ ExprInContext list_to_action( ExprInContext eINc ){ // Return one of ...
 
 ExprInContext meaning( ExprInContext eINc ){
     // Attempt to assign appropriate action to the given expression 'e'
-    // Case Literal -OR- Case Empty: Pass thru
+    if( _DEBUG_VERBOSE ) writeln( "`meaning`" );
     Atom* e = eINc.expr;
-    if( p_literal(e) || p_empty(e) ){  return eINc;  }
+    
+    // Case Literal -OR- Case Empty: Pass thru
+    if( p_literal(e) || p_empty(e) ){
+        if( _DEBUG_VERBOSE ) writeln( "\tmeaning: " ~ "Was atom" );
+        return eINc;  
+    }else if( p_binding_exists( eINc.context, e.str ) ){
+        return ExprInContext(
+            get_bound_atom( eINc.context, e.str ),
+            eINc.context,
+            e.str
+        );
     // Case Structure: More evaluation needed
-    else{  return list_to_action( eINc );  }
+    }else{  
+        if( _DEBUG_VERBOSE ) writeln( "\tmeaning: " ~ "Was Complex" );
+        return list_to_action( eINc );  
+    }
 }
 
 // function value(e){ return meaning(e, $global); } // this function, together with all the functions it uses, is an interpreter
@@ -1431,8 +1444,20 @@ void main(){
     run_special_form( "(lambda (n) (+ n 2))" ); // ( ( n, ⧄ ), ( (  +, ( n, ( 2, ⧄ ) ) ), ⧄ ) )
     run_special_form( "(define n 5)" ); // n
     run_special_form( "(define m 6)" ); // m
+    run_special_form( "(define o (+ 2 3))" ); // o
+    run_special_form( "(define p (+ m n))" ); // o
     prnt( get_bound_atom( baseEnv, "n" ) ); // 5
     prnt( get_bound_atom( baseEnv, "m" ) ); // 6
-    run_special_form( "(cond ((> 3 3) greater)((< 3 3) less)(else equal))" ); // FIXME: "Segmentation fault (core dumped)"
+    prnt( get_bound_atom( baseEnv, "o" ) ); // 5
+    prnt( get_bound_atom( baseEnv, "p" ) ); // 6
+    run_special_form( "(cond ((> 3 3) greater)
+                             ((< 3 3) lesser)
+                             (else equal))" ); // "equal" 
+    run_special_form( "(cond ((> 4 3) greater)
+                             ((< 3 3) lesser)
+                             (else equal))" ); // "greater"
+    run_special_form( "(cond ((> 3 3) greater)
+                             ((< 3 4) lesser)
+                             (else equal))" ); // "lesser"                             
 
 }

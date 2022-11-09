@@ -796,14 +796,22 @@ Atom* consify_token_sequence( string[] tokens, ulong bgn = 0 ){
     string token;
     ulong  seqLen  = tokens.length;
     Atom*  rtnTree = null;
-    parsDex = bgn;
+    /*--*/ parsDex = bgn;
     if( _DEBUG_VERBOSE )  writeln( "Sequence of ", seqLen, " tokens at index ", parsDex, ", sub-seq: ", tokens[parsDex..$] );
     
     // Base Case: There were no tokens, return Empty
-    if( (seqLen-parsDex) == 0 ){  return empty_atom();  }
+    if( (seqLen-parsDex) == 0 ){  
+        if( _DEBUG_VERBOSE )  writeln( "EMPTY atom!" );
+        return empty_atom();  
+    }
     
     // Base Case: There was one token, Return it
-    if( (seqLen-parsDex) == 1 ){  return atomize_string( tokens[ parsDex ] );  }
+    if( (seqLen-parsDex) == 1 ){  
+        if( _DEBUG_VERBOSE )  writeln( "SINGLE toke!" );
+        return atomize_string( tokens[ parsDex ] );  
+    }
+
+    if( _DEBUG_VERBOSE )  writeln( "LEX a sequence!" );
 
     // Recursive Case: There were 2 or more tokens
     if( (seqLen-parsDex) > 2 ){
@@ -819,17 +827,25 @@ Atom* consify_token_sequence( string[] tokens, ulong bgn = 0 ){
             token = tokens[ parsDex ];
             // 5. Case Open Paren
             if( find_reserved( token ) == "open_parn" ){
+                if( _DEBUG_VERBOSE )  writeln( "DESCEND one level!" );
                 // If the sequence begins with an open paren, do nothing, we have already begun a cons
                 
                 // Else we are descending by one level
-                if( parsDex != bgn ){  rtnTree = append(  rtnTree , consify_token_sequence( tokens, parsDex+1 )  );  }
+                // if( parsDex != bgn ){  rtnTree = append(  rtnTree , consify_token_sequence( tokens, parsDex+1 )  );  }
+                // if( parsDex > 0 ){  rtnTree = append(  rtnTree, consify_token_sequence( tokens, parsDex+1 )  );  }
+                if( parsDex > 0 ){  rtnTree = append(  rtnTree, consify_token_sequence( tokens, parsDex+1 )  );  }
+                // parsDex += 1;
+                // rtnTree = append(  rtnTree, consify_token_sequence( tokens, parsDex+1 )  ); 
+                // rtnTree = append(  rtnTree, consify_token_sequence( tokens, parsDex )  ); 
             // 6. Case Close Paren, ascend one level
             }else if( find_reserved( token ) == "clos_parn" ){  
+                if( _DEBUG_VERBOSE )  writeln( "ASCEND one level!" );
+                // parsDex += 1;
                 return rtnTree;  
             // 8. Case literal
             }else{
+                if( _DEBUG_VERBOSE )  writeln( "APPEND token!" );
                 rtnTree = append( rtnTree , atomize_string( token ) );
-                
             }
             parsDex += 1;
         }
