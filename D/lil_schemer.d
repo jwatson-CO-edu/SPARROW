@@ -953,63 +953,61 @@ void init_specials(){
     };
 
     specialForms["and"] = function ExprInContext( ExprInContext eINc ){  
+        // Return true only if all the forms evaluate to true, otherwise return false
+        Atom*   forms   = formLinesOf( eINc.expr );
+        Atom*[] formLst = flatten_atom_list( forms );
 
-        // fetch first item 'meaning',
-        ExprInContext current = meaning( ExprInContext( //- Expression result to bind
-            get_car( eINc.expr ), // Eval this
-            eINc.context, // ------- Context for eval
-            "meaning" // --------- Eval tag
-        ));
-
-        if( !truthiness( current.expr ) ){
-            return ExprInContext(
-                make_bool(false), // Truthiness of the element
-                current.context, //- Original context
-                "truthiness" // ---- Tag
-            );
-        }else if( p_empty( get_cdr( eINc.expr ) ) ){
-            return ExprInContext(
-                make_bool(true), // Truthiness of the element
-                current.context, // Original context
-                "truthiness" // --- Tag
-            );
-        }else{
-            return specialForms["and"]( ExprInContext(
-                get_cdr( eINc.expr ), // Balance of arguments
-                current.context, // ---- Original context
-                "`and` recur" // ------- Tag
-            ) );
+        foreach (Atom* form; formLst){
+            if( !truthiness(
+                meaning( ExprInContext( //- Expression result to bind
+                    form, // Eval this
+                    eINc.context, // ------- Context for eval
+                    str( form ) // --------- Eval tag
+                )).expr
+            ) ){
+                return ExprInContext(
+                    make_bool( false ), // Truthiness of the element
+                    eINc.context, //- Original context
+                    "truthiness" // ---- Tag
+                );
+            }
         }
+
+        return ExprInContext(
+            make_bool( true ), // Truthiness of the element
+            eINc.context, // Original context
+            "truthiness" // --- Tag
+        );
     };
 
     specialForms["or"] = function ExprInContext( ExprInContext eINc ){  
+        // Return true if any of the forms evaluate to true, otherwise return false
+        Atom*   forms   = formLinesOf( eINc.expr );
+        Atom*[] formLst = flatten_atom_list( forms );
 
-        // fetch first item 'meaning',
-        ExprInContext current = meaning( ExprInContext( //- Expression result to bind
-            get_car( eINc.expr ), // Eval this
-            eINc.context, // ------- Context for eval
-            "meaning" // --------- Eval tag
-        ));
+        if( _DEBUG_VERBOSE ) writeln( "OR" );
 
-        if( truthiness( current.expr ) ){
-            return ExprInContext(
-                make_bool(true), // Truthiness of the element
-                current.context, //- Original context
-                "truthiness" // ---- Tag
-            );
-        }else if( p_empty( get_cdr( eINc.expr ) ) ){
-            return ExprInContext(
-                make_bool(false), // Truthiness of the element
-                current.context, // Original context
-                "truthiness" // --- Tag
-            );
-        }else{
-            return specialForms["or"]( ExprInContext(
-                get_cdr( eINc.expr ), // Balance of arguments
-                current.context, // ---- Original context
-                "`or` recur" // ------- Tag
-            ) );
+        foreach (Atom* form; formLst){
+            if( truthiness(
+                meaning( ExprInContext( //- Expression result to bind
+                    form, // Eval this
+                    eINc.context, // ------- Context for eval
+                    str( form ) // --------- Eval tag
+                )).expr
+            ) ){
+                return ExprInContext(
+                    make_bool( true ), // Truthiness of the element
+                    eINc.context, //- Original context
+                    "truthiness" // ---- Tag
+                );
+            }
         }
+
+        return ExprInContext(
+            make_bool( false ), // Truthiness of the element
+            eINc.context, // Original context
+            "truthiness" // --- Tag
+        );
     };
 
     // specialForms["load"] = function ExprInContext( ExprInContext eINc ){ /* LOAD FILE */ } // FIXME: LOAD FILE
@@ -1180,7 +1178,7 @@ ExprInContext meaning( ExprInContext eINc ){
     
     // Case Literal -OR- Case Empty: Pass thru
     if( p_literal(e) || p_empty(e) ){
-        if( _DEBUG_VERBOSE ) writeln( "\tmeaning: " ~ "Was atom" );
+        if( _DEBUG_VERBOSE ) writeln( "\tmeaning: " ~ "Was atom, " ~ str(e) ~ " is a " ~ e.kind.to!string );
         return eINc;  
     }else if( p_binding_exists( eINc.context, e.str ) ){
         return ExprInContext(
@@ -1459,6 +1457,9 @@ void main(){
                              (else equal))" ); // "greater"
     run_special_form( "(cond ((> 3 3) greater)
                              ((< 3 4) lesser)
-                             (else equal))" ); // "lesser"                             
-
+                             (else equal))" ); // "lesser"     
+    run_special_form( "(and 1 1 1)" ); // T
+    run_special_form( "(and 1 0 1)" ); // F
+    run_special_form( "(or  0 0 0)" ); // F
+    run_special_form( "(or  0 1 0)" ); // T
 }

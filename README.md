@@ -91,7 +91,8 @@ Completion Key:
 
 [>] Translate "The Little Javascripter" by Douglas Crockford
     https://www.crockford.com/little.html (See `JS` folder for reference implementation)
-    [ ] T: All REPLacement tests pass
+    [>] T: Test each component as it is developed
+    [ ] Fork from FINCH, make public, and reorganize around SPARROW only.
     [ ] T: Ask Dlang forum for feedback
     [ ] T: Ask StackOverflow for feedback
     
