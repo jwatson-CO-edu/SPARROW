@@ -1147,26 +1147,84 @@ bool p_special_form( string name ){
     return (name in specialForms) !is null;
 }
 
+bool p_bound_function( Env* env, string name ){
+    // Return true if there is a bound function with this name
+    if( p_binding_exists( env, name ) ){
+        return p_func(  get_bound_atom( env, name )  );
+    }else{  return false;  }
+}
+
 
 ExprInContext list_to_action( ExprInContext eINc ){ // Return one of ...
 	// special form action OR a function that returns the result of applying the form assuming the first item is a func name
     // Handle expressions more complex than literals
     if( _DEBUG_VERBOSE ) writeln( "`list_to_action`" );
-    Atom*  e    = eINc.expr;
-    string name = get_car( e ).str;
-    // Case Primitive
-    if( p_primitve_function( name ) ){
+    Atom*  e /*-*/ = eINc.expr;
+    Atom*  balance = get_cdr( e );
+    string name    = "";
+    if( p_cons( e )   ){  name = get_car( e ).str;  }
+    if( p_string( e ) ){  name = e.str;             }
+
+    /// Base Cases ///
+
+    // Base Case: Primitive Symbol
+    if( p_primitve_symbol( name ) ){
         return ExprInContext(
-            primitiveFunctions[ get_car( eINc.expr ).str ]( get_cdr( eINc.expr ) ), // Balance of arguments
+            primitiveSymbols[ name ](), // Balance of arguments
             eINc.context, // ---- Original context
-            "primitive: " ~ get_car( eINc.expr ).str // ------- Tag
+            "primitive: " ~ name // ------- Tag
         );
+
+    // Base Case: Bound Symbol
+    }else if( p_binding_exists( eINc.context, name ) ){
+        return ExprInContext(
+            get_bound_atom( eINc.context, name ), // Balance of arguments
+            eINc.context, // ---- Original context
+            "primitive: " ~ name // ------- Tag
+        );
+
+    /// Recursive Cases ///
+
+    // Case Primitive Function
+    }else if( p_primitve_function( name ) ){
+        return ExprInContext(
+            primitiveFunctions[ name ]( 
+                meaning( ExprInContext(
+                    balance, // Balance of arguments
+                    eINc.context, // ---- Original context
+                    str( balance ) // ------- Tag
+                ) ).expr
+            ), // Balance of arguments
+            eINc.context, // ---- Original context
+            "primitive: " ~ name // ------- Tag
+        );
+
     // Case Special Form
-    } else if( p_special_form( name ) ){
-        return specialForms[ get_car( e ).str ]( eINc );
+    }else if( p_special_form( name ) ){
+        return specialForms[ name ]( eINc );
+
     // Case Function Application
-    }else{
+    }else if( p_bound_function( eINc.context, name ) ){
         return apply_closure( eINc );
+
+    // Case Cons Structure
+    }else{
+        return ExprInContext(
+            make_cons(
+                meaning( ExprInContext(
+                    first( e ), // Balance of arguments
+                    eINc.context, // ---- Original context
+                    str( first( e ) ) // ------- Tag
+                ) ).expr,
+                meaning( ExprInContext(
+                    balance, // Balance of arguments
+                    eINc.context, // ---- Original context
+                    str( balance )  // ------- Tag
+                ) ).expr
+            ), // Balance of arguments
+            eINc.context, // ---- Original context
+            str( e ) // ------- Tag
+        );
     }
 }
 
@@ -1180,12 +1238,7 @@ ExprInContext meaning( ExprInContext eINc ){
     if( p_literal(e) || p_empty(e) ){
         if( _DEBUG_VERBOSE ) writeln( "\tmeaning: " ~ "Was atom, " ~ str(e) ~ " is a " ~ e.kind.to!string );
         return eINc;  
-    }else if( p_binding_exists( eINc.context, e.str ) ){
-        return ExprInContext(
-            get_bound_atom( eINc.context, e.str ),
-            eINc.context,
-            e.str
-        );
+    
     // Case Structure: More evaluation needed
     }else{  
         if( _DEBUG_VERBOSE ) writeln( "\tmeaning: " ~ "Was Complex" );
