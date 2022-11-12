@@ -34,7 +34,7 @@ import std.ascii; // --------- Whitespace test
 alias  is_white = std.ascii.isWhite; 
 
 ///// Env Vars /////
-bool _DEBUG_VERBOSE = false; // Set true for debug prints
+bool _DEBUG_VERBOSE = true; // Set true for debug prints
 
 
 ////////// ATOMS ///////////////////////////////////////////////////////////////////////////////////
@@ -1169,6 +1169,9 @@ ExprInContext list_to_action( ExprInContext eINc ){ // Return one of ...
 
     // Base Case: Primitive Symbol
     if( p_primitve_symbol( name ) ){
+
+        if( _DEBUG_VERBOSE ) writeln( "`list_to_action`: " ~ "Primitive Symbol" );
+
         return ExprInContext(
             primitiveSymbols[ name ](), // Balance of arguments
             eINc.context, // ---- Original context
@@ -1177,6 +1180,9 @@ ExprInContext list_to_action( ExprInContext eINc ){ // Return one of ...
 
     // Base Case: Bound Symbol
     }else if( p_binding_exists( eINc.context, name ) ){
+
+        if( _DEBUG_VERBOSE ) writeln( "`list_to_action`: " ~ "Bound Symbol" );
+
         return ExprInContext(
             get_bound_atom( eINc.context, name ), // Balance of arguments
             eINc.context, // ---- Original context
@@ -1187,6 +1193,9 @@ ExprInContext list_to_action( ExprInContext eINc ){ // Return one of ...
 
     // Case Primitive Function
     }else if( p_primitve_function( name ) ){
+
+        if( _DEBUG_VERBOSE ) writeln( "`list_to_action`: " ~ "Primitive Function" );
+
         return ExprInContext(
             primitiveFunctions[ name ]( 
                 meaning( ExprInContext(
@@ -1201,14 +1210,23 @@ ExprInContext list_to_action( ExprInContext eINc ){ // Return one of ...
 
     // Case Special Form
     }else if( p_special_form( name ) ){
+
+        if( _DEBUG_VERBOSE ) writeln( "`list_to_action`: " ~ "Special Form" );
+
         return specialForms[ name ]( eINc );
 
     // Case Function Application
     }else if( p_bound_function( eINc.context, name ) ){
+
+        if( _DEBUG_VERBOSE ) writeln( "`list_to_action`: " ~ "Bound Function (Closure)" );
+
         return apply_closure( eINc );
 
     // Case Cons Structure
     }else{
+
+        if( _DEBUG_VERBOSE ) writeln( "`list_to_action`: " ~ "Conse Structure" );
+
         return ExprInContext(
             make_cons(
                 meaning( ExprInContext(
