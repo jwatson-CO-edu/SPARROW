@@ -34,7 +34,7 @@ import std.ascii; // --------- Whitespace test
 alias  is_white = std.ascii.isWhite; 
 
 ///// Env Vars /////
-bool _DEBUG_VERBOSE = true; // Set true for debug prints
+bool _DEBUG_VERBOSE = false; // Set true for debug prints
 
 
 ////////// ATOMS ///////////////////////////////////////////////////////////////////////////////////
@@ -180,13 +180,16 @@ Atom* third(   Atom* atm ){  return get_car(get_cdr(get_cdr(atm)));  } // Return
 Atom* condLinesOf( Atom* atm ){  return get_cdr( atm );   }
 Atom* formLinesOf( Atom* atm ){  return get_cdr( atm );   }
 Atom* argsOf(      Atom* atm ){  return get_cdr( atm );   }
+Atom* paramsOf(      Atom* atm ){  return get_cdr( atm );   }
 Atom* tableOf(     Atom* atm ){  return first( atm );     }
 Atom* nameOf(      Atom* atm ){  return first( atm );     }
 Atom* questionOf(  Atom* atm ){  return first( atm );     }
 Atom* textOf(      Atom* atm ){  return second( atm );    }
-Atom* formalsOf(   Atom* atm ){  return second( atm );    }
+// Atom* formalsOf(   Atom* atm ){  return second( atm );    }
+Atom* formalsOf(   Atom* atm ){  return first( atm );    }
 Atom* answerOf(    Atom* atm ){  return second( atm );    }
-Atom* bodyOf(      Atom* atm ){  return third( atm );     }
+// Atom* bodyOf(      Atom* atm ){  return third( atm );     }
+Atom* bodyOf(      Atom* atm ){  return get_cdr( atm );     }
 
 
 // Basic Setters //
@@ -504,23 +507,46 @@ void bind_atom( Env* env, string name, Atom* atom ){
     env.boundVars[ name ] = atom;
 }
 
-
 bool p_binding_exists( Env* env, string name ){
     // Return T if the binding exists in the `boundVars` of `env`, otherwise return F
-    return (name in env.boundVars) !is null;
+    if((name in env.boundVars) is null){
+        if( env.parent == null )
+            return false;
+        else
+            return p_binding_exists( env.parent, name );
+    }else
+        return true;
 }
 
 
 Atom* get_bound_atom( Env* env, string name ){
     // Return the atom bound to `name`, if it exists, Otherwise return an empty atom
-    if( p_binding_exists( env, name ) ){  return env.boundVars[ name ];  }
-    else{  return empty_atom();  }
+    if((name in env.boundVars) is null){
+        if( env.parent == null )
+            return empty_atom();  
+        else
+            return get_bound_atom( env.parent, name );
+    }else
+        return env.boundVars[ name ];
 }
+
+// bool p_binding_exists( Env* env, string name ){
+//     // Return T if the binding exists in the `boundVars` of `env`, otherwise return F
+//     return (name in env.boundVars) !is null;
+// }
+
+
+// Atom* get_bound_atom( Env* env, string name ){
+//     // Return the atom bound to `name`, if it exists, Otherwise return an empty atom
+//     if( p_binding_exists( env, name ) ){  return env.boundVars[ name ];  }
+//     else{  return empty_atom();  }
+// }
 
 
 Env* enclose( Env* parent, Atom* names, Atom* values ){
     // Create a child `Env` of `parent`, then bind `values` to `names` in the child context
-    Env* rtnEnv = new Env( parent );
+    Env* rtnEnv   = new Env();
+    rtnEnv.parent = parent;
     string[] nams = flatten_string_list( names  );
     Atom*[]  vals = flatten_atom_list(   values );
     if( nams.length == vals.length ){
@@ -1084,7 +1110,13 @@ ExprInContext apply_primitive_function( ExprInContext eINc ){
     if( p_primitve_function( get_car( eINc.expr ).str ) ){
 
         return ExprInContext(
-            primitiveFunctions[ get_car( eINc.expr ).str ]( get_cdr( eINc.expr ) ), // Balance of arguments
+            primitiveFunctions[ get_car( eINc.expr ).str ]( 
+                meaning( ExprInContext(
+                    get_cdr( eINc.expr ),
+                    eINc.context,
+                    "primitive arguments"
+                )).expr
+            ), // Balance of arguments
             eINc.context, // ---- Original context
             "primitive: " ~ get_car( eINc.expr ).str // ------- Tag
         );
@@ -1121,28 +1153,52 @@ bool p_user_def_function( Env* env, string funcName ){
 ExprInContext apply_closure( ExprInContext input ){ 
     // apply a non-primitive function
 
+    if( _DEBUG_VERBOSE )  writeln( "`apply_closure`" );
+
     Env*  nuEnv = null;
     Atom* func  = null;
 
     // 0. Determine if the function exists, then construct a new context
     if(  p_user_def_function( input.context, nameOf( input.expr ).str )  ){
         // 1. Create a new context with the arguments given values as a child of the containing context
+
         func  = get_bound_atom( input.context, nameOf( input.expr ).str );
+
+        if( _DEBUG_VERBOSE ){  
+            writeln( "\t`apply_closure`: " ~ "Found function " ~ nameOf( input.expr ).str );
+            writeln( "\t`apply_closure`: " ~ "Parameters - " ~ str(formalsOf( func ) ));
+            writeln( "\t`apply_closure`: " ~ "Arguments  - " ~ str(argsOf( input.expr )) );
+        }
+
         nuEnv = enclose( 
             input.context, // ------- parent 
             formalsOf( func ), // --- parameters
-            answerOf( input.expr ) // arguments 
+            meaning(ExprInContext(
+                argsOf( input.expr ), // arguments
+                input.context,
+                "input params meaning"
+            )).expr, 
+        );
+
+        // 2. Evaluate the function within the new context
+        return meaning(
+            ExprInContext(
+                bodyOf( func ),
+                nuEnv,
+                "closure"
+            )
         );
     }
 
+    if( _DEBUG_VERBOSE )  writeln( "`apply_closure`: " ~ "NO function named " ~ nameOf( input.expr ).str );
+
     // 2. Evaluate the function within the new context
-    return meaning(
-        ExprInContext(
-            bodyOf( func ),
-            nuEnv,
-            "closure"
-        )
+    return ExprInContext(
+        make_error( F_Error.NOVALUE, "There is no function with the name " ~ nameOf( input.expr ).str ),
+        nuEnv,
+        "closure"
     );
+    
 }
 
 bool p_special_form( string name ){
@@ -1244,7 +1300,14 @@ ExprInContext meaning( ExprInContext eINc ){ // Return one of ...
         // Case Cons Structure
         }else{
 
-            if( _DEBUG_VERBOSE ) writeln( "`meaning`: " ~ "Cons Structure" );
+            if( _DEBUG_VERBOSE ){ 
+                writeln( "\t`meaning`: " ~ "Cons Structure" );
+                writeln( "\t`meaning`: " ~ "car - " ~ str(first( e )) );
+                writeln( "\t`meaning`: " ~ "cdr - " ~ str(balance) );
+                writeln( "\t`meaning`: " ~ "cdr empty? - " ~ p_empty(balance).to!string );
+                writeln( "\t`meaning`: " ~ "cdr empty? - " ~ balance.kind.to!string );
+                writeln( "\t`meaning`: " ~ "cdr empty? - " ~ balance.err.to!string );
+            }
 
             return ExprInContext(
                 make_cons(
@@ -1258,10 +1321,12 @@ ExprInContext meaning( ExprInContext eINc ){ // Return one of ...
                         eINc.context, // ---- Original context
                         str( balance )  // ------- Tag
                     ) ).expr
-                ), // Balance of arguments
+                ) , 
                 eINc.context, // ---- Original context
                 str( e ) // ------- Tag
             );
+
+            
         }
     } 
 }
@@ -1536,16 +1601,36 @@ void main(){
     run_special_form( "(and 1 0 1)" ); // F
     run_special_form( "(or  0 0 0)" ); // F
     run_special_form( "(or  0 1 0)" ); // T
-    run_special_form( "(define addition (lambda (a b) (+ a b) ))" ); 
+    run_special_form( "(define addition 
+                               (lambda (a b) (+ a b) )
+                        )" ); 
 
     writeln( "\nEvaluation Tests" ); //////////////////////////////
 
-    Atom* read_eval_print( string strForm ){
+    void eval_print( string strForm ){
         // The language is now taking shape
-
-        // FIXME: START HERE
-
+        Atom* expr = expression_from_string( strForm );
+        write( str( expr ) ~ " --value-> " );
+        prnt(  value( expr )  );
     }
 
-    // prnt( run_special_form( "(addition 2 3)" ) ); 
+    eval_print( "(atom? 2.5)" ); // T
+    eval_print( "(+ 2 3 4)" ); // 9
+    eval_print( "(cons 4 5)" ); // ( 4, 5 )
+    eval_print( "(define q (+ o p))" ); // q
+    eval_print( "q" ); // 16
+    eval_print( "(cond ((> 4 3) greater)
+                       ((< 3 3) lesser)
+                       (else equal))" ); // greater
+    eval_print( "(addition 2 3)" ); // ( 5, ⧄ ) // Is this okay?
+    eval_print( "(define fact (lambda (x) 
+                                      (cond ((> x 1) (* x (fact (- x 1))) ) 
+                                            (else 1)                      ) 
+                               )
+                  )" );
+    eval_print( "(fact 4)" ); // 
+
+
+    
+    
 }
