@@ -1225,8 +1225,6 @@ ExprInContext meaning( ExprInContext eINc ){ // Return one of ...
 
     /// Base Cases ///
 
-    
-
     // Base Case: Primitive Symbol
     if( p_primitve_symbol( name ) ){
 
