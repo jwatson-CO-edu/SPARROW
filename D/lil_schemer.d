@@ -154,16 +154,16 @@ Atom* make_cons( Atom* car = null, Atom* cdr = null, ){
 
 ///// Function /////
 
-Atom* make_funct( string name, Atom* definition = null, ){
+Atom* make_function( Atom* parameters = null, Atom* definition = null ){
     // Make a function
     return new Atom(
-        F_Type.FUNC, // ------- Function
-        make_string( name ), // Name as an atom
-        definition, // -------- Const structure containing code
-        double.nan, // -------- No number interpretation
-        name, // -------------- Name as a string
-        true, // -------------- Assume truthiness
-        F_Error.OKAY // ------- Assume okay
+        F_Type.FUNC, // Function
+        parameters, //- Cons list of parameter symbols
+        definition, //- Cons structure containing code
+        double.nan, //- No number interpretation
+        "function", //- Name as a string
+        true, // ------ Assume truthiness
+        F_Error.OKAY // Assume okay
     );
 }
 
@@ -914,8 +914,9 @@ void init_specials(){
     
     specialForms["lambda"] = function ExprInContext( ExprInContext eINc ){  
         // Package anonymous function for eval
+        Atom* forms = get_cdr( eINc.expr );
         return ExprInContext(
-            get_cdr( eINc.expr ),
+            make_function( first( forms ), get_cdr( forms ) ),
             eINc.context,
             "non-primitive"
         );
@@ -932,6 +933,8 @@ void init_specials(){
 
     specialForms["define"] = function ExprInContext( ExprInContext eINc ){  
         // Bind expression result to a name
+
+        if( _DEBUG_VERBOSE ) writeln( "`define`: " ~ str( eINc.expr )  );
         
         // 1. Bind name
         bind_atom( 
@@ -1155,22 +1158,23 @@ bool p_bound_function( Env* env, string name ){
 }
 
 
-ExprInContext list_to_action( ExprInContext eINc ){ // Return one of ...
+ExprInContext meaning( ExprInContext eINc ){ // Return one of ...
 	// special form action OR a function that returns the result of applying the form assuming the first item is a func name
     // Handle expressions more complex than literals
-    if( _DEBUG_VERBOSE ) writeln( "`list_to_action`" );
+    if( _DEBUG_VERBOSE ) writeln( "`meaning`" );
     Atom*  e /*-*/ = eINc.expr;
     Atom*  balance = get_cdr( e );
     string name    = "";
-    if( p_cons( e )   ){  name = get_car( e ).str;  }
     if( p_string( e ) ){  name = e.str;             }
 
     /// Base Cases ///
 
+    
+
     // Base Case: Primitive Symbol
     if( p_primitve_symbol( name ) ){
 
-        if( _DEBUG_VERBOSE ) writeln( "`list_to_action`: " ~ "Primitive Symbol" );
+        if( _DEBUG_VERBOSE ) writeln( "\t`meaning`: " ~ "Primitive Symbol" );
 
         return ExprInContext(
             primitiveSymbols[ name ](), // Balance of arguments
@@ -1181,88 +1185,87 @@ ExprInContext list_to_action( ExprInContext eINc ){ // Return one of ...
     // Base Case: Bound Symbol
     }else if( p_binding_exists( eINc.context, name ) ){
 
-        if( _DEBUG_VERBOSE ) writeln( "`list_to_action`: " ~ "Bound Symbol" );
+        if( _DEBUG_VERBOSE ){ 
+            writeln( "\t`meaning`: " ~ "Bound Symbol, " ~ name );
+            writeln( "\t`meaning`: " ~ name ~ " = " ~ str( get_bound_atom( eINc.context, name ) ) );
+            writeln( eINc.context );
+        }
 
         return ExprInContext(
             get_bound_atom( eINc.context, name ), // Balance of arguments
             eINc.context, // ---- Original context
-            "primitive: " ~ name // ------- Tag
+            "Variable: " ~ name // ------- Tag
         );
+
+    // Base Case Literal -OR- Base Case Empty: Pass thru
+    }else if( p_literal(e) || p_empty(e) ){
+        if( _DEBUG_VERBOSE ) writeln( "\tmeaning: " ~ "Was atom, " ~ str(e) ~ " is a " ~ e.kind.to!string );
+        return eINc;
 
     /// Recursive Cases ///
-
-    // Case Primitive Function
-    }else if( p_primitve_function( name ) ){
-
-        if( _DEBUG_VERBOSE ) writeln( "`list_to_action`: " ~ "Primitive Function" );
-
-        return ExprInContext(
-            primitiveFunctions[ name ]( 
-                meaning( ExprInContext(
-                    balance, // Balance of arguments
-                    eINc.context, // ---- Original context
-                    str( balance ) // ------- Tag
-                ) ).expr
-            ), // Balance of arguments
-            eINc.context, // ---- Original context
-            "primitive: " ~ name // ------- Tag
-        );
-
-    // Case Special Form
-    }else if( p_special_form( name ) ){
-
-        if( _DEBUG_VERBOSE ) writeln( "`list_to_action`: " ~ "Special Form" );
-
-        return specialForms[ name ]( eINc );
-
-    // Case Function Application
-    }else if( p_bound_function( eINc.context, name ) ){
-
-        if( _DEBUG_VERBOSE ) writeln( "`list_to_action`: " ~ "Bound Function (Closure)" );
-
-        return apply_closure( eINc );
-
-    // Case Cons Structure
     }else{
 
-        if( _DEBUG_VERBOSE ) writeln( "`list_to_action`: " ~ "Conse Structure" );
+        if( p_cons( e )   ){  name = get_car( e ).str;  }
+        
+        // Case Primitive Function
+        if( p_primitve_function( name ) ){
 
-        return ExprInContext(
-            make_cons(
-                meaning( ExprInContext(
-                    first( e ), // Balance of arguments
-                    eINc.context, // ---- Original context
-                    str( first( e ) ) // ------- Tag
-                ) ).expr,
-                meaning( ExprInContext(
-                    balance, // Balance of arguments
-                    eINc.context, // ---- Original context
-                    str( balance )  // ------- Tag
-                ) ).expr
-            ), // Balance of arguments
-            eINc.context, // ---- Original context
-            str( e ) // ------- Tag
-        );
-    }
+            if( _DEBUG_VERBOSE ){
+                writeln( "\t`meaning`: " ~ "Primitive Function" );
+                writeln( "\t`meaning`: " ~ "Args - ", str( balance ) );
+            }
+
+            return ExprInContext(
+                primitiveFunctions[ name ]( 
+                    meaning( ExprInContext(
+                        balance, // Balance of arguments
+                        eINc.context, // ---- Original context
+                        str( balance ) // ------- Tag
+                    ) ).expr
+                ), // Balance of arguments
+                eINc.context, // ---- Original context
+                "primitive: " ~ name // ------- Tag
+            );
+
+        // Case Special Form
+        }else if( p_special_form( name ) ){
+
+            if( _DEBUG_VERBOSE ) writeln( "`meaning`: " ~ "Special Form" );
+
+            return specialForms[ name ]( eINc );
+
+        // Case Function Application
+        }else if( p_bound_function( eINc.context, name ) ){
+
+            if( _DEBUG_VERBOSE ) writeln( "`meaning`: " ~ "Bound Function (Closure)" );
+
+            return apply_closure( eINc );
+
+        // Case Cons Structure
+        }else{
+
+            if( _DEBUG_VERBOSE ) writeln( "`meaning`: " ~ "Cons Structure" );
+
+            return ExprInContext(
+                make_cons(
+                    meaning( ExprInContext(
+                        first( e ), // Balance of arguments
+                        eINc.context, // ---- Original context
+                        str( first( e ) ) // ------- Tag
+                    ) ).expr,
+                    meaning( ExprInContext(
+                        balance, // Balance of arguments
+                        eINc.context, // ---- Original context
+                        str( balance )  // ------- Tag
+                    ) ).expr
+                ), // Balance of arguments
+                eINc.context, // ---- Original context
+                str( e ) // ------- Tag
+            );
+        }
+    } 
 }
 
-
-ExprInContext meaning( ExprInContext eINc ){
-    // Attempt to assign appropriate action to the given expression 'e'
-    if( _DEBUG_VERBOSE ) writeln( "`meaning`" );
-    Atom* e = eINc.expr;
-    
-    // Case Literal -OR- Case Empty: Pass thru
-    if( p_literal(e) || p_empty(e) ){
-        if( _DEBUG_VERBOSE ) writeln( "\tmeaning: " ~ "Was atom, " ~ str(e) ~ " is a " ~ e.kind.to!string );
-        return eINc;  
-    
-    // Case Structure: More evaluation needed
-    }else{  
-        if( _DEBUG_VERBOSE ) writeln( "\tmeaning: " ~ "Was Complex" );
-        return list_to_action( eINc );  
-    }
-}
 
 // function value(e){ return meaning(e, $global); } // this function, together with all the functions it uses, is an interpreter
 // call meaning on expression in the '$global' context
@@ -1533,4 +1536,16 @@ void main(){
     run_special_form( "(and 1 0 1)" ); // F
     run_special_form( "(or  0 0 0)" ); // F
     run_special_form( "(or  0 1 0)" ); // T
+    run_special_form( "(define addition (lambda (a b) (+ a b) ))" ); 
+
+    writeln( "\nEvaluation Tests" ); //////////////////////////////
+
+    Atom* read_eval_print( string strForm ){
+        // The language is now taking shape
+
+        // FIXME: START HERE
+
+    }
+
+    // prnt( run_special_form( "(addition 2 3)" ) ); 
 }
