@@ -34,7 +34,7 @@ import std.ascii; // --------- Whitespace test
 alias  is_white = std.ascii.isWhite; 
 
 ///// Env Vars /////
-bool _DEBUG_VERBOSE = false; // Set true for debug prints
+bool _DEBUG_VERBOSE = true; // Set true for debug prints
 
 
 ////////// ATOMS ///////////////////////////////////////////////////////////////////////////////////
@@ -1107,20 +1107,43 @@ ExprInContext evcon( ExprInContext eINc ){
 ExprInContext apply_primitive_function( ExprInContext eINc ){
     // Invocation of primitive function in a context
 
-    if( p_primitve_function( get_car( eINc.expr ).str ) ){
+    if( _DEBUG_VERBOSE ) writeln( "`apply_primitive_function`" );
 
-        return ExprInContext(
-            primitiveFunctions[ get_car( eINc.expr ).str ]( 
-                meaning( ExprInContext(
-                    get_cdr( eINc.expr ),
-                    eINc.context,
-                    "primitive arguments"
-                )).expr
+    string /*--*/ name /*-*/ = get_car( eINc.expr ).str;
+    Atom* /*---*/ interpArgs = null;
+    ExprInContext result;
+
+    if( p_primitve_function( name ) ){
+
+        interpArgs = meaning( ExprInContext(
+            get_cdr( eINc.expr ),
+            eINc.context,
+            "primitive arguments"
+        )).expr;
+
+        if( _DEBUG_VERBOSE ) writeln( 
+            "\t`apply_primitive_function`: " ~ "About to call " ~ name ~ " with the following args -> " ~ str( interpArgs ) 
+        );
+
+        result = ExprInContext(
+            primitiveFunctions[ name ]( 
+                interpArgs
             ), // Balance of arguments
             eINc.context, // ---- Original context
-            "primitive: " ~ get_car( eINc.expr ).str // ------- Tag
+            "primitive: " ~ name // ------- Tag
         );
+
+        if( _DEBUG_VERBOSE ) writeln( 
+            "\t`apply_primitive_function`: " ~ str( eINc.expr ) ~ "--(" ~ name ~ ")-> " ~ str( result.expr )
+        );
+
+        return result;
     }else{
+
+        if( _DEBUG_VERBOSE ) writeln( 
+            "\t`apply_primitive_function`: Search for primitive function " ~ name ~ " has no result!" 
+        );
+
         return ExprInContext(
             make_error(
                 F_Error.DNE,
@@ -1259,7 +1282,7 @@ ExprInContext meaning( ExprInContext eINc ){ // Return one of ...
     /// Recursive Cases ///
     }else{
 
-        if( p_cons( e )   ){  name = get_car( e ).str;  }
+        if( p_cons( e )){  name = get_car( e ).str;  }
         
         // Case Primitive Function
         if( p_primitve_function( name ) ){
@@ -1269,17 +1292,11 @@ ExprInContext meaning( ExprInContext eINc ){ // Return one of ...
                 writeln( "\t`meaning`: " ~ "Args - ", str( balance ) );
             }
 
-            return ExprInContext(
-                primitiveFunctions[ name ]( 
-                    meaning( ExprInContext(
-                        balance, // Balance of arguments
-                        eINc.context, // ---- Original context
-                        str( balance ) // ------- Tag
-                    ) ).expr
-                ), // Balance of arguments
+            return apply_primitive_function( ExprInContext(
+                e, // Expression
                 eINc.context, // ---- Original context
-                "primitive: " ~ name // ------- Tag
-            );
+                str( e ) // ------- Tag
+            ) );
 
         // Case Special Form
         }else if( p_special_form( name ) ){
@@ -1344,6 +1361,14 @@ Atom* value( Atom* expression ){
     return result.expr;
 }
 
+void init_SPARROW(){
+    // Populate necessary global structures
+    init_reserved(); // - Reserved symbols
+    init_env(); // ------ Global context
+    init_primitives(); // Special atoms and Primitive Functions
+    init_specials(); // - Special forms
+}
+
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1351,257 +1376,253 @@ Atom* value( Atom* expression ){
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void main(){
-    // SPARROW Init //
-    // FIXME: WRAP ALL OF THESE IN A SINGLE INIT FUNCTION
-    init_reserved();
-    init_env();
-    init_primitives();
-    init_specials();
+    // Populate necessary interpreter components
+    init_SPARROW();
     
-    writeln( "\nStructure Tests" ); //////////////////////////////////////
-    Atom* list1 = make_list_of_2( make_number(2), make_number(3) );
-    writeln( str( list1 ) );
-    append( list1, make_number(4) );
-    append( list1, make_number(5) );
-    writeln( str( list1 ) );
-    prnt( first( list1 ) );
-    prnt( second( list1 ) );
-    prnt( third( list1 ) );
+    // writeln( "\nStructure Tests" ); //////////////////////////////////////
+    // Atom* list1 = make_list_of_2( make_number(2), make_number(3) );
+    // writeln( str( list1 ) );
+    // append( list1, make_number(4) );
+    // append( list1, make_number(5) );
+    // writeln( str( list1 ) );
+    // prnt( first( list1 ) );
+    // prnt( second( list1 ) );
+    // prnt( third( list1 ) );
 
-    writeln( "\nMath Tests" ); ////////////////////////////////////////////
-    writeln( add1(2) ); // 3
-    writeln( sub1(2) ); // 1
-    writeln( add([2.0,3.0,4.0]) ); // 9
-    writeln( minus([2,3,4]) ); // -5
-    writeln( lt([2,3,4]) ); // true
-    writeln( lt([2,3,3]) ); // false
-    writeln( gt([4,3,2]) ); // true
-    writeln( gt([4,3,3]) ); // false
-    writeln( le([2,3,3]) ); // true
-    writeln( le([2,3,1]) ); // false
-    writeln( ge([4,3,3]) ); // true
-    writeln( ge([4,3,5]) ); // false
+    // writeln( "\nMath Tests" ); ////////////////////////////////////////////
+    // writeln( add1(2) ); // 3
+    // writeln( sub1(2) ); // 1
+    // writeln( add([2.0,3.0,4.0]) ); // 9
+    // writeln( minus([2,3,4]) ); // -5
+    // writeln( lt([2,3,4]) ); // true
+    // writeln( lt([2,3,3]) ); // false
+    // writeln( gt([4,3,2]) ); // true
+    // writeln( gt([4,3,3]) ); // false
+    // writeln( le([2,3,3]) ); // true
+    // writeln( le([2,3,1]) ); // false
+    // writeln( ge([4,3,3]) ); // true
+    // writeln( ge([4,3,5]) ); // false
 
-    writeln( "\nInterpreter Tests" ); /////////////////////////////////////
-    writeln( flatten_double_list( list1 ) ); // [2, 3, 4, 5]
-    Atom* list2 = make_list_of_2( make_string( "foo" ), make_string( "bar" ) );
-    append( list2, make_string( "baz" ) );
-    append( list2, make_string( "xur" ) );
-    append( list2, make_string( "tef" ) );
-    writeln( flatten_string_list( list2 ) ); // ["foo", "bar", "baz", "xur", "tef"]
+    // writeln( "\nInterpreter Tests" ); /////////////////////////////////////
+    // writeln( flatten_double_list( list1 ) ); // [2, 3, 4, 5]
+    // Atom* list2 = make_list_of_2( make_string( "foo" ), make_string( "bar" ) );
+    // append( list2, make_string( "baz" ) );
+    // append( list2, make_string( "xur" ) );
+    // append( list2, make_string( "tef" ) );
+    // writeln( flatten_string_list( list2 ) ); // ["foo", "bar", "baz", "xur", "tef"]
 
-    writeln( "\nPrimitive Symbol Tests" ); ////////////////////////////////
-    Atom* expr1 = expression_from_string( "true" );
-    prnt( expr1 );
-    expr1 = expression_from_string( "false" );
-    prnt( expr1 );
-    expr1 = expression_from_string( "#t" );
-    prnt( expr1 );
-    expr1 = expression_from_string( "#f" );
-    prnt( expr1 );
+    // writeln( "\nPrimitive Symbol Tests" ); ////////////////////////////////
+    // Atom* expr1 = expression_from_string( "true" );
+    // prnt( expr1 );
+    // expr1 = expression_from_string( "false" );
+    // prnt( expr1 );
+    // expr1 = expression_from_string( "#t" );
+    // prnt( expr1 );
+    // expr1 = expression_from_string( "#f" );
+    // prnt( expr1 );
 
     
-    writeln( "\nPrimitive Function Tests" ); //////////////////////////////
+    // writeln( "\nPrimitive Function Tests" ); //////////////////////////////
     
-    Atom* run_primitive_function( Atom* schemeForm ){
-        // Fake the invocation of primitives by the interpreter
-        string name = nameOf( schemeForm ).str;
-        Atom*  args = argsOf( schemeForm );
-        // prnt( args );
-        if( p_primitve_function( name ) ){
-            return primitiveFunctions[ name ]( args );
-        }else{
-            return empty_atom();
-        }
-    }
+    // Atom* run_primitive_function( Atom* schemeForm ){
+    //     // Fake the invocation of primitives by the interpreter
+    //     string name = nameOf( schemeForm ).str;
+    //     Atom*  args = argsOf( schemeForm );
+    //     // prnt( args );
+    //     if( p_primitve_function( name ) ){
+    //         return primitiveFunctions[ name ]( args );
+    //     }else{
+    //         return empty_atom();
+    //     }
+    // }
     
-    Atom* expr2;
-    expr2 = expression_from_string( "(atom? 2.5)" ); // T
-    prnt( run_primitive_function( expr2 ) );
-    expr2 = expression_from_string( "(atom? (2 3))" ); // F
-    prnt( run_primitive_function( expr2 ) );
+    // Atom* expr2;
+    // expr2 = expression_from_string( "(atom? 2.5)" ); // T
+    // prnt( run_primitive_function( expr2 ) );
+    // expr2 = expression_from_string( "(atom? (2 3))" ); // F
+    // prnt( run_primitive_function( expr2 ) );
     
-    expr2 = expression_from_string( "(eq? 3 3 3)" ); // T
-    prnt( run_primitive_function( expr2 ) );
-    expr2 = expression_from_string( "(eq? 3 3 4)" ); // F
-    prnt( run_primitive_function( expr2 ) );
+    // expr2 = expression_from_string( "(eq? 3 3 3)" ); // T
+    // prnt( run_primitive_function( expr2 ) );
+    // expr2 = expression_from_string( "(eq? 3 3 4)" ); // F
+    // prnt( run_primitive_function( expr2 ) );
 
-    expr2 = expression_from_string( "(empty? [/])" ); // T
-    prnt( run_primitive_function( expr2 ) );
-    expr2 = expression_from_string( "(empty? 42)" ); // F
-    prnt( run_primitive_function( expr2 ) );
+    // expr2 = expression_from_string( "(empty? [/])" ); // T
+    // prnt( run_primitive_function( expr2 ) );
+    // expr2 = expression_from_string( "(empty? 42)" ); // F
+    // prnt( run_primitive_function( expr2 ) );
 
-    expr2 = expression_from_string( "(zero? 0.0)" ); // T
-    prnt( run_primitive_function( expr2 ) );
-    expr2 = expression_from_string( "(zero? 0.0 0.0 0.0)" ); // T
-    prnt( run_primitive_function( expr2 ) );
-    expr2 = expression_from_string( "(zero? 0.0 0.0 0.5)" ); // F
-    prnt( run_primitive_function( expr2 ) );
+    // expr2 = expression_from_string( "(zero? 0.0)" ); // T
+    // prnt( run_primitive_function( expr2 ) );
+    // expr2 = expression_from_string( "(zero? 0.0 0.0 0.0)" ); // T
+    // prnt( run_primitive_function( expr2 ) );
+    // expr2 = expression_from_string( "(zero? 0.0 0.0 0.5)" ); // F
+    // prnt( run_primitive_function( expr2 ) );
 
-    expr2 = expression_from_string( "(number? 0.0)" ); // T
-    prnt( run_primitive_function( expr2 ) );
-    expr2 = expression_from_string( "(number? 0.0 0.0 0.0)" ); // T
-    prnt( run_primitive_function( expr2 ) );
-    expr2 = expression_from_string( "(number? 0.0 0.0 foo)" ); // F
-    prnt( run_primitive_function( expr2 ) );
+    // expr2 = expression_from_string( "(number? 0.0)" ); // T
+    // prnt( run_primitive_function( expr2 ) );
+    // expr2 = expression_from_string( "(number? 0.0 0.0 0.0)" ); // T
+    // prnt( run_primitive_function( expr2 ) );
+    // expr2 = expression_from_string( "(number? 0.0 0.0 foo)" ); // F
+    // prnt( run_primitive_function( expr2 ) );
 
-    expr2 = expression_from_string( "(+ 2)" ); // 2
-    prnt( run_primitive_function( expr2 ) );
-    expr2 = expression_from_string( "(+ 2 3)" ); // 5
-    prnt( run_primitive_function( expr2 ) );
-    expr2 = expression_from_string( "(+ 2 3 4)" ); // 9
-    prnt( run_primitive_function( expr2 ) );
+    // expr2 = expression_from_string( "(+ 2)" ); // 2
+    // prnt( run_primitive_function( expr2 ) );
+    // expr2 = expression_from_string( "(+ 2 3)" ); // 5
+    // prnt( run_primitive_function( expr2 ) );
+    // expr2 = expression_from_string( "(+ 2 3 4)" ); // 9
+    // prnt( run_primitive_function( expr2 ) );
 
-    expr2 = expression_from_string( "(- 2)" ); // -2
-    prnt( run_primitive_function( expr2 ) );
-    expr2 = expression_from_string( "(- 2 3)" ); // -1
-    prnt( run_primitive_function( expr2 ) );
-    expr2 = expression_from_string( "(- 2 3 4)" ); // -5
-    prnt( run_primitive_function( expr2 ) );
+    // expr2 = expression_from_string( "(- 2)" ); // -2
+    // prnt( run_primitive_function( expr2 ) );
+    // expr2 = expression_from_string( "(- 2 3)" ); // -1
+    // prnt( run_primitive_function( expr2 ) );
+    // expr2 = expression_from_string( "(- 2 3 4)" ); // -5
+    // prnt( run_primitive_function( expr2 ) );
 
-    expr2 = expression_from_string( "(* 2)" ); // 2
-    prnt( run_primitive_function( expr2 ) );
-    expr2 = expression_from_string( "(* 2 3)" ); // 6
-    prnt( run_primitive_function( expr2 ) );
-    expr2 = expression_from_string( "(* 2 3 4)" ); // 24
-    prnt( run_primitive_function( expr2 ) );
+    // expr2 = expression_from_string( "(* 2)" ); // 2
+    // prnt( run_primitive_function( expr2 ) );
+    // expr2 = expression_from_string( "(* 2 3)" ); // 6
+    // prnt( run_primitive_function( expr2 ) );
+    // expr2 = expression_from_string( "(* 2 3 4)" ); // 24
+    // prnt( run_primitive_function( expr2 ) );
 
-    expr2 = expression_from_string( "(/ 2)" ); // 0.5
-    prnt( run_primitive_function( expr2 ) );
-    expr2 = expression_from_string( "(/ 2 3)" ); // 0.666667
-    prnt( run_primitive_function( expr2 ) );
-    expr2 = expression_from_string( "(/ 2 3 4)" ); // 0.166667
-    prnt( run_primitive_function( expr2 ) );
+    // expr2 = expression_from_string( "(/ 2)" ); // 0.5
+    // prnt( run_primitive_function( expr2 ) );
+    // expr2 = expression_from_string( "(/ 2 3)" ); // 0.666667
+    // prnt( run_primitive_function( expr2 ) );
+    // expr2 = expression_from_string( "(/ 2 3 4)" ); // 0.166667
+    // prnt( run_primitive_function( expr2 ) );
 
-    expr2 = expression_from_string( "(1+ 2)" ); // 3
-    prnt( run_primitive_function( expr2 ) );
-    expr2 = expression_from_string( "(1+ 2 3)" ); // ( 3, ( 4, ⧄ ) )
-    prnt( run_primitive_function( expr2 ) );
-    expr2 = expression_from_string( "(1+ 2 3 4)" ); // ( 3, ( 4, ( 5, ⧄ ) ) )
-    prnt( run_primitive_function( expr2 ) );
+    // expr2 = expression_from_string( "(1+ 2)" ); // 3
+    // prnt( run_primitive_function( expr2 ) );
+    // expr2 = expression_from_string( "(1+ 2 3)" ); // ( 3, ( 4, ⧄ ) )
+    // prnt( run_primitive_function( expr2 ) );
+    // expr2 = expression_from_string( "(1+ 2 3 4)" ); // ( 3, ( 4, ( 5, ⧄ ) ) )
+    // prnt( run_primitive_function( expr2 ) );
 
-    expr2 = expression_from_string( "(1- 2)" ); // 1
-    prnt( run_primitive_function( expr2 ) );
-    expr2 = expression_from_string( "(1- 2 3)" ); // ( 1, ( 2, ⧄ ) )
-    prnt( run_primitive_function( expr2 ) );
-    expr2 = expression_from_string( "(1- 2 3 4)" ); // ( 1, ( 2, ( 3, ⧄ ) ) )
-    prnt( run_primitive_function( expr2 ) );
+    // expr2 = expression_from_string( "(1- 2)" ); // 1
+    // prnt( run_primitive_function( expr2 ) );
+    // expr2 = expression_from_string( "(1- 2 3)" ); // ( 1, ( 2, ⧄ ) )
+    // prnt( run_primitive_function( expr2 ) );
+    // expr2 = expression_from_string( "(1- 2 3 4)" ); // ( 1, ( 2, ( 3, ⧄ ) ) )
+    // prnt( run_primitive_function( expr2 ) );
 
-    expr2 = expression_from_string( "(< 2)" ); // F
-    prnt( run_primitive_function( expr2 ) );
-    expr2 = expression_from_string( "(< 2 3)" ); // T
-    prnt( run_primitive_function( expr2 ) );
-    expr2 = expression_from_string( "(< 2 3 4)" ); // T
-    prnt( run_primitive_function( expr2 ) );
-    expr2 = expression_from_string( "(< 2 5 4)" ); // F
-    prnt( run_primitive_function( expr2 ) );
+    // expr2 = expression_from_string( "(< 2)" ); // F
+    // prnt( run_primitive_function( expr2 ) );
+    // expr2 = expression_from_string( "(< 2 3)" ); // T
+    // prnt( run_primitive_function( expr2 ) );
+    // expr2 = expression_from_string( "(< 2 3 4)" ); // T
+    // prnt( run_primitive_function( expr2 ) );
+    // expr2 = expression_from_string( "(< 2 5 4)" ); // F
+    // prnt( run_primitive_function( expr2 ) );
 
-    expr2 = expression_from_string( "(> 2)" ); // F
-    prnt( run_primitive_function( expr2 ) );
-    expr2 = expression_from_string( "(> 3 2)" ); // T
-    prnt( run_primitive_function( expr2 ) );
-    expr2 = expression_from_string( "(> 4 3 2)" ); // T
-    prnt( run_primitive_function( expr2 ) );
-    expr2 = expression_from_string( "(> 4 5 2)" ); // F
-    prnt( run_primitive_function( expr2 ) );
+    // expr2 = expression_from_string( "(> 2)" ); // F
+    // prnt( run_primitive_function( expr2 ) );
+    // expr2 = expression_from_string( "(> 3 2)" ); // T
+    // prnt( run_primitive_function( expr2 ) );
+    // expr2 = expression_from_string( "(> 4 3 2)" ); // T
+    // prnt( run_primitive_function( expr2 ) );
+    // expr2 = expression_from_string( "(> 4 5 2)" ); // F
+    // prnt( run_primitive_function( expr2 ) );
 
-    expr2 = expression_from_string( "(<= 2)" ); // F
-    prnt( run_primitive_function( expr2 ) );
-    expr2 = expression_from_string( "(<= 2 3)" ); // T
-    prnt( run_primitive_function( expr2 ) );
-    expr2 = expression_from_string( "(<= 2 3 3)" ); // T
-    prnt( run_primitive_function( expr2 ) );
-    expr2 = expression_from_string( "(<= 2 5 4)" ); // F
-    prnt( run_primitive_function( expr2 ) );
+    // expr2 = expression_from_string( "(<= 2)" ); // F
+    // prnt( run_primitive_function( expr2 ) );
+    // expr2 = expression_from_string( "(<= 2 3)" ); // T
+    // prnt( run_primitive_function( expr2 ) );
+    // expr2 = expression_from_string( "(<= 2 3 3)" ); // T
+    // prnt( run_primitive_function( expr2 ) );
+    // expr2 = expression_from_string( "(<= 2 5 4)" ); // F
+    // prnt( run_primitive_function( expr2 ) );
 
-    expr2 = expression_from_string( "(>= 2)" ); // F
-    prnt( run_primitive_function( expr2 ) );
-    expr2 = expression_from_string( "(>= 3 2)" ); // T
-    prnt( run_primitive_function( expr2 ) );
-    expr2 = expression_from_string( "(>= 4 3 3)" ); // T
-    prnt( run_primitive_function( expr2 ) );
-    expr2 = expression_from_string( "(>= 4 5 2)" ); // F
-    prnt( run_primitive_function( expr2 ) );
+    // expr2 = expression_from_string( "(>= 2)" ); // F
+    // prnt( run_primitive_function( expr2 ) );
+    // expr2 = expression_from_string( "(>= 3 2)" ); // T
+    // prnt( run_primitive_function( expr2 ) );
+    // expr2 = expression_from_string( "(>= 4 3 3)" ); // T
+    // prnt( run_primitive_function( expr2 ) );
+    // expr2 = expression_from_string( "(>= 4 5 2)" ); // F
+    // prnt( run_primitive_function( expr2 ) );
 
-    expr2 = expression_from_string( "(cons 4 5 2)" ); // ( 4, 5 )
-    prnt( run_primitive_function( expr2 ) );
-    expr2 = expression_from_string( "(cons 4 5)" ); // ( 4, 5 )
-    prnt( run_primitive_function( expr2 ) );
-    expr2 = expression_from_string( "(cons 4)" ); // ( 4, ⧄ )
-    prnt( run_primitive_function( expr2 ) );
-    expr2 = expression_from_string( "(cons)" ); // ( ⧄, ⧄ )
-    prnt( run_primitive_function( expr2 ) );
+    // expr2 = expression_from_string( "(cons 4 5 2)" ); // ( 4, 5 )
+    // prnt( run_primitive_function( expr2 ) );
+    // expr2 = expression_from_string( "(cons 4 5)" ); // ( 4, 5 )
+    // prnt( run_primitive_function( expr2 ) );
+    // expr2 = expression_from_string( "(cons 4)" ); // ( 4, ⧄ )
+    // prnt( run_primitive_function( expr2 ) );
+    // expr2 = expression_from_string( "(cons)" ); // ( ⧄, ⧄ )
+    // prnt( run_primitive_function( expr2 ) );
 
-    writeln( "\nTruthiness Tests" ); //////////////////////////////////////
+    // writeln( "\nTruthiness Tests" ); //////////////////////////////////////
 
-    writeln( truthiness( make_string( ""    ) ) ); // false
-    writeln( truthiness( make_string( "Foo" ) ) ); // true
-    writeln( truthiness( make_bool( false ) ) ); // false
-    writeln( truthiness( make_bool( true  ) ) ); // true
-    writeln( truthiness( make_number( -1.5 ) ) ); // false
-    writeln( truthiness( make_number(  0.0 ) ) ); // false
-    writeln( truthiness( make_number( 28.7 ) ) ); // true
-    writeln( truthiness( make_cons() ) ); // false
-    writeln( truthiness( make_cons( make_number(4) ) ) ); // true
-    writeln( truthiness( make_error( F_Error.DNE, "All errors are FALSE!" ) ) ); // false
-    writeln( truthiness() ); // false
+    // writeln( truthiness( make_string( ""    ) ) ); // false
+    // writeln( truthiness( make_string( "Foo" ) ) ); // true
+    // writeln( truthiness( make_bool( false ) ) ); // false
+    // writeln( truthiness( make_bool( true  ) ) ); // true
+    // writeln( truthiness( make_number( -1.5 ) ) ); // false
+    // writeln( truthiness( make_number(  0.0 ) ) ); // false
+    // writeln( truthiness( make_number( 28.7 ) ) ); // true
+    // writeln( truthiness( make_cons() ) ); // false
+    // writeln( truthiness( make_cons( make_number(4) ) ) ); // true
+    // writeln( truthiness( make_error( F_Error.DNE, "All errors are FALSE!" ) ) ); // false
+    // writeln( truthiness() ); // false
 
-    writeln( "\nSpecial Forms Tests" ); //////////////////////////////
+    // writeln( "\nSpecial Forms Tests" ); //////////////////////////////
     
-    Atom* run_special_form( string strForm ){
-        // Fake the invocation of primitives by the interpreter
+    // Atom* run_special_form( string strForm ){
+    //     // Fake the invocation of primitives by the interpreter
 
-        Atom*  schemeForm = expression_from_string( strForm );
-        string name /*-*/ = nameOf( schemeForm ).str;
-        // Atom*  args    = argsOf( schemeForm );
+    //     Atom*  schemeForm = expression_from_string( strForm );
+    //     string name /*-*/ = nameOf( schemeForm ).str;
+    //     // Atom*  args    = argsOf( schemeForm );
 
-        writeln( "Attempt to evaluate: " ~ str( schemeForm ) );
+    //     writeln( "Attempt to evaluate: " ~ str( schemeForm ) );
 
-        ExprInContext input = ExprInContext(
-            schemeForm,
-            baseEnv,
-            strForm
-        ); 
-        ExprInContext output;
-        Atom* /*---*/ outLst;
+    //     ExprInContext input = ExprInContext(
+    //         schemeForm,
+    //         baseEnv,
+    //         strForm
+    //     ); 
+    //     ExprInContext output;
+    //     Atom* /*---*/ outLst;
         
-        // prnt( args );
-        if( p_special_form( name ) ){
-            output = specialForms[ name ]( input );
-            outLst = output.expr;
-            writeln( strForm ~ " --"~name~"-> " ~ str( outLst ) );
-            return outLst;
-        }else{
-            return empty_atom();
-        }
-    }
+    //     // prnt( args );
+    //     if( p_special_form( name ) ){
+    //         output = specialForms[ name ]( input );
+    //         outLst = output.expr;
+    //         writeln( strForm ~ " --"~name~"-> " ~ str( outLst ) );
+    //         return outLst;
+    //     }else{
+    //         return empty_atom();
+    //     }
+    // }
 
-    run_special_form( "(quote (+ 2 3))" ); // ( +, ( 2, ( 3, ⧄ ) ) )
-    run_special_form( "(lambda (n) (+ n 2))" ); // ( ( n, ⧄ ), ( (  +, ( n, ( 2, ⧄ ) ) ), ⧄ ) )
-    run_special_form( "(define n 5)" ); // n
-    run_special_form( "(define m 6)" ); // m
-    run_special_form( "(define o (+ 2 3))" ); // o
-    run_special_form( "(define p (+ m n))" ); // o
-    prnt( get_bound_atom( baseEnv, "n" ) ); // 5
-    prnt( get_bound_atom( baseEnv, "m" ) ); // 6
-    prnt( get_bound_atom( baseEnv, "o" ) ); // 5
-    prnt( get_bound_atom( baseEnv, "p" ) ); // 6
-    run_special_form( "(cond ((> 3 3) greater)
-                             ((< 3 3) lesser)
-                             (else equal))" ); // "equal" 
-    run_special_form( "(cond ((> 4 3) greater)
-                             ((< 3 3) lesser)
-                             (else equal))" ); // "greater"
-    run_special_form( "(cond ((> 3 3) greater)
-                             ((< 3 4) lesser)
-                             (else equal))" ); // "lesser"     
-    run_special_form( "(and 1 1 1)" ); // T
-    run_special_form( "(and 1 0 1)" ); // F
-    run_special_form( "(or  0 0 0)" ); // F
-    run_special_form( "(or  0 1 0)" ); // T
-    run_special_form( "(define addition 
-                               (lambda (a b) (+ a b) )
-                        )" ); 
+    // run_special_form( "(quote (+ 2 3))" ); // ( +, ( 2, ( 3, ⧄ ) ) )
+    // run_special_form( "(lambda (n) (+ n 2))" ); // ( ( n, ⧄ ), ( (  +, ( n, ( 2, ⧄ ) ) ), ⧄ ) )
+    // run_special_form( "(define n 5)" ); // n
+    // run_special_form( "(define m 6)" ); // m
+    // run_special_form( "(define o (+ 2 3))" ); // o
+    // run_special_form( "(define p (+ m n))" ); // o
+    // prnt( get_bound_atom( baseEnv, "n" ) ); // 5
+    // prnt( get_bound_atom( baseEnv, "m" ) ); // 6
+    // prnt( get_bound_atom( baseEnv, "o" ) ); // 5
+    // prnt( get_bound_atom( baseEnv, "p" ) ); // 6
+    // run_special_form( "(cond ((> 3 3) greater)
+    //                          ((< 3 3) lesser)
+    //                          (else equal))" ); // "equal" 
+    // run_special_form( "(cond ((> 4 3) greater)
+    //                          ((< 3 3) lesser)
+    //                          (else equal))" ); // "greater"
+    // run_special_form( "(cond ((> 3 3) greater)
+    //                          ((< 3 4) lesser)
+    //                          (else equal))" ); // "lesser"     
+    // run_special_form( "(and 1 1 1)" ); // T
+    // run_special_form( "(and 1 0 1)" ); // F
+    // run_special_form( "(or  0 0 0)" ); // F
+    // run_special_form( "(or  0 1 0)" ); // T
+    // run_special_form( "(define addition 
+    //                            (lambda (a b) (+ a b) )
+    //                     )" ); 
 
     writeln( "\nEvaluation Tests" ); //////////////////////////////
 
@@ -1612,15 +1633,15 @@ void main(){
         prnt(  value( expr )  );
     }
 
-    eval_print( "(atom? 2.5)" ); // T
-    eval_print( "(+ 2 3 4)" ); // 9
-    eval_print( "(cons 4 5)" ); // ( 4, 5 )
-    eval_print( "(define q (+ o p))" ); // q
-    eval_print( "q" ); // 16
-    eval_print( "(cond ((> 4 3) greater)
-                       ((< 3 3) lesser)
-                       (else equal))" ); // greater
-    eval_print( "(addition 2 3)" ); // ( 5, ⧄ ) // Is this okay?
+    // eval_print( "(atom? 2.5)" ); // T
+    // eval_print( "(+ 2 3 4)" ); // 9
+    // eval_print( "(cons 4 5)" ); // ( 4, 5 )
+    // eval_print( "(define q (+ o p))" ); // q
+    // eval_print( "q" ); // 16
+    // eval_print( "(cond ((> 4 3) greater)
+    //                    ((< 3 3) lesser)
+    //                    (else equal))" ); // greater
+    // eval_print( "(addition 2 3)" ); // ( 5, ⧄ ) // Is this okay?
     eval_print( "(define fact (lambda (x) 
                                       (cond ((> x 1) (* x (fact (- x 1))) ) 
                                             (else 1)                      ) 
