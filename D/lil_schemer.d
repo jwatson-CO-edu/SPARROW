@@ -1679,6 +1679,8 @@ void main(){
                   )" );
     eval_print( "(fact 4)" ); // 
     // eval_print( "(1+ 1 2 3 4 5)" ); // correct
+    // eval_print( "(+ (+ 1 2) (+ 3 4) )" ); // correct
+
 
 
     
