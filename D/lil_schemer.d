@@ -1178,8 +1178,9 @@ ExprInContext apply_closure( ExprInContext input ){
 
     if( _DEBUG_VERBOSE )  writeln( "`apply_closure`" );
 
-    Env*  nuEnv = null;
-    Atom* func  = null;
+    Env* /*----*/ nuEnv = null;
+    Atom* /*---*/ func  = null;
+    ExprInContext argMeaning;
 
     // 0. Determine if the function exists, then construct a new context
     if(  p_user_def_function( input.context, nameOf( input.expr ).str )  ){
@@ -1187,20 +1188,22 @@ ExprInContext apply_closure( ExprInContext input ){
 
         func  = get_bound_atom( input.context, nameOf( input.expr ).str );
 
+        argMeaning = meaning(ExprInContext(
+            argsOf( input.expr ), // arguments
+            input.context,
+            "args meaning"
+        ));
+
         if( _DEBUG_VERBOSE ){  
             writeln( "\t`apply_closure`: " ~ "Found function " ~ nameOf( input.expr ).str );
             writeln( "\t`apply_closure`: " ~ "Parameters - " ~ str(formalsOf( func ) ));
-            writeln( "\t`apply_closure`: " ~ "Arguments  - " ~ str(argsOf( input.expr )) );
+            writeln( "\t`apply_closure`: " ~ "Arguments  - " ~ str( argMeaning.expr ) );
         }
 
         nuEnv = enclose( 
             input.context, // ------- parent 
             formalsOf( func ), // --- parameters
-            meaning(ExprInContext(
-                argsOf( input.expr ), // arguments
-                input.context,
-                "input params meaning"
-            )).expr, 
+            argMeaning.expr, 
         );
 
         // 2. Evaluate the function within the new context
@@ -1236,15 +1239,25 @@ bool p_bound_function( Env* env, string name ){
     }else{  return false;  }
 }
 
+bool first_only( Atom* atm ){
+    if( p_cons( atm ) ){
+        return !p_empty( get_cdr( atm ) );
+    }else return false;
+}
 
 ExprInContext meaning( ExprInContext eINc ){ // Return one of ...
 	// special form action OR a function that returns the result of applying the form assuming the first item is a func name
     // Handle expressions more complex than literals
     if( _DEBUG_VERBOSE ) writeln( "`meaning`" );
-    Atom*  e /*-*/ = eINc.expr;
-    Atom*  balance = get_cdr( e );
-    string name    = "";
-    if( p_string( e ) ){  name = e.str;             }
+    
+    Atom* /*---*/ e /*-*/  = eINc.expr;
+    Atom* /*---*/ balance  = get_cdr( e );
+    Atom* /*---*/ rtnRoot  = null;
+    Atom* /*---*/ inputPtr = null;
+    string /*--*/ name     = "";
+    ExprInContext rntResult;
+
+    if( p_string( e ) ){  name = e.str;  }
 
     /// Base Cases ///
 
@@ -1253,7 +1266,7 @@ ExprInContext meaning( ExprInContext eINc ){ // Return one of ...
 
         if( _DEBUG_VERBOSE ) writeln( "\t`meaning`: " ~ "Primitive Symbol" );
 
-        return ExprInContext(
+        rntResult = ExprInContext(
             primitiveSymbols[ name ](), // Balance of arguments
             eINc.context, // ---- Original context
             "primitive: " ~ name // ------- Tag
@@ -1268,7 +1281,7 @@ ExprInContext meaning( ExprInContext eINc ){ // Return one of ...
             writeln( eINc.context );
         }
 
-        return ExprInContext(
+        rntResult = ExprInContext(
             get_bound_atom( eINc.context, name ), // Balance of arguments
             eINc.context, // ---- Original context
             "Variable: " ~ name // ------- Tag
@@ -1277,12 +1290,12 @@ ExprInContext meaning( ExprInContext eINc ){ // Return one of ...
     // Base Case Literal -OR- Base Case Empty: Pass thru
     }else if( p_literal(e) || p_empty(e) ){
         if( _DEBUG_VERBOSE ) writeln( "\tmeaning: " ~ "Was atom, " ~ str(e) ~ " is a " ~ e.kind.to!string );
-        return eINc;
+        rntResult = eINc;
 
     /// Recursive Cases ///
     }else{
 
-        if( p_cons( e )){  name = get_car( e ).str;  }
+        if( p_cons( e ) ){  name = get_car( e ).str;  }
         
         // Case Primitive Function
         if( p_primitve_function( name ) ){
@@ -1292,7 +1305,7 @@ ExprInContext meaning( ExprInContext eINc ){ // Return one of ...
                 writeln( "\t`meaning`: " ~ "Args - ", str( balance ) );
             }
 
-            return apply_primitive_function( ExprInContext(
+            rntResult = apply_primitive_function( ExprInContext(
                 e, // Expression
                 eINc.context, // ---- Original context
                 str( e ) // ------- Tag
@@ -1303,47 +1316,64 @@ ExprInContext meaning( ExprInContext eINc ){ // Return one of ...
 
             if( _DEBUG_VERBOSE ) writeln( "`meaning`: " ~ "Special Form" );
 
-            return specialForms[ name ]( eINc );
+            rntResult = specialForms[ name ]( eINc );
 
         // Case Function Application
         }else if( p_bound_function( eINc.context, name ) ){
 
             if( _DEBUG_VERBOSE ) writeln( "`meaning`: " ~ "Bound Function (Closure)" );
 
-            return apply_closure( eINc );
+            rntResult = apply_closure( eINc );
 
         // Case Cons Structure
         }else{
 
             if( _DEBUG_VERBOSE ){ 
                 writeln( "\t`meaning`: " ~ "Cons Structure" );
-                writeln( "\t`meaning`: " ~ "car - " ~ str(first( e )) );
-                writeln( "\t`meaning`: " ~ "cdr - " ~ str(balance) );
-                writeln( "\t`meaning`: " ~ "cdr empty? - " ~ p_empty(balance).to!string );
-                writeln( "\t`meaning`: " ~ "cdr empty? - " ~ balance.kind.to!string );
-                writeln( "\t`meaning`: " ~ "cdr empty? - " ~ balance.err.to!string );
+                writeln( "\t`meaning`: " ~ str( e ) );
+                // writeln( "\t`meaning`: " ~ "car - " ~ str(first( e )) );
+                // writeln( "\t`meaning`: " ~ "cdr - " ~ str(balance) );
+                // writeln( "\t`meaning`: " ~ "cdr empty? - " ~ p_empty(balance).to!string );
+                // writeln( "\t`meaning`: " ~ "cdr empty? - " ~ balance.kind.to!string );
+                // writeln( "\t`meaning`: " ~ "cdr empty? - " ~ balance.err.to!string );
             }
 
-            return ExprInContext(
-                make_cons(
-                    meaning( ExprInContext(
-                        first( e ), // Balance of arguments
-                        eINc.context, // ---- Original context
-                        str( first( e ) ) // ------- Tag
-                    ) ).expr,
-                    meaning( ExprInContext(
-                        balance, // Balance of arguments
-                        eINc.context, // ---- Original context
-                        str( balance )  // ------- Tag
-                    ) ).expr
-                ) , 
-                eINc.context, // ---- Original context
-                str( e ) // ------- Tag
-            );
+            // if( !p_empty(balance) ){
+                inputPtr = e;
+                rtnRoot  = make_cons();
+
+                while( !p_empty( first( inputPtr ) ) ){
+                    rtnRoot = append( rtnRoot,  
+                        meaning( ExprInContext(
+                            first( inputPtr ), // Balance of arguments
+                            eINc.context, // ---- Original context
+                            "suppress cons" // ------- Tag
+                        ) ).expr
+                    );
+                    inputPtr = get_cdr( inputPtr );
+                }
+
+                rntResult = ExprInContext(
+                    rtnRoot,
+                    eINc.context, // ---- Original context
+                    str( rtnRoot ) // ------- Tag
+                );
+            // }else{
+            //     rntResult = meaning( ExprInContext(
+            //         e, // Balance of arguments
+            //         eINc.context, // ---- Original context
+            //         "suppress cons" // ------- Tag
+            //     ) );
+            // }
 
             
         }
     } 
+    if( _DEBUG_VERBOSE ) writeln( "\t`meaning`: " ~ "Final ->" ~ str( rntResult.expr ) );
+    // if( first_only( rntResult.expr ) ){
+    //     rntResult.expr = first( rntResult.expr );
+    // }
+    return rntResult;
 }
 
 
@@ -1648,6 +1678,7 @@ void main(){
                                )
                   )" );
     eval_print( "(fact 4)" ); // 
+    // eval_print( "(1+ 1 2 3 4 5)" ); // correct
 
 
     
