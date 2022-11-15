@@ -1,5 +1,6 @@
 # **F**low **I**nterpreter for **N**ovice **C**omputer language **H**acking [FINCH]
-Alt: **F**low **I**nterpreter for **N**ode **C**omputing **H**elp [FINCH]  
+### **HYPERFOCUS DANGER**: FINCH is _**NOT**_ a lightweight snack!
+Alt: **F**low **I**nterpreter for **N**ode **C**omputing **H**elper [FINCH]  
 An interpreted language written in [D](https://dlang.org/), with the goal of learning language design.  That's it.  
 FINCH's ability to solve problems for others is a side-effect.  
 Spelled "FINCH" or "Finch".
