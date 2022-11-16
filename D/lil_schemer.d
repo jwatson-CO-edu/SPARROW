@@ -44,6 +44,7 @@ enum F_Error{
     NOVALUE = "NOVALUE", // There is no value held in this atom
     NAN     = "NAN", // --- Not A Number
     DNE     = "DNE", // --- Does Not Exist
+    SYNTAX  = "SYNTAX", //- Syntax error
 }
 
 enum F_Type{ 
@@ -820,8 +821,77 @@ Atom* atomize_string( string token ){
 }
 
 
+bool p_open_paren( string token ){  return find_reserved( token ) == "open_parn";  } // Is an open  paren?
+bool p_clos_paren( string token ){  return find_reserved( token ) == "clos_parn";  } // Is an close paren?
+
+
+bool p_balanced_parens( string[] tokens ){
+    // Return true if parens open and close in a quantity and order that returns to root depth, Otherwise return false
+    int depth = 0;
+    foreach( string token; tokens ){
+        if( p_open_paren( token ) ) depth++; 
+        else
+        if( p_clos_paren( token ) ) depth--;
+    }
+    return (depth == 0);
+}
+
+
+bool p_bounded_parens( string[] tokens ){
+    // Return true if the token sequence begins and ends with open and close parens, respectively
+    if( p_open_paren( tokens[0] ) ){
+        if( p_clos_paren( tokens[end] ) )  return true;  else  return false;
+    }else return false;
+}
+
+Atom* consify_token_sequence( string[] tokens ){
+    // Recursively render tokens as a cons structure
+    // 2022-11: Rewritten
+    ulong    seqLen  = tokens.length;
+    int /**/ depth   = 0;
+    uint     index;
+    string   token;
+    string[] carPart;
+    string[] cdrPart;
+
+    // Base Case: There were no tokens, return Empty
+    if( seqLen == 0 ){  return empty_atom();  }
+    
+    // Base Case: There was one token, Return it
+    if( seqLen == 1 ){  return atomize_string( tokens[0] );  }
+
+    // Recursive Case: Multiple tokens, is at least a list
+    if( seqLen > 1 ){
+        // INVARIANT: A multi-token sequence must begin and end with parens
+        if( p_balanced_parens( tokens ) && p_bounded_parens( tokens ) ){
+
+            // car //
+            index = 1;
+            carPart ~= tokens[index];
+            if( p_open_paren( tokens[index] ) ){
+                depth++;
+                while( depth > 0 ){
+                    // FIXME, START HERE: CONSTRUCT THE CAR SIDE
+                    index++;
+                }
+            }else index++;
+
+            // cdr //
+            // FIXME: CONSTRUCT THE CDR SIDE
+
+        }else{
+            return make_error( F_Error.SYNTAX, "PARENTHESES MISMATCH" );
+        }
+    }
+
+}
+
+
 ulong parsDex; // Global index for parsing an expression, preserves state across recursive calls
 // 2022-09-13: This global var was to avoid requiring `consify_token_sequence` to return a tuple
+
+
+
 
 
 Atom* consify_token_sequence( string[] tokens, ulong bgn = 0 ){
