@@ -830,6 +830,15 @@ Atom* consify_token_sequence( string[] tokens, ulong bgn = 0 ){
     ulong  seqLen  = tokens.length;
     Atom*  rtnTree = null;
     parsDex = bgn;
+
+    /* FIXME: THE CONSES ARE COMING FROM INSIDE THE HOUSE
+       MAYBE REWRITE THIS FUNCTION, 
+       IDEAS
+       * Recursive, but send a chunk defined by matched parens down one depth
+       * Non-recursive: bookkeepping magic ...
+    */
+
+
     if( _DEBUG_VERBOSE )  writeln( "Sequence of ", seqLen, " tokens at index ", parsDex, ", sub-seq: ", tokens[parsDex..$] );
     
     // Base Case: There were no tokens, return Empty
@@ -840,11 +849,12 @@ Atom* consify_token_sequence( string[] tokens, ulong bgn = 0 ){
 
     // Recursive Case: There were 2 or more tokens
     if( (seqLen-parsDex) > 2 ){
+    // if( (seqLen-parsDex) > 1 ){
 
-        if( rtnTree is null ){
+        // if( rtnTree is null ){
             // 2. Start off by creating a cons list
             rtnTree = make_cons();
-        }               
+        // }               
         
         // 3. For each remaining token in the vector
         while( parsDex < seqLen ){
@@ -855,7 +865,9 @@ Atom* consify_token_sequence( string[] tokens, ulong bgn = 0 ){
                 // If the sequence begins with an open paren, do nothing, we have already begun a cons
                 
                 // Else we are descending by one level
+                
                 if( parsDex > 0 ){  rtnTree = append(  rtnTree , consify_token_sequence( tokens, parsDex+1 )  );  }
+
             // 6. Case Close Paren, ascend one level
             }else if( find_reserved( token ) == "clos_parn" ){  
                 return rtnTree;  
@@ -1120,6 +1132,7 @@ ExprInContext apply_primitive_function( ExprInContext eINc ){
             eINc.context,
             "primitive arguments"
         )).expr;
+        // interpArgs = get_cdr( eINc.expr );
 
         if( _DEBUG_VERBOSE ) writeln( 
             "\t`apply_primitive_function`: " ~ "About to call " ~ name ~ " with the following args -> " ~ str( interpArgs ) 
@@ -1189,10 +1202,12 @@ ExprInContext apply_closure( ExprInContext input ){
         func  = get_bound_atom( input.context, nameOf( input.expr ).str );
 
         argMeaning = meaning(ExprInContext(
+        // argMeaning = ExprInContext(
             argsOf( input.expr ), // arguments
             input.context,
             "args meaning"
         ));
+        // );
 
         if( _DEBUG_VERBOSE ){  
             writeln( "\t`apply_closure`: " ~ "Found function " ~ nameOf( input.expr ).str );
@@ -1273,7 +1288,7 @@ ExprInContext meaning( ExprInContext eINc ){ // Return one of ...
         );
 
     // Base Case: Bound Symbol
-    }else if( p_binding_exists( eINc.context, name ) ){
+    }else if( p_binding_exists( eINc.context, name ) && (!p_bound_function( eINc.context, name )) ){
 
         if( _DEBUG_VERBOSE ){ 
             writeln( "\t`meaning`: " ~ "Bound Symbol, " ~ name );
@@ -1305,11 +1320,12 @@ ExprInContext meaning( ExprInContext eINc ){ // Return one of ...
                 writeln( "\t`meaning`: " ~ "Args - ", str( balance ) );
             }
 
-            rntResult = apply_primitive_function( ExprInContext(
-                e, // Expression
-                eINc.context, // ---- Original context
-                str( e ) // ------- Tag
-            ) );
+            rntResult = apply_primitive_function( eINc );
+            // ExprInContext(
+            //     e, // Expression
+            //     eINc.context, // ---- Original context
+            //     str( e ) // ------- Tag
+            // ) );
 
         // Case Special Form
         }else if( p_special_form( name ) ){
@@ -1683,6 +1699,13 @@ void main(){
 
 
 
-    
-    
+    // ExprInContext result = meaning( meaning( meaning(
+    //     ExprInContext(
+    //         expression_from_string( "(+ (+ 1 2) (+ 3 4) )" ), // ----- Expression to be evaluated
+    //         baseEnv, // -------- Global context
+    //         "test" // String representation of the original expression
+    //     )
+    // )));
+    // prnt( result.expr ); // 10 // Correct
 }
+    
