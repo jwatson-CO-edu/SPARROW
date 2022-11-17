@@ -34,7 +34,7 @@ import std.ascii; // --------- Whitespace test
 alias  is_white = std.ascii.isWhite; 
 
 ///// Env Vars /////
-bool _DEBUG_VERBOSE = true; // Set true for debug prints
+bool _DEBUG_VERBOSE = false; // Set true for debug prints
 
 
 ////////// ATOMS ///////////////////////////////////////////////////////////////////////////////////
@@ -45,6 +45,7 @@ enum F_Error{
     NAN     = "NAN", // --- Not A Number
     DNE     = "DNE", // --- Does Not Exist
     SYNTAX  = "SYNTAX", //- Syntax error
+    LEXER   = "LEXER", // - Eval machinery failed
 }
 
 enum F_Type{ 
@@ -190,7 +191,8 @@ Atom* textOf(      Atom* atm ){  return second( atm );    }
 Atom* formalsOf(   Atom* atm ){  return first( atm );    }
 Atom* answerOf(    Atom* atm ){  return second( atm );    }
 // Atom* bodyOf(      Atom* atm ){  return third( atm );     }
-Atom* bodyOf(      Atom* atm ){  return get_cdr( atm );     }
+// Atom* bodyOf(      Atom* atm ){  return get_cdr( atm );     }
+Atom* bodyOf(      Atom* atm ){  return second( atm );     }
 
 
 // Basic Setters //
@@ -840,7 +842,23 @@ bool p_balanced_parens( string[] tokens ){
 bool p_bounded_parens( string[] tokens ){
     // Return true if the token sequence begins and ends with open and close parens, respectively
     if( p_open_paren( tokens[0] ) ){
-        if( p_clos_paren( tokens[end] ) )  return true;  else  return false;
+        if( p_clos_paren( tokens[$-1] ) )  return true;  else  return false;
+    }else return false;
+}
+
+bool p_parent_parens( string[] tokens ){
+    int   depth  = 0;
+    ulong i      = 0;
+    ulong seqLen = tokens.length;
+    if( p_bounded_parens( tokens ) ){
+        foreach( string token; tokens ){
+            i++;
+            if( p_open_paren( token ) ) depth++; 
+            else
+            if( p_clos_paren( token ) ) depth--;
+            if( (depth == 0) && (i<seqLen) ) return false;
+        }
+        return true;
     }else return false;
 }
 
@@ -848,11 +866,16 @@ Atom* consify_token_sequence( string[] tokens ){
     // Recursively render tokens as a cons structure
     // 2022-11: Rewritten
     ulong    seqLen  = tokens.length;
+    ulong    bgn;
+    ulong    end;
     int /**/ depth   = 0;
-    uint     index;
+    ulong    index;
     string   token;
     string[] carPart;
     string[] cdrPart;
+    Atom*    lstRoot = null;
+
+    if( _DEBUG_VERBOSE )  writeln( "Input: " ~ tokens );
 
     // Base Case: There were no tokens, return Empty
     if( seqLen == 0 ){  return empty_atom();  }
@@ -862,96 +885,62 @@ Atom* consify_token_sequence( string[] tokens ){
 
     // Recursive Case: Multiple tokens, is at least a list
     if( seqLen > 1 ){
-        // INVARIANT: A multi-token sequence must begin and end with parens
-        if( p_balanced_parens( tokens ) && p_bounded_parens( tokens ) ){
 
-            // car //
-            index = 1;
-            carPart ~= tokens[index];
-            if( p_open_paren( tokens[index] ) ){
-                depth++;
-                while( depth > 0 ){
-                    // FIXME, START HERE: CONSTRUCT THE CAR SIDE
-                    index++;
+        // Establish bounds
+        bgn = 0;
+        end = seqLen-1;
+
+        // Are the parens correct?
+        if( p_balanced_parens( tokens ) ){
+            
+            // Are we building a list?
+            if( p_parent_parens( tokens ) ){
+                bgn++;
+                end--;
+                // Begin list
+                index   = bgn;
+                lstRoot = make_cons();
+                // While we are in the list bounds
+                while( index <= end ){
+                    
+                    // Find an element
+                    carPart = [];
+                    
+                    // If element is a list
+                    if( p_open_paren( tokens[index] ) ){
+                        do{
+                            token = tokens[index];
+                            if( p_open_paren( token ) ) depth++; 
+                            else
+                            if( p_clos_paren( token ) ) depth--;
+                            carPart ~= token;
+                            index++;
+                        }while( (depth > 0) && (index <= end) );
+
+                    // else element was atom
+                    }else{
+                        carPart ~= tokens[index];
+                        index++;
+                    }
+
+                    // Append element to list
+                    lstRoot = append( 
+                        lstRoot,
+                        consify_token_sequence( carPart )
+                    );
+                    
                 }
-            }else index++;
-
-            // cdr //
-            // FIXME: CONSTRUCT THE CDR SIDE
-
+                return lstRoot;
+            }else{
+                return make_error( F_Error.SYNTAX, "BAD LIST CASE" );
+            }
         }else{
             return make_error( F_Error.SYNTAX, "PARENTHESES MISMATCH" );
         }
     }
-
+    return make_error( F_Error.LEXER, "LEXER FAILED, This branch was ?UNREACHABLE?" );
 }
 
-
-ulong parsDex; // Global index for parsing an expression, preserves state across recursive calls
-// 2022-09-13: This global var was to avoid requiring `consify_token_sequence` to return a tuple
-
-
-
-
-
-Atom* consify_token_sequence( string[] tokens, ulong bgn = 0 ){
-    // Recursively render tokens as a cons structure
-    string token;
-    ulong  seqLen  = tokens.length;
-    Atom*  rtnTree = null;
-    parsDex = bgn;
-
-    /* FIXME: THE CONSES ARE COMING FROM INSIDE THE HOUSE
-       MAYBE REWRITE THIS FUNCTION, 
-       IDEAS
-       * Recursive, but send a chunk defined by matched parens down one depth
-       * Non-recursive: bookkeepping magic ...
-    */
-
-
-    if( _DEBUG_VERBOSE )  writeln( "Sequence of ", seqLen, " tokens at index ", parsDex, ", sub-seq: ", tokens[parsDex..$] );
-    
-    // Base Case: There were no tokens, return Empty
-    if( (seqLen-parsDex) == 0 ){  return empty_atom();  }
-    
-    // Base Case: There was one token, Return it
-    if( (seqLen-parsDex) == 1 ){  return atomize_string( tokens[ parsDex ] );  }
-
-    // Recursive Case: There were 2 or more tokens
-    if( (seqLen-parsDex) > 2 ){
-    // if( (seqLen-parsDex) > 1 ){
-
-        // if( rtnTree is null ){
-            // 2. Start off by creating a cons list
-            rtnTree = make_cons();
-        // }               
-        
-        // 3. For each remaining token in the vector
-        while( parsDex < seqLen ){
-            // 4. Fetch token at this index and update counter
-            token = tokens[ parsDex ];
-            // 5. Case Open Paren
-            if( find_reserved( token ) == "open_parn" ){
-                // If the sequence begins with an open paren, do nothing, we have already begun a cons
-                
-                // Else we are descending by one level
-                
-                if( parsDex > 0 ){  rtnTree = append(  rtnTree , consify_token_sequence( tokens, parsDex+1 )  );  }
-
-            // 6. Case Close Paren, ascend one level
-            }else if( find_reserved( token ) == "clos_parn" ){  
-                return rtnTree;  
-            // 8. Case literal
-            }else{
-                rtnTree = append( rtnTree , atomize_string( token ) );
-                
-            }
-            parsDex += 1;
-        }
-        // return rtnTree;
-    }
-    return rtnTree;
-}
 
 
 Atom* expression_from_string( string expStr, dchar sepChar = ' ' ){
@@ -1279,17 +1268,18 @@ ExprInContext apply_closure( ExprInContext input ){
         ));
         // );
 
-        if( _DEBUG_VERBOSE ){  
-            writeln( "\t`apply_closure`: " ~ "Found function " ~ nameOf( input.expr ).str );
-            writeln( "\t`apply_closure`: " ~ "Parameters - " ~ str(formalsOf( func ) ));
-            writeln( "\t`apply_closure`: " ~ "Arguments  - " ~ str( argMeaning.expr ) );
-        }
-
         nuEnv = enclose( 
             input.context, // ------- parent 
             formalsOf( func ), // --- parameters
             argMeaning.expr, 
         );
+
+        if( _DEBUG_VERBOSE ){  
+            writeln( "\t`apply_closure`: " ~ "Found function " ~ nameOf( input.expr ).str );
+            writeln( "\t`apply_closure`: " ~ "Parameters - " ~ str(formalsOf( func ) ));
+            writeln( "\t`apply_closure`: " ~ "Arguments  - " ~ str( argMeaning.expr ) );
+            writeln( "\t`apply_closure`: " ~ "Body       - " ~ str( bodyOf( func ) ) );
+        }
 
         // 2. Evaluate the function within the new context
         return meaning(
@@ -1428,7 +1418,7 @@ ExprInContext meaning( ExprInContext eINc ){ // Return one of ...
                 inputPtr = e;
                 rtnRoot  = make_cons();
 
-                while( !p_empty( first( inputPtr ) ) ){
+                do{
                     rtnRoot = append( rtnRoot,  
                         meaning( ExprInContext(
                             first( inputPtr ), // Balance of arguments
@@ -1437,7 +1427,10 @@ ExprInContext meaning( ExprInContext eINc ){ // Return one of ...
                         ) ).expr
                     );
                     inputPtr = get_cdr( inputPtr );
-                }
+                }while( !p_empty( inputPtr ) );
+
+
+                
 
                 rntResult = ExprInContext(
                     rtnRoot,
@@ -1685,33 +1678,33 @@ void main(){
 
     // writeln( "\nSpecial Forms Tests" ); //////////////////////////////
     
-    // Atom* run_special_form( string strForm ){
-    //     // Fake the invocation of primitives by the interpreter
+    Atom* run_special_form( string strForm ){
+        // Fake the invocation of primitives by the interpreter
 
-    //     Atom*  schemeForm = expression_from_string( strForm );
-    //     string name /*-*/ = nameOf( schemeForm ).str;
-    //     // Atom*  args    = argsOf( schemeForm );
+        Atom*  schemeForm = expression_from_string( strForm );
+        string name /*-*/ = nameOf( schemeForm ).str;
+        // Atom*  args    = argsOf( schemeForm );
 
-    //     writeln( "Attempt to evaluate: " ~ str( schemeForm ) );
+        writeln( "Attempt to evaluate: " ~ str( schemeForm ) );
 
-    //     ExprInContext input = ExprInContext(
-    //         schemeForm,
-    //         baseEnv,
-    //         strForm
-    //     ); 
-    //     ExprInContext output;
-    //     Atom* /*---*/ outLst;
+        ExprInContext input = ExprInContext(
+            schemeForm,
+            baseEnv,
+            strForm
+        ); 
+        ExprInContext output;
+        Atom* /*---*/ outLst;
         
-    //     // prnt( args );
-    //     if( p_special_form( name ) ){
-    //         output = specialForms[ name ]( input );
-    //         outLst = output.expr;
-    //         writeln( strForm ~ " --"~name~"-> " ~ str( outLst ) );
-    //         return outLst;
-    //     }else{
-    //         return empty_atom();
-    //     }
-    // }
+        // prnt( args );
+        if( p_special_form( name ) ){
+            output = specialForms[ name ]( input );
+            outLst = output.expr;
+            writeln( strForm ~ " --"~name~"-> " ~ str( outLst ) );
+            return outLst;
+        }else{
+            return empty_atom();
+        }
+    }
 
     // run_special_form( "(quote (+ 2 3))" ); // ( +, ( 2, ( 3, ⧄ ) ) )
     // run_special_form( "(lambda (n) (+ n 2))" ); // ( ( n, ⧄ ), ( (  +, ( n, ( 2, ⧄ ) ) ), ⧄ ) )
@@ -1736,9 +1729,9 @@ void main(){
     // run_special_form( "(and 1 0 1)" ); // F
     // run_special_form( "(or  0 0 0)" ); // F
     // run_special_form( "(or  0 1 0)" ); // T
-    // run_special_form( "(define addition 
-    //                            (lambda (a b) (+ a b) )
-    //                     )" ); 
+    run_special_form( "(define addition 
+                               (lambda (a b) (+ a b) )
+                        )" ); 
 
     writeln( "\nEvaluation Tests" ); //////////////////////////////
 
@@ -1757,7 +1750,7 @@ void main(){
     // eval_print( "(cond ((> 4 3) greater)
     //                    ((< 3 3) lesser)
     //                    (else equal))" ); // greater
-    // eval_print( "(addition 2 3)" ); // ( 5, ⧄ ) // Is this okay?
+    eval_print( "(addition 2 3)" ); // 5
     eval_print( "(define fact (lambda (x) 
                                       (cond ((> x 1) (* x (fact (- x 1))) ) 
                                             (else 1)                      ) 
