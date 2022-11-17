@@ -48,10 +48,12 @@ Completion Key:
     [Y] Clean source - 2022-11-16, READY FOR REPL
     [Y] Implement REPL - 2022-11-17, `readln` returns a string, including the newline
     [Y] Clean source of {tests, debug prints} - 2022-11-17, Point interested parties to commit with tests if asked
-    [>] T: Ask Dlang forum for feedback
-    [ ] Apply Dlang forum changes
-    [ ] T: Ask StackOverflow for feedback
-    [ ] Apply StackOverflow changes
+    [Y] T: Ask Dlang forum for feedback - 2022-11-17
+        * Variant/Union: https://forum.dlang.org/thread/icpmctbrsscuimkxtuby@forum.dlang.org
+        * Code Critique: https://forum.dlang.org/thread/uhziclioiviwzztojofy@forum.dlang.org
+    [>] Apply Dlang forum changes
+    [N] T: Ask StackOverflow for feedback - 2022-11-17, Not for projects of this size
+    [N] Apply StackOverflow changes - 2022-11-17, Not for projects of this size
     
 [ ] Parse "Easy S-Expressions" instead: 2022-04-19, Ignore whitespace except to separate symbols
     [ ] Implicit open paren, `;` is close paren
