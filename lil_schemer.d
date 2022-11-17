@@ -26,13 +26,14 @@ Context             Scoped         Flow     // Is flow based programming relevan
 ////////// INIT ////////////////////////////////////////////////////////////////////////////////////
 
 ///// Imports /////
-import std.string; // -------- `string` type
-import std.stdio; // --------- `writeln`
-import std.conv; // ---------- string conversions
-import std.uni; // ----------- `strip`
-import std.math.operations; // `NaN`
-import std.typecons; // ------ Tuple
-import std.ascii; // --------- Whitespace test
+import std.string; // ----------- `string` type
+import std.stdio; // ------------ `writeln`
+import std.conv; // ------------- string conversions
+import std.uni; // -------------- `strip`
+import std.math.operations; // -- `NaN`
+import std.typecons; // ---------- Tuple
+import std.ascii; // ------------- Whitespace test
+import std.algorithm.searching; // `canFind``
 alias  is_white = std.ascii.isWhite; 
 
 ///// Env Vars /////
@@ -1458,6 +1459,55 @@ void init_SPARROW(){
 
 
 
+////////// READ, EVALUATE, PRINT, LOOP /////////////////////////////////////////////////////////////
+
+void read_eval_prnt_loop(){
+    // Terminal interaction with SPARROW
+    bool   quit   = false; // Use request to quit
+    // char[] inBuf;
+    string input; // -------- User input
+    Atom*  expr   = null; //- S-Expression
+    Atom*  output = null; //- Eval result
+    
+    // Preamble //
+    // writeln( "\n##### SPARROW Interpreter, Version 2022-11 #####" );
+    writeln( "\n##### \"Little Scheme\" Interpreter, Version 2022-11 #####" );
+    writeln( "Interpreter expects complete, well-formed s-expressions,\n" ~
+             "and does not currently support multi-line input.\n" ~
+             "Input validation is unsupported, your mistakes will crash the program. ;P" );
+    writeln( "Type \"exit\" and the [Enter] key to end program." );
+    writeln( "=========================================================================\n" );
+
+    // REPL //
+    while( !quit ){
+        
+        // 0. Emit prompt
+        write( "S> " ); 
+
+        // 1. Read
+        // readf("%s", &input);
+        // readf!" %s"( input );
+        // stdin.read( input );
+        input = readln(); // Note no newline handling is needed as the parser will strip it automatically
+
+        // 1.5. Handle quit
+        if( canFind( input, "exit" ) )  break;
+
+        // 2. Evaluate
+        expr   = expression_from_string( input ); // FIXME: INPUT VALIDATION
+        output = value( expr ); // FIXME: CATCH INTERPRETER ERRORS
+
+        // 3. Print
+        prnt( output );
+        write( "\n" );
+
+        // 4. Loop if we did not quit ___,^
+    }
+
+    // End //
+    writeln( "\nProgram exit by user request. ~ Goodbye!\n" );
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // MAIN  MAIN  MAIN  MAIN  MAIN  MAIN  MAIN  MAIN  MAIN  MAIN  MAIN  MAIN  MAIN  MAIN  MAIN  MAIN //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1467,274 +1517,7 @@ void main(){
     // Populate necessary interpreter components
     init_SPARROW();
     
-    writeln( "\nStructure Tests" ); //////////////////////////////////////
-    Atom* list1 = make_list_of_2( make_number(2), make_number(3) );
-    writeln( str( list1 ) );
-    append( list1, make_number(4) );
-    append( list1, make_number(5) );
-    writeln( str( list1 ) );
-    prnt( first( list1 ) );
-    prnt( second( list1 ) );
-    prnt( third( list1 ) );
-
-    writeln( "\nMath Tests" ); ////////////////////////////////////////////
-    writeln( add1(2) ); // 3
-    writeln( sub1(2) ); // 1
-    writeln( add([2.0,3.0,4.0]) ); // 9
-    writeln( minus([2,3,4]) ); // -5
-    writeln( lt([2,3,4]) ); // true
-    writeln( lt([2,3,3]) ); // false
-    writeln( gt([4,3,2]) ); // true
-    writeln( gt([4,3,3]) ); // false
-    writeln( le([2,3,3]) ); // true
-    writeln( le([2,3,1]) ); // false
-    writeln( ge([4,3,3]) ); // true
-    writeln( ge([4,3,5]) ); // false
-
-    writeln( "\nInterpreter Tests" ); /////////////////////////////////////
-    writeln( flatten_double_list( list1 ) ); // [2, 3, 4, 5]
-    Atom* list2 = make_list_of_2( make_string( "foo" ), make_string( "bar" ) );
-    append( list2, make_string( "baz" ) );
-    append( list2, make_string( "xur" ) );
-    append( list2, make_string( "tef" ) );
-    writeln( flatten_string_list( list2 ) ); // ["foo", "bar", "baz", "xur", "tef"]
-
-    writeln( "\nPrimitive Symbol Tests" ); ////////////////////////////////
-    Atom* expr1 = expression_from_string( "true" );
-    prnt( expr1 );
-    expr1 = expression_from_string( "false" );
-    prnt( expr1 );
-    expr1 = expression_from_string( "#t" );
-    prnt( expr1 );
-    expr1 = expression_from_string( "#f" );
-    prnt( expr1 );
-
-    
-    writeln( "\nPrimitive Function Tests" ); //////////////////////////////
-    
-    Atom* run_primitive_function( Atom* schemeForm ){
-        // Fake the invocation of primitives by the interpreter
-        string name = nameOf( schemeForm ).str;
-        Atom*  args = argsOf( schemeForm );
-        // prnt( args );
-        if( p_primitve_function( name ) ){
-            return primitiveFunctions[ name ]( args );
-        }else{
-            return empty_atom();
-        }
-    }
-    
-    Atom* expr2;
-    expr2 = expression_from_string( "(atom? 2.5)" ); // T
-    prnt( run_primitive_function( expr2 ) );
-    expr2 = expression_from_string( "(atom? (2 3))" ); // F
-    prnt( run_primitive_function( expr2 ) );
-    
-    expr2 = expression_from_string( "(eq? 3 3 3)" ); // T
-    prnt( run_primitive_function( expr2 ) );
-    expr2 = expression_from_string( "(eq? 3 3 4)" ); // F
-    prnt( run_primitive_function( expr2 ) );
-
-    expr2 = expression_from_string( "(empty? [/])" ); // T
-    prnt( run_primitive_function( expr2 ) );
-    expr2 = expression_from_string( "(empty? 42)" ); // F
-    prnt( run_primitive_function( expr2 ) );
-
-    expr2 = expression_from_string( "(zero? 0.0)" ); // T
-    prnt( run_primitive_function( expr2 ) );
-    expr2 = expression_from_string( "(zero? 0.0 0.0 0.0)" ); // T
-    prnt( run_primitive_function( expr2 ) );
-    expr2 = expression_from_string( "(zero? 0.0 0.0 0.5)" ); // F
-    prnt( run_primitive_function( expr2 ) );
-
-    expr2 = expression_from_string( "(number? 0.0)" ); // T
-    prnt( run_primitive_function( expr2 ) );
-    expr2 = expression_from_string( "(number? 0.0 0.0 0.0)" ); // T
-    prnt( run_primitive_function( expr2 ) );
-    expr2 = expression_from_string( "(number? 0.0 0.0 foo)" ); // F
-    prnt( run_primitive_function( expr2 ) );
-
-    expr2 = expression_from_string( "(+ 2)" ); // 2
-    prnt( run_primitive_function( expr2 ) );
-    expr2 = expression_from_string( "(+ 2 3)" ); // 5
-    prnt( run_primitive_function( expr2 ) );
-    expr2 = expression_from_string( "(+ 2 3 4)" ); // 9
-    prnt( run_primitive_function( expr2 ) );
-
-    expr2 = expression_from_string( "(- 2)" ); // -2
-    prnt( run_primitive_function( expr2 ) );
-    expr2 = expression_from_string( "(- 2 3)" ); // -1
-    prnt( run_primitive_function( expr2 ) );
-    expr2 = expression_from_string( "(- 2 3 4)" ); // -5
-    prnt( run_primitive_function( expr2 ) );
-
-    expr2 = expression_from_string( "(* 2)" ); // 2
-    prnt( run_primitive_function( expr2 ) );
-    expr2 = expression_from_string( "(* 2 3)" ); // 6
-    prnt( run_primitive_function( expr2 ) );
-    expr2 = expression_from_string( "(* 2 3 4)" ); // 24
-    prnt( run_primitive_function( expr2 ) );
-
-    expr2 = expression_from_string( "(/ 2)" ); // 0.5
-    prnt( run_primitive_function( expr2 ) );
-    expr2 = expression_from_string( "(/ 2 3)" ); // 0.666667
-    prnt( run_primitive_function( expr2 ) );
-    expr2 = expression_from_string( "(/ 2 3 4)" ); // 0.166667
-    prnt( run_primitive_function( expr2 ) );
-
-    expr2 = expression_from_string( "(1+ 2)" ); // 3
-    prnt( run_primitive_function( expr2 ) );
-    expr2 = expression_from_string( "(1+ 2 3)" ); // ( 3, ( 4, ⧄ ) )
-    prnt( run_primitive_function( expr2 ) );
-    expr2 = expression_from_string( "(1+ 2 3 4)" ); // ( 3, ( 4, ( 5, ⧄ ) ) )
-    prnt( run_primitive_function( expr2 ) );
-
-    expr2 = expression_from_string( "(1- 2)" ); // 1
-    prnt( run_primitive_function( expr2 ) );
-    expr2 = expression_from_string( "(1- 2 3)" ); // ( 1, ( 2, ⧄ ) )
-    prnt( run_primitive_function( expr2 ) );
-    expr2 = expression_from_string( "(1- 2 3 4)" ); // ( 1, ( 2, ( 3, ⧄ ) ) )
-    prnt( run_primitive_function( expr2 ) );
-
-    expr2 = expression_from_string( "(< 2)" ); // F
-    prnt( run_primitive_function( expr2 ) );
-    expr2 = expression_from_string( "(< 2 3)" ); // T
-    prnt( run_primitive_function( expr2 ) );
-    expr2 = expression_from_string( "(< 2 3 4)" ); // T
-    prnt( run_primitive_function( expr2 ) );
-    expr2 = expression_from_string( "(< 2 5 4)" ); // F
-    prnt( run_primitive_function( expr2 ) );
-
-    expr2 = expression_from_string( "(> 2)" ); // F
-    prnt( run_primitive_function( expr2 ) );
-    expr2 = expression_from_string( "(> 3 2)" ); // T
-    prnt( run_primitive_function( expr2 ) );
-    expr2 = expression_from_string( "(> 4 3 2)" ); // T
-    prnt( run_primitive_function( expr2 ) );
-    expr2 = expression_from_string( "(> 4 5 2)" ); // F
-    prnt( run_primitive_function( expr2 ) );
-
-    expr2 = expression_from_string( "(<= 2)" ); // F
-    prnt( run_primitive_function( expr2 ) );
-    expr2 = expression_from_string( "(<= 2 3)" ); // T
-    prnt( run_primitive_function( expr2 ) );
-    expr2 = expression_from_string( "(<= 2 3 3)" ); // T
-    prnt( run_primitive_function( expr2 ) );
-    expr2 = expression_from_string( "(<= 2 5 4)" ); // F
-    prnt( run_primitive_function( expr2 ) );
-
-    expr2 = expression_from_string( "(>= 2)" ); // F
-    prnt( run_primitive_function( expr2 ) );
-    expr2 = expression_from_string( "(>= 3 2)" ); // T
-    prnt( run_primitive_function( expr2 ) );
-    expr2 = expression_from_string( "(>= 4 3 3)" ); // T
-    prnt( run_primitive_function( expr2 ) );
-    expr2 = expression_from_string( "(>= 4 5 2)" ); // F
-    prnt( run_primitive_function( expr2 ) );
-
-    expr2 = expression_from_string( "(cons 4 5 2)" ); // ( 4, 5 )
-    prnt( run_primitive_function( expr2 ) );
-    expr2 = expression_from_string( "(cons 4 5)" ); // ( 4, 5 )
-    prnt( run_primitive_function( expr2 ) );
-    expr2 = expression_from_string( "(cons 4)" ); // ( 4, ⧄ )
-    prnt( run_primitive_function( expr2 ) );
-    expr2 = expression_from_string( "(cons)" ); // ( ⧄, ⧄ )
-    prnt( run_primitive_function( expr2 ) );
-
-    writeln( "\nTruthiness Tests" ); //////////////////////////////////////
-
-    writeln( truthiness( make_string( ""    ) ) ); // false
-    writeln( truthiness( make_string( "Foo" ) ) ); // true
-    writeln( truthiness( make_bool( false ) ) ); // false
-    writeln( truthiness( make_bool( true  ) ) ); // true
-    writeln( truthiness( make_number( -1.5 ) ) ); // false
-    writeln( truthiness( make_number(  0.0 ) ) ); // false
-    writeln( truthiness( make_number( 28.7 ) ) ); // true
-    writeln( truthiness( make_cons() ) ); // false
-    writeln( truthiness( make_cons( make_number(4) ) ) ); // true
-    writeln( truthiness( make_error( F_Error.DNE, "All errors are FALSE!" ) ) ); // false
-    writeln( truthiness() ); // false
-
-    writeln( "\nSpecial Forms Tests" ); //////////////////////////////
-    
-    Atom* run_special_form( string strForm ){
-        // Fake the invocation of primitives by the interpreter
-
-        Atom*  schemeForm = expression_from_string( strForm );
-        string name /*-*/ = nameOf( schemeForm ).str;
-        // Atom*  args    = argsOf( schemeForm );
-
-        writeln( "Attempt to evaluate: " ~ str( schemeForm ) );
-
-        ExprInContext input = ExprInContext(
-            schemeForm,
-            baseEnv,
-            strForm
-        ); 
-        ExprInContext output;
-        Atom* /*---*/ outLst;
-        
-        // prnt( args );
-        if( p_special_form( name ) ){
-            output = specialForms[ name ]( input );
-            outLst = output.expr;
-            writeln( strForm ~ " --"~name~"-> " ~ str( outLst ) );
-            return outLst;
-        }else{
-            return empty_atom();
-        }
-    }
-
-    run_special_form( "(quote (+ 2 3))" ); // ( +, ( 2, ( 3, ⧄ ) ) )
-    run_special_form( "(lambda (n) (+ n 2))" ); // ( ( n, ⧄ ), ( (  +, ( n, ( 2, ⧄ ) ) ), ⧄ ) )
-    run_special_form( "(define n 5)" ); // n
-    run_special_form( "(define m 6)" ); // m
-    run_special_form( "(define o (+ 2 3))" ); // o
-    run_special_form( "(define p (+ m n))" ); // o
-    prnt( get_bound_atom( baseEnv, "n" ) ); // 5
-    prnt( get_bound_atom( baseEnv, "m" ) ); // 6
-    prnt( get_bound_atom( baseEnv, "o" ) ); // 5
-    prnt( get_bound_atom( baseEnv, "p" ) ); // 6
-    run_special_form( "(cond ((> 3 3) greater)
-                             ((< 3 3) lesser)
-                             (else equal))" ); // "equal" 
-    run_special_form( "(cond ((> 4 3) greater)
-                             ((< 3 3) lesser)
-                             (else equal))" ); // "greater"
-    run_special_form( "(cond ((> 3 3) greater)
-                             ((< 3 4) lesser)
-                             (else equal))" ); // "lesser"     
-    run_special_form( "(and 1 1 1)" ); // T
-    run_special_form( "(and 1 0 1)" ); // F
-    run_special_form( "(or  0 0 0)" ); // F
-    run_special_form( "(or  0 1 0)" ); // T
-    run_special_form( "(define addition 
-                               (lambda (a b) (+ a b) )
-                        )" ); 
-
-    writeln( "\nEvaluation Tests" ); //////////////////////////////
-
-    void eval_print( string strForm ){
-        // The language is now taking shape
-        Atom* expr = expression_from_string( strForm );
-        write( str( expr ) ~ " --value-> " );
-        prnt(  value( expr )  );
-    }
-
-    eval_print( "(atom? 2.5)" ); // T
-    eval_print( "(+ 2 3 4)" ); // 9
-    eval_print( "(cons 4 5)" ); // ( 4, 5 )
-    eval_print( "(define q (+ o p))" ); // q
-    eval_print( "q" ); // 16
-    eval_print( "(cond ((> 4 3) greater)
-                       ((< 3 3) lesser)
-                       (else equal))" ); // greater
-    eval_print( "(addition 2 3)" ); // 5
-    eval_print( "(define fact (lambda (x) 
-                                      (cond ((> x 1) (* x (fact (- x 1))) ) 
-                                            (else 1)                      ) 
-                               )
-                  )" );
-    eval_print( "(fact 4)" ); // 24 // CORRECT
+    // Begin REPL
+    read_eval_prnt_loop();
 }
     
