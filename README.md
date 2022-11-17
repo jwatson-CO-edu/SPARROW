@@ -1,7 +1,10 @@
 # **S**cheme **P**rogram **A**llowing **R**easonable **R**eckoning **O**f **W**ork [SPARROW]
-An implementation of "[Little Scheme](https://mitpress.mit.edu/9780262560993/the-little-schemer/)" written in [D](https://dlang.org/), with the goal of learning language design.  That's it.  The concept it to slowly morph it into my own language.  
-SPARROW's ability to solve problems for others is a side-effect.  
-Spelled "SPARROW" or "Sparrow".
+An implementation of "[Little Scheme](https://mitpress.mit.edu/9780262560993/the-little-schemer/)" written in [D](https://dlang.org/), with the goal of learning language design.  That's it.  
+The concept is to slowly morph it into my own language. 
+
+#### Notes: 
+* SPARROW's ability to solve problems for others is an unintentional side-effect.  
+* Spelled "SPARROW" or "Sparrow".
 
 # Design Goals
 1. This is for my own entertainment and edification.
