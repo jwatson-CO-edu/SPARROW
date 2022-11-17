@@ -43,7 +43,8 @@ Completion Key:
     [Y] T: Test each component as it is developed - 2022-11-16, AWESOME
     [Y] Change name from FINCH, make public, and reorganize around SPARROW only. - 2022-11-16
     [Y] Clean source - 2022-11-16, READY FOR REPL
-    [ ] Implement REPL
+    [>] Implement REPL
+    [ ] Clean source of {tests, debug prints}
     [ ] T: Ask Dlang forum for feedback
     [ ] Apply Dlang forum changes
     [ ] T: Ask StackOverflow for feedback
