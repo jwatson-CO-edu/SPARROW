@@ -186,8 +186,8 @@ Atom* third(   Atom* atm ){  return get_car(get_cdr(get_cdr(atm)));  } // Return
 Atom* condLinesOf( Atom* atm ){  return get_cdr( atm );  }
 Atom* formLinesOf( Atom* atm ){  return get_cdr( atm );  }
 Atom* argsOf(      Atom* atm ){  return get_cdr( atm );  }
-Atom* paramsOf(    Atom* atm ){  return get_cdr( atm );  }
-Atom* tableOf(     Atom* atm ){  return first( atm );    }
+// Atom* paramsOf(    Atom* atm ){  return get_cdr( atm );  }
+// Atom* tableOf(     Atom* atm ){  return first( atm );    }
 Atom* nameOf(      Atom* atm ){  return first( atm );    }
 Atom* questionOf(  Atom* atm ){  return first( atm );    }
 Atom* textOf(      Atom* atm ){  return second( atm );   }
