@@ -110,5 +110,24 @@ Completion Key:
 ## Phase 2: A different language ...
 
 # Resources
+## Novice Language Design
 * https://mitpress.mit.edu/9780262560993/the-little-schemer/
 * https://www.crockford.com/little.html
+* https://pointersgonewild.com/2022/05/23/minimalism-in-programming-language-design/
+* https://dustycloud.org/blog/racket-is-an-acceptable-python/
+* https://blog.sigplan.org/2022/05/19/language-design-in-the-real-world/
+* http://ducklang.org/designing-a-programming-language-i
+* https://beyondloom.com/decker/lil.html
+* https://texdraft.github.io/lisp-compiler/internals.html
+* https://www.jsoftware.com/papers/tot.htm
+* http://www.om-language.org/
+* https://cs.lmu.edu/~ray/notes/languagedesignnotes/
+## Parsing
+* https://www.engr.mun.ca/~theo/Misc/exp_parsing.htm
+## Optimization
+* https://johnysswlab.com/vectorization-dependencies-and-outer-loop-vectorization-if-you-cant-beat-them-join-them/
+## Type Checking
+* https://www.haskellforall.com/2022/03/the-hard-part-of-type-checking-nix.html
+## Advanced Language Design
+* https://mooc.pharo.org/
+* https://www.cis.upenn.edu/~bcpierce/courses/670Fall04/GreatWorksInPL.shtml
