@@ -1474,6 +1474,7 @@ void read_eval_prnt_loop(){
              "and does not currently support multi-line input.\n" ~
              "Input validation is unsupported, your mistakes will crash the program. ;P" );
     writeln( "Type \"exit\" and the [Enter] key to end program." );
+    writeln( "Atom size: " ~ Atom.sizeof.to!string );
     writeln( "=========================================================================\n" );
 
     // REPL //
