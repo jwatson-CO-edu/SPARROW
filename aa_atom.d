@@ -11,12 +11,12 @@ import std.conv; // ------------- string conversions
 ////////// ATOMS /////////////////////////////////
 
 enum F_Error{ 
-    OKAY    = "OKAY", // -- No error code applicable
-    NOVALUE = "NOVALUE", // There is no value held in this atom
-    NAN     = "NAN", // --- Not A Number
-    DNE     = "DNE", // --- Does Not Exist
-    SYNTAX  = "SYNTAX", //- Syntax error
-    LEXER   = "LEXER", // - Eval machinery failed
+    OKAY, // -- No error code applicable
+    NOVALUE, // There is no value held in this atom
+    NAN, // --- Not A Number
+    DNE, // --- Does Not Exist
+    SYNTAX, //- Syntax error
+    LEXER, // - Eval machinery failed
 }
 
 
@@ -99,7 +99,7 @@ void main(){
     writeln( atm.err.to!string );
     writeln( atm.msg );
     writeln( atm.bul ); // false, >>>WHY<<<?
-    writeln( atm.cdr.num ); // 7.72446e+228, >>>WHY<<<?
+    // writeln( atm.cdr.num ); // SegFault
 
     writeln( Atom.sizeof );
 }
