@@ -40,8 +40,7 @@ Completion Key:
 [Y] Translate second "ac_" evaluator to Dlang - 2022-09-08: COMPLETE
     [Y] All Functions Implemented - 2022-09-08: COMPLETE
     [Y] All tests pass - 2022-09-08: Environment bound and unbound variables implemented, are ref counts needed?
-
-[>] Translate "The Little Javascripter" by Douglas Crockford
+[Y] Translate "The Little Javascripter" by Douglas Crockford
     https://www.crockford.com/little.html (See `JS` folder for reference implementation)
     [Y] T: Test each component as it is developed - 2022-11-16, AWESOME
     [Y] Change name from FINCH, make public, and reorganize around SPARROW only. - 2022-11-16
@@ -51,9 +50,13 @@ Completion Key:
     [Y] T: Ask Dlang forum for feedback - 2022-11-17
         * Variant/Union: https://forum.dlang.org/thread/icpmctbrsscuimkxtuby@forum.dlang.org
         * Code Critique: https://forum.dlang.org/thread/uhziclioiviwzztojofy@forum.dlang.org
-    [>] Apply Dlang forum changes
+    [N] Apply Dlang forum changes, 2022-11-19: Ring buffer isn't so interesting since atoms won't die in order 
     [N] T: Ask StackOverflow for feedback - 2022-11-17, Not for projects of this size
     [N] Apply StackOverflow changes - 2022-11-17, Not for projects of this size
+
+[>] Atom Size Reduction
+    [Y] Try unions: 1{car, str, num} + 2{cdr, err} - 2022-11-19, 72 --to-> 32 bytes!
+    [>] Integrate change into Little Schemer ---> Sparrow
     
 [ ] Parse "Easy S-Expressions" instead: 2022-04-19, Ignore whitespace except to separate symbols
     [ ] Implicit open paren, `;` is close paren
@@ -70,11 +73,6 @@ Completion Key:
     [ ] Line Continuation: `\+`    
     [ ] T: Translate and repeat all REPLacement tests!
 [ ] Evaluate "The Seasoned Schemer" for useful features and structures (If yes, then expand this bullet with REQUIRED topics ONLY )
-[ ] Atom Size Reduction
-    [ ] Try unions: 1{car, str, num} + 2{cdr, err}
-    [ ] T: Size of Union -vs- Speed of computation
-        * "Fat Atoms" might be faster if we can assume the components are always there
-        * Do "Slim Atoms" offer any performance improvements other than memory usage?
 [ ] Experiment with memory models
     [ ] Q: Which is faster? 
         * Pointer
