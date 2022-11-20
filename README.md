@@ -32,6 +32,7 @@ Completion Key:
 * `[~]` Partially Done and/or Skipped for Now
 
 ## Phase 1: Learn Computer Language Design via Scheme -- SPARROW
+### Basic Implementation
 ```
 [Y] Translate first "ab_" evaluator to Dlang - 2022-09-07: COMPLETE
     [Y] All Functions Implemented - 2022-09-07: Nim had pointer references, so some implementation needed changing
@@ -64,46 +65,85 @@ Completion Key:
         [ ] E: What is the most ergonimic way to handle nested expressions?
     [ ] T: Parse and run a plaintext file
         [ ] E: File extension: .BRD, .SPRW, .FNC,
-    [ ] Program Blocks: 2022-11-16, Last line is the meaning of the block
-        [ ] Curly Braces {}
-        [ ] Pythonic / Implicit
-        [ ] New block == new context
+[ ] Program Blocks
+    [ ] Curly Braces {}
+    [ ] New block == new context
     [ ] T: Verify that statement precedence with block brackets already exists in evaluator, If not then Implement it! 
     [ ] T: Make sure that nested statements and blocks do not cause ambiguity
-    [ ] Line Continuation: `\+`    
-    [ ] T: Translate and repeat all REPLacement tests!
-[ ] Evaluate "The Seasoned Schemer" for useful features and structures (If yes, then expand this bullet with REQUIRED topics ONLY )
-[ ] Experiment with memory models
-    [ ] Q: Which is faster? 
-        * Pointer
-        * Copy
-    [ ] Q: Is selective compilation possible in Dlang?
-        [ ] T: If so, test a program that requires selective compilation in order to be compatible w/ Windows
-    [ ] Read: How does Dlang allocate memory?
-    [ ] Q: Can a block of "null pointer" memory be allocated?
-    [ ] Q: Can a large array of `Atoms` be allocated? 
-    [ ] T: Which is faster; (Pre-allocated block -vs- Dynamic vars); Create 1000 vars and assign randomly for 10k steps
-[ ] Small Optimizations
-    [ ] Iterate LISP lists instead of converting to dyn arrays
-    [ ] Unify and/or streamline `ExprInContext` usage
-[ ] E: Evaluate "Practical Common Lisp" (PCL) for useful features and structures (If yes, then expand this bullet with REQUIRED topics ONLY )
-[ ] E: R6RS, Complete Scheme without Error System
-[ ] E: R7RS, Complete Scheme *with*  Error System
-[ ] E: Identify Philosophical Differences
-    [ ] Identify Dynamic Typing, Where does the language burn time matching?
-    [ ] Identify where value history can be built
-[ ] T: Will SPARROW compile & run in Windows without modification?
+    [ ] Last line is the meaning of the block, (prog ... ) ?
+    [ ] Pythonic: Implicit by indentation
+        [ ] How to cleanly handle nested indented blocks?
+[ ] Implement loops
+    [ ] for (<counter> <bgn> <end>) {<BLOCK>}; - Counter bounds inclusive, Note DOUBLE bounds!
+        [ ] Loop iterates with <counter> == <end>
+        [ ] Loop exits    with <counter> > <end>
+         *  At this time not allowing the user to specify custom conditions!
+    [ ] for (<counter> <bgn> <incr> <end>) {<BLOCK>}; - Counter bounds inclusive with increment value
+    [ ] while (<cond>)
+[ ] Line Continuation: `\+`    
+[ ] Unify and/or streamline `ExprInContext` usage
 [ ] Allow SPARROW to either run a file or run a REPL, depending on how it is called
     [ ] Execute file: `sparrow <FILENAME>`
     [ ] Run REPL: `sparrow`
-[ ] E: Single-threaded Efficiency and Readability
-    [ ] T: Ask Dlang forum for feedback
-    [ ] T: Ask StackOverflow for feedback
-[ ] E: Read the next phase's goals.  
-    [ ] E: Do they make match your purpose in creating FINCH?
-    [ ] E: Do they make sense to you?
-    [ ] E: What is FINCH's value to you?
 ```
+### Modest Extensions
+```
+[ ] Experiment with memory models
+    [ ] Read: How does Dlang allocate memory?
+    [ ] Q: Can a block of "null pointer" memory be allocated?
+    [ ] Q: Can a large array of `Atoms` be allocated? 
+    [ ] T: Which is faster; (Pre-allocated block -vs- Dynamic vars); 
+        [ ] Create 10k vars and assign randomly for 10k steps
+[ ] Evaluate "The Seasoned Schemer" for useful features and structures (If yes, then expand this bullet with REQUIRED topics ONLY )
+[ ] E: Evaluate "Practical Common Lisp" (PCL) for useful features and structures (If yes, then expand this bullet with REQUIRED topics ONLY )
+[ ] E: R6RS, Complete Scheme without Error System (If yes, then expand this bullet with SELECTED topics ONLY )
+[ ] E: R7RS, Complete Scheme *with*  Error System (If yes, then expand this bullet with SELECTED topics ONLY )
+```
+### Structural Changes
+```
+[ ] E: Identify Implementation Choices
+    [ ] What are the advantages    of being a LISP?
+    [ ] What are the disadvantages of being a LISP?
+    [ ] Identify Dynamic Typing handler code, Where does the language burn time matching?
+[ ] T: Will SPARROW compile & run in Windows without modification?
+    [ ] Q: Is selective compilation required and/or possible in Dlang?
+[ ] E: Single-threaded Efficiency and Readability
+    [ ] Efficiency
+        [ ] Develop a benchmark use case
+        [ ] Run solving algo in SPARROW
+        [ ] Compare same algo to Python3.10
+        [ ] Compare same algo to Python3.11
+    [ ] Readability
+        [ ] Is the algo easy or hard to read in SPARROW?
+```
+### **FINCH Transition**: What are you even doing?
+`[ ]` Manage the FINCH vision 
+* `[ ]` What is the purpose of FINCH?
+* `[ ]` Gather non-parallel goals from FINCH paper notes.
+* `[ ]` Read the next phase's goals.  
+* `[ ]` Consolidate paper and README goals.
+* `[ ]` Choose the main theme and remove conflicting goals
+* `[ ]` Does your list of goals match your purpose in creating FINCH?
+* `[ ]` Do they make sense to you?
+* `[ ]` What is FINCH's value to you?
+* `[ ]` Does FINCH interfere with your professional goals? 
+    - There were a number of times I let it interfere.
+    - Have I managed to keep it from becoming an obsession?
+
+`[ ]` Read & Take Notes
+* `[ ]` [Minimalism in Programming Language Design](https://pointersgonewild.com/2022/05/23/minimalism-in-programming-language-design/)
+* `[ ]` [Racket is an Acceptable Python](https://dustycloud.org/blog/racket-is-an-acceptable-python/)
+* `[ ]` [Computer Language Design in the Real World](https://blog.sigplan.org/2022/05/19/language-design-in-the-real-world/)  
+
+`[ ]` Investigate languages and their philosophies
+* `[ ]` [Duck](http://ducklang.org/designing-a-programming-language-i)
+* `[ ]` [Lil](https://beyondloom.com/decker/lil.html)
+* `[ ]` [LISP](https://texdraft.github.io/lisp-compiler/internals.html)
+* `[ ]` [Om](http://www.om-language.org/)  
+
+`[ ]` Absorb PL Advice
+* `[ ]` [Programming Language Design Notes](https://cs.lmu.edu/~ray/notes/languagedesignnotes/)
+* `[ ]` [Great Works in PL](https://www.jsoftware.com/papers/tot.htm)
 
 ## Phase 2: A different language ...
 
@@ -111,15 +151,7 @@ Completion Key:
 ## Novice Language Design
 * https://mitpress.mit.edu/9780262560993/the-little-schemer/
 * https://www.crockford.com/little.html
-* https://pointersgonewild.com/2022/05/23/minimalism-in-programming-language-design/
-* https://dustycloud.org/blog/racket-is-an-acceptable-python/
-* https://blog.sigplan.org/2022/05/19/language-design-in-the-real-world/
-* http://ducklang.org/designing-a-programming-language-i
-* https://beyondloom.com/decker/lil.html
-* https://texdraft.github.io/lisp-compiler/internals.html
-* https://www.jsoftware.com/papers/tot.htm
-* http://www.om-language.org/
-* https://cs.lmu.edu/~ray/notes/languagedesignnotes/
+* See reading lists, above.
 ## Parsing
 * https://www.engr.mun.ca/~theo/Misc/exp_parsing.htm
 ## Optimization
