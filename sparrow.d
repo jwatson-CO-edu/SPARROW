@@ -22,7 +22,7 @@ Context             Scoped         Flow     // Is flow based programming relevan
 
 */
 
-////////// INIT ////////////////////////////////////////////////////////////////////////////////////
+////////// INIT //////////////////////////////////
 
 ///// Imports /////
 import std.string; // ----------- `string` type
@@ -36,18 +36,19 @@ import std.algorithm.searching; // `canFind``
 alias  is_white = std.ascii.isWhite; 
 
 ///// Env Vars /////
-bool _DEBUG_VERBOSE = false; // Set true for debug prints
+bool _DEBUG_VERBOSE  = false; // Set true for debug prints
+bool _TEST_ALL_PARTS =  true; // Set true to run all unit tests
 
 
-////////// ATOMS ///////////////////////////////////////////////////////////////////////////////////
+////////// ATOMS /////////////////////////////////
 
 enum F_Error{ 
-    OKAY    = "OKAY", // -- No error code applicable
-    NOVALUE = "NOVALUE", // There is no value held in this atom
-    NAN     = "NAN", // --- Not A Number
-    DNE     = "DNE", // --- Does Not Exist
-    SYNTAX  = "SYNTAX", //- Syntax error
-    LEXER   = "LEXER", // - Eval machinery failed
+    OKAY, // -- No error code applicable
+    NOVALUE, // There is no value held in this atom
+    NAN, // --- Not A Number
+    DNE, // --- Does Not Exist
+    SYNTAX, //- Syntax error
+    LEXER, // - Eval machinery failed
 }
 
 
@@ -58,103 +59,45 @@ enum F_Type{
     EROR, // Error object
     BOOL, // Boolean value
     FUNC, // Function
-    // NULL, // Null // 2022-09-03: Trying it w/o NULL
 }
-
 
 struct Atom{
-    F_Type  kind; // ---------------- What kind of atom this is
-    Atom*   car; // ----------------- Left  `Atom` Pointer
-    Atom*   cdr; // ----------------- Right `Atom` Pointer
-    double  num; // ----------------- Number value
-    string  str; // ----------------- String value, D-string underlies
-    bool    bul; // ----------------- Boolean value
-    F_Error err = F_Error.NOVALUE; /* Error code, 2022-09-03: Any atom can have an error code
-                                      Instead of NULL, we can ask the Atom if it has a fault code assigned to it */
+    F_Type  kind; // What kind of atom this is
+    union{
+        double  num; // NMBR: Number value
+        string  str; // STRN: String value, D-string 
+        bool    bul; // BOOL: Boolean value
+        struct{ // ---- CONS: pair
+            Atom* car; // Left  `Atom` Pointer
+            Atom* cdr; // Right `Atom` Pointer
+        }
+        struct{ // ---- EROR: Code + Message
+            F_Error err; // Error code
+            string  msg; // Detailed desc
+        }
+    }
+    // https://forum.dlang.org/post/omsbr8$7do$1@digitalmars.com
+    this( double n ){ kind = F_Type.NMBR; num = n; } // make number
+    this( string s ){ kind = F_Type.STRN; str = s; } // make string
+    this( bool   b ){ kind = F_Type.BOOL; bul = b; } // make bool
+    this( Atom* a, Atom* d ){ kind = F_Type.CONS; car = a; cdr = d; } // make cons
+    this( Atom* a ){ kind = F_Type.CONS; car = a; cdr = null; } // make left-handed cons
+    this( F_Error e, string m ){ kind = F_Type.EROR; err = e; msg = m; } // make error
 }
 
+///// Empty / Terminator /////
 
 Atom* empty_atom(){
     // Allocate and return an a `NOVALUE` error
-    return new Atom(
-        F_Type.EROR,
-        null,
-        null,
-        double.nan,
-        "NO VALUE",
-        false,
-        F_Error.NOVALUE
-    );
+    return new Atom( F_Error.NOVALUE, "NO VALUE" );
 }
 
-
-Atom* make_string( string str ){
-    // Make a string
-    return new Atom(
-        F_Type.STRN,
-        null,
-        null,
-        double.nan,
-        str,
-        (str.length > 0),
-        F_Error.OKAY
-    );
-}
-
-
-Atom* make_number( double nmbr ){
-    // Make a number
-    return new Atom(
-        F_Type.NMBR,
-        null,
-        null,
-        nmbr,
-        "",
-        (nmbr > 0.0),
-        F_Error.OKAY
-    );
-}
-
-Atom* make_error( F_Error code, string msg ){
-    // Make an error
-    return new Atom(
-        F_Type.EROR,
-        null,
-        null,
-        double.nan,
-        msg,
-        false,
-        code
-    );
-}
-
-Atom* make_bool( bool val ){
-    // Make a Boolean value
-    return new Atom(
-        F_Type.BOOL,
-        null,
-        null,
-        double.nan,
-        "",
-        val,
-        F_Error.OKAY
-    );
-}
-
-
-///// Cons /////
-
-Atom* make_cons( Atom* car = null, Atom* cdr = null, ){
-    // Make a pair
-    return new Atom(
-        F_Type.CONS,
-        car,
-        cdr,
-        double.nan,
-        "",
-        true,
-        F_Error.OKAY
-    );
+Atom* empty_cons(){
+    // Cons without contents
+    Atom* rtnAtm = new Atom( empty_atom(), empty_atom() );
+    rtnAtm.car   = null; 
+    rtnAtm.cdr   = null;
+    return rtnAtm;
 }
 
 
@@ -162,15 +105,9 @@ Atom* make_cons( Atom* car = null, Atom* cdr = null, ){
 
 Atom* make_function( Atom* parameters = null, Atom* definition = null ){
     // Make a function
-    return new Atom(
-        F_Type.FUNC, // Function
-        parameters, //- Cons list of parameter symbols
-        definition, //- Cons structure containing code
-        double.nan, //- No number interpretation
-        "function", //- Name as a string
-        true, // ------ Assume truthiness
-        F_Error.OKAY // Assume okay
-    );
+    Atom* rtnAtm = new Atom( parameters, definition );
+    rtnAtm.kind = F_Type.FUNC;
+    return rtnAtm;
 }
 
 ///// Getters and Setters ////////////////////////
@@ -216,9 +153,9 @@ bool set_cdr_B( Atom* atm, Atom* cdrAtm ){
 
 bool p_empty( Atom* atm ){  
     //- Atom either has the `NOVALUE` code or is null
-    return (atm == null) || (atm.err == F_Error.NOVALUE);  
+    return (atm == null) || ((atm.kind == F_Type.EROR) && (atm.err == F_Error.NOVALUE));  
 } 
-bool p_has_error( Atom* atm ){  return (atm.err != F_Error.OKAY);  } // Atom has any code other than `OKAY`
+bool p_has_error( Atom* atm ){  return (atm.kind == F_Type.EROR);  } // Atom has any code other than `OKAY`
 bool p_cons( Atom* atm ){  return (atm.kind == F_Type.CONS);  } // ---- Return true if Atom is a pair
 bool p_literal( Atom* atm ){  return (atm.kind == F_Type.NMBR) || (atm.kind == F_Type.STRN) || (atm.kind == F_Type.BOOL);  }
 bool p_number( Atom* atm ){  return (atm.kind == F_Type.NMBR);  }
@@ -351,7 +288,7 @@ bool ge( double[] args ){
 
 Atom* consify_atom( Atom* carAtm ){
     // Wrap the `atm` in a cons, with `carAtm` as 'car'
-    return make_cons( carAtm, empty_atom() );
+    return new Atom( carAtm, empty_atom() );
 }
 
 
@@ -396,10 +333,10 @@ Atom* append( Atom* list, Atom* atm = null ){
     return rtnLst;
 }
 
-
 Atom* make_list_of_2( Atom* atm1, Atom* atm2 ){
     // return a two-item list with 's1' as the first item and 's2' as the second item
-    return make_cons( atm1, make_cons( atm2, empty_atom() ) );
+    Atom* second = new Atom( atm2, empty_atom() );
+    return new Atom( atm1, second );
 }
 
 
@@ -427,7 +364,7 @@ string str( Atom* item ){
                 rtnStr = "( "~str(item.car)~", "~str(item.cdr)~" )";
                 break;
             case F_Type.EROR:
-                rtnStr = "( ERROR: " ~ item.err ~ ", " ~ item.str ~ " )";
+                rtnStr = "( ERROR: " ~ item.err.to!string ~ ", " ~ item.str ~ " )";
                 break;
             default: break;
         }
@@ -463,7 +400,6 @@ string[] tokenize( string expStr, dchar sepChar = ' ' ){
     string[] tokens;
     dchar    c      = ' ';
     string   token  = "";
-    ulong    expLen = expStr.length;
     bool     testWhite = false;
     if( sepChar == ' ' ) testWhite = true;
 
@@ -630,18 +566,18 @@ void init_primitives(){
 
     /// Zero Arguments ///
 
-    primitiveSymbols["true"]  = function Atom*(){  return make_bool(true);   }; // Boolean True
-    primitiveSymbols["#t"]    = function Atom*(){  return make_bool(true);   }; // Boolean True
-    primitiveSymbols["false"] = function Atom*(){  return make_bool(false);  }; // Boolean False
-    primitiveSymbols["#f"]    = function Atom*(){  return make_bool(false);  }; // Boolean False
-    
+    primitiveSymbols["true"]  = function Atom*(){  return new Atom(true);   }; // Boolean True
+    primitiveSymbols["#t"]    = function Atom*(){  return new Atom(true);   }; // Boolean True
+    primitiveSymbols["false"] = function Atom*(){  return new Atom(false);  }; // Boolean False
+    primitiveSymbols["#f"]    = function Atom*(){  return new Atom(false);  }; // Boolean False
+
     /// One Argument ///
 
     primitiveFunctions["atom?"] = function Atom*( Atom* args ){
         // Predicate: Is this atom a literal?
         // FIXME: CONVERT THIS FUNCTION TO HANDLE MANY ARGUMENTS WHERE ALL ATOMS TESTED
-        if( p_literal( first( args ) ) ){  return make_bool(true);  }
-        else{  return make_bool(false);  }
+        if( p_literal( first( args ) ) ){  return new Atom(true);  }
+        else{  return new Atom(false);  }
     };
 
     /// Many Arguments ///
@@ -651,78 +587,78 @@ void init_primitives(){
         Atom*[] atoms = flatten_atom_list( args );
         if( atoms.length > 1 ){
             F_Type typ0 = atoms[0].kind;
-            foreach(Atom* atm; atoms[1..$]){  if(atm.kind != typ0){  return make_bool(false);  }  }
+            foreach(Atom* atm; atoms[1..$]){  if(atm.kind != typ0){  return new Atom(false);  }  }
             // NOTE: WOULD BE NICE TO USE A `Variant` HERE? (loops) (Algebraic?)
             switch( typ0 ){
                 case F_Type.STRN:
                     string val0 = atoms[0].str;
-                    foreach(Atom* atm; atoms[1..$]){  if(atm.str != val0){  return make_bool(false);  }  }
+                    foreach(Atom* atm; atoms[1..$]){  if(atm.str != val0){  return new Atom(false);  }  }
                     break;
                 case F_Type.NMBR:
                     double val0 = atoms[0].num;
-                    foreach(Atom* atm; atoms[1..$]){  if(atm.num != val0){  return make_bool(false);  }  }
+                    foreach(Atom* atm; atoms[1..$]){  if(atm.num != val0){  return new Atom(false);  }  }
                     break;
                 case F_Type.BOOL:
                     bool val0 = atoms[0].bul;
-                    foreach(Atom* atm; atoms[1..$]){  if(atm.bul != val0){  return make_bool(false);  }  }
+                    foreach(Atom* atm; atoms[1..$]){  if(atm.bul != val0){  return new Atom(false);  }  }
                     break;
                 default: 
-                    return make_bool(false);
+                    return new Atom(false);
             }
-            return make_bool(true);       
-        }else{  return make_bool(false);  }
+            return new Atom(true);       
+        }else{  return new Atom(false);  }
     };
 
 
     primitiveFunctions["empty?"] = function Atom*( Atom* args ){
         // Predicate: Is this an empty atom?
         Atom*[] atoms = flatten_atom_list( args );
-        foreach(Atom* atm; atoms){  if( !p_empty( atm ) ){  return make_bool(false);  }  }
-        return make_bool(true);
+        foreach(Atom* atm; atoms){  if( !p_empty( atm ) ){  return new Atom(false);  }  }
+        return new Atom(true);
     };
 
 
     primitiveFunctions["zero?"] = function Atom*( Atom* args ){
         // Predicate: Is this a number atom wtih a zero value?
         Atom*[] atoms = flatten_atom_list( args );
-        foreach(Atom* atm; atoms){  if( !p_zero( atm ) ){  return make_bool(false);  }  }
-        return make_bool(true);
+        foreach(Atom* atm; atoms){  if( !p_zero( atm ) ){  return new Atom(false);  }  }
+        return new Atom(true);
     };
-    
+
 
     primitiveFunctions["number?"] = function Atom*( Atom* args ){
         // Predicate: Is this atom of number type?
         Atom*[] atoms = flatten_atom_list( args );
-        foreach(Atom* atm; atoms){  if( !p_zero( atm ) ){  return make_bool(false);  }  }
-        return make_bool(true);
+        foreach(Atom* atm; atoms){  if( !p_zero( atm ) ){  return new Atom(false);  }  }
+        return new Atom(true);
     };
 
 
     primitiveFunctions["+"] = function Atom*( Atom* args ){
         // Add 1 or more number atoms
         double[] ops = flatten_double_list( args );
-        return make_number( add( ops ) );
+        return new Atom( add( ops ) );
     };
 
 
     primitiveFunctions["-"] = function Atom*( Atom* args ){
         // Negate 1 or subtract more number atoms
         double[] ops = flatten_double_list( args );
-        return make_number( minus( ops ) );
+        return new Atom( minus( ops ) );
     };
 
 
     primitiveFunctions["*"] = function Atom*( Atom* args ){
         // Multiply 1 or more number atoms
         double[] ops = flatten_double_list( args );
-        return make_number( multiply( ops ) );
+        return new Atom( multiply( ops ) );
     };
 
 
     primitiveFunctions["/"] = function Atom*( Atom* args ){
         // Inverse 1 or divide more number atoms
         double[] ops = flatten_double_list( args );
-        return make_number( divide( ops ) );
+        return new Atom( divide( ops ) );
     };
 
 
@@ -731,10 +667,10 @@ void init_primitives(){
         Atom*[] ops = flatten_atom_list( args );
         Atom* rtnLst;
         if( ops.length > 1 ){
-            rtnLst = make_cons();
-            foreach(Atom* atm; ops){  if( p_number( atm ) ){  rtnLst = append( rtnLst, make_number( add1( atm.num ) ) );  }  }
+            rtnLst = empty_cons();
+            foreach(Atom* atm; ops){  if( p_number( atm ) ){  rtnLst = append( rtnLst, new Atom( add1( atm.num ) ) );  }  }
         }else if( ops.length == 1 )
-            rtnLst = make_number( add1( ops[0].num ) );
+            rtnLst = new Atom( add1( ops[0].num ) );
         return rtnLst;
     };
 
@@ -744,10 +680,10 @@ void init_primitives(){
         Atom*[] ops = flatten_atom_list( args );
         Atom* rtnLst;
         if( ops.length > 1 ){
-            rtnLst = make_cons();
-            foreach(Atom* atm; ops){  if( p_number( atm ) ){  rtnLst = append( rtnLst, make_number( sub1( atm.num ) ) );  }  }
+            rtnLst = empty_cons();
+            foreach(Atom* atm; ops){  if( p_number( atm ) ){  rtnLst = append( rtnLst, new Atom( sub1( atm.num ) ) );  }  }
         }else if( ops.length == 1 )
-            rtnLst = make_number( sub1( ops[0].num ) );
+            rtnLst = new Atom( sub1( ops[0].num ) );
         return rtnLst;
     };
 
@@ -755,37 +691,37 @@ void init_primitives(){
     primitiveFunctions["<"] = function Atom*( Atom* args ){
         // Less Than, for 2 or more Number atoms
         double[] ops = flatten_double_list( args );
-        return make_bool( lt( ops ) );
+        return new Atom( lt( ops ) );
     };
 
 
     primitiveFunctions[">"] = function Atom*( Atom* args ){
         // Greater Than, for 2 or more Number atoms
         double[] ops = flatten_double_list( args );
-        return make_bool( gt( ops ) );
+        return new Atom( gt( ops ) );
     };
 
 
     primitiveFunctions["<="] = function Atom*( Atom* args ){
         // Less Than Or Equal To, for 2 or more Number atoms
         double[] ops = flatten_double_list( args );
-        return make_bool( le( ops ) );
+        return new Atom( le( ops ) );
     };
 
 
     primitiveFunctions[">="] = function Atom*( Atom* args ){
         // Greater Than Or Equal To, for 2 or more Number atoms
         double[] ops = flatten_double_list( args );
-        return make_bool( ge( ops ) );
+        return new Atom( ge( ops ) );
     };
 
 
     primitiveFunctions["cons"] = function Atom*( Atom* args ){
         // Cons up to 2 atoms together into a pair. Missing params filled with `empty`
         Atom*[] atoms = flatten_atom_list( args );
-        if( atoms.length >= 2 ) return make_cons( atoms[0], atoms[1] ); // Only takes 1st two args
-        if( atoms.length == 1 ) return make_cons( atoms[0] ); // --------- One arg is accepted, other empty
-        else /*--------------*/ return make_cons(); // ------------------- Two empty accepted
+        if( atoms.length >= 2 ) return new Atom( atoms[0], atoms[1] ); // Only takes 1st two args
+        if( atoms.length == 1 ) return new Atom( atoms[0] ); // --------- One arg is accepted, other empty
+        else /*--------------*/ return empty_cons(); // ----------------- Two empty accepted
     };
 }
 
@@ -800,6 +736,7 @@ bool p_float_string( string inputStr ){
     string slimStr = strip( inputStr );
     try{
         slimStr.to!double();
+        if(_DEBUG_VERBOSE){  writeln( "Converted \"", slimStr, "\" to a number" );  }
         return true;
     }catch( ConvException e ){
         if(_DEBUG_VERBOSE){  writeln( "CONVERSION ERROR: Cannot convert \"", slimStr, "\"" );  }
@@ -818,13 +755,12 @@ bool p_empty_atom_string( string inputStr ){
 }
 
 ///// Text Processing /////
-
 Atom* atomize_string( string token ){
     // Convert a string token into a non-cons atom
-    if( p_float_string( token ) ){       return make_number( token.to!double() );  }  
+    if( p_float_string( token ) ){       return new Atom( token.to!double() );  }  
     if( p_empty_atom_string( token ) ){  return empty_atom();  }  
     if( p_primitve_symbol( token ) ){    return primitiveSymbols[ token ]();  }
-   /* else assume string -------------*/ return make_string( token );
+   /* else assume string -------------*/ return new Atom( token );
 }
 
 
@@ -883,7 +819,10 @@ Atom* consify_token_sequence( string[] tokens ){
     string[] cdrPart;
     Atom*    lstRoot = null;
 
-    if( _DEBUG_VERBOSE )  writeln( "Input: " ~ tokens );
+    if( _DEBUG_VERBOSE ){
+        writeln("`consify_token_sequence`");
+        writeln( "\tInput: " ~ tokens );
+    }  
 
     // Base Case: There were no tokens, return Empty
     if( seqLen == 0 ){  return empty_atom();  }
@@ -907,7 +846,12 @@ Atom* consify_token_sequence( string[] tokens ){
                 end--;
                 // Begin list
                 index   = bgn;
-                lstRoot = make_cons();
+                lstRoot = empty_cons();
+                if( _DEBUG_VERBOSE ){
+                    writeln( "\tInput: " ~ tokens.to!string );
+                    writeln( "\tRoot: " ~ lstRoot.kind.to!string ~ ", " ~ str( lstRoot ) );
+                }  
+
                 // While we are in the list bounds
                 while( index <= end ){
                     
@@ -939,13 +883,13 @@ Atom* consify_token_sequence( string[] tokens ){
                 }
                 return lstRoot;
             }else{
-                return make_error( F_Error.SYNTAX, "BAD LIST CASE" );
+                return new Atom( F_Error.SYNTAX, "BAD LIST CASE" );
             }
         }else{
-            return make_error( F_Error.SYNTAX, "PARENTHESES MISMATCH" );
+            return new Atom( F_Error.SYNTAX, "PARENTHESES MISMATCH" );
         }
     }
-    return make_error( F_Error.LEXER, "LEXER FAILED, This branch was ?UNREACHABLE?" );
+    return new Atom( F_Error.LEXER, "LEXER FAILED, This branch was ?UNREACHABLE?" );
 }
 
 
@@ -1075,7 +1019,7 @@ void init_specials(){
                 )).expr
             ) ){
                 return ExprInContext(
-                    make_bool( false ), // Truthiness of the element
+                    new Atom( false ), // Truthiness of the element
                     eINc.context, //- Original context
                     "truthiness" // ---- Tag
                 );
@@ -1083,7 +1027,7 @@ void init_specials(){
         }
 
         return ExprInContext(
-            make_bool( true ), // Truthiness of the element
+            new Atom( true ), // Truthiness of the element
             eINc.context, // Original context
             "truthiness" // --- Tag
         );
@@ -1106,7 +1050,7 @@ void init_specials(){
                 )).expr
             ) ){
                 return ExprInContext(
-                    make_bool( true ), // Truthiness of the element
+                    new Atom( true ), // Truthiness of the element
                     eINc.context, //- Original context
                     "truthiness" // ---- Tag
                 );
@@ -1114,7 +1058,7 @@ void init_specials(){
         }
 
         return ExprInContext(
-            make_bool( false ), // Truthiness of the element
+            new Atom( false ), // Truthiness of the element
             eINc.context, // Original context
             "truthiness" // --- Tag
         );
@@ -1123,12 +1067,14 @@ void init_specials(){
     // specialForms["load"] = function ExprInContext( ExprInContext eINc ){ /* LOAD FILE */ } // FIXME: LOAD FILE
 }
 
+
+
 ////////// EVALUATION //////////////////////////////////////////////////////////////////////////////
 // This is the real living mechanism of the SPARROW interpreted language
 // 2022-09-13: `atomize_string` will fetch primitive symbols, these were together w/ primitve functions in Little JS
 
 bool p_eq( Atom* op1, Atom* op2 ){  return primitiveFunctions["eq?"]( make_list_of_2( op1, op2 ) ).bul;  }
-bool p_else( Atom* x ){  return p_literal( x ) && p_eq( x, make_string( "else" ) );  } // is the arg an 'else symbol?
+bool p_else( Atom* x ){  return p_literal( x ) && p_eq( x, new Atom( "else" ) );  } // is the arg an 'else symbol?
 
 
 ExprInContext evcon( ExprInContext eINc ){
@@ -1175,7 +1121,7 @@ ExprInContext evcon( ExprInContext eINc ){
     }
 
     return meaning( ExprInContext( 
-        make_bool( false ),
+        new Atom( false ),
         baseEnv,
         "No Cond True"
     ) );
@@ -1224,7 +1170,7 @@ ExprInContext apply_primitive_function( ExprInContext eINc ){
         );
 
         return ExprInContext(
-            make_error(
+            new Atom(
                 F_Error.DNE,
                 "Oops, \"" ~ get_car( eINc.expr ).str ~ "\" is NOT a primitive function in SPARROW!"
             ),
@@ -1296,7 +1242,7 @@ ExprInContext apply_closure( ExprInContext input ){
 
     // 2. Evaluate the function within the new context
     return ExprInContext(
-        make_error( F_Error.NOVALUE, "There is no function with the name " ~ nameOf( input.expr ).str ),
+        new Atom( F_Error.NOVALUE, "There is no function with the name " ~ nameOf( input.expr ).str ),
         nuEnv,
         "closure"
     );
@@ -1328,9 +1274,12 @@ bool first_only( Atom* atm ){
 ExprInContext meaning( ExprInContext eINc ){ 
     // Handle expressions more complex than literals
 
-    if( _DEBUG_VERBOSE ) writeln( "`meaning`" );
-    
     Atom* /*---*/ e /*-*/  = eINc.expr;
+    if( _DEBUG_VERBOSE ){
+        writeln( "`meaning`" );
+        writeln( "\t" ~ str(e) );
+        writeln( "\t" ~ str(get_cdr( e )) );
+    } 
     Atom* /*---*/ balance  = get_cdr( e );
     Atom* /*---*/ rtnRoot  = null;
     Atom* /*---*/ inputPtr = null;
@@ -1338,6 +1287,10 @@ ExprInContext meaning( ExprInContext eINc ){
     ExprInContext rntResult;
 
     if( p_string( e ) ){  name = e.str;  }
+
+    if( _DEBUG_VERBOSE )  writeln( "\t`meaning`" ~ ": init done" );
+
+    
 
     /// Base Cases ///
 
@@ -1375,7 +1328,7 @@ ExprInContext meaning( ExprInContext eINc ){
     /// Recursive Cases ///
     }else{
 
-        if( p_cons( e ) ){  name = get_car( e ).str;  }
+        if( p_cons( e ) && p_string( get_car( e ) ) ){  name = get_car( e ).str;  }
         
         // Case Primitive Function
         if( p_primitve_function( name ) ){
@@ -1410,7 +1363,7 @@ ExprInContext meaning( ExprInContext eINc ){
             }
 
             inputPtr = e;
-            rtnRoot  = make_cons();
+            rtnRoot  = empty_cons();
 
             do{
                 rtnRoot = append( rtnRoot,  
@@ -1474,7 +1427,6 @@ void read_eval_prnt_loop(){
              "and does not currently support multi-line input.\n" ~
              "Input validation is unsupported, your mistakes will crash the program. ;P" );
     writeln( "Type \"exit\" and the [Enter] key to end program." );
-    writeln( "Atom size: " ~ Atom.sizeof.to!string );
     writeln( "=========================================================================\n" );
 
     // REPL //

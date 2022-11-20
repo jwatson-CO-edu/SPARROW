@@ -41,7 +41,7 @@ Completion Key:
 [Y] Translate second "ac_" evaluator to Dlang - 2022-09-08: COMPLETE
     [Y] All Functions Implemented - 2022-09-08: COMPLETE
     [Y] All tests pass - 2022-09-08: Environment bound and unbound variables implemented, are ref counts needed?
-[Y] Translate "The Little Javascripter" by Douglas Crockford
+[Y] Translate "The Little Javascripter" by Douglas Crockford - 2022-11-16, AWESOME
     https://www.crockford.com/little.html (See `JS` folder for reference implementation)
     [Y] T: Test each component as it is developed - 2022-11-16, AWESOME
     [Y] Change name from FINCH, make public, and reorganize around SPARROW only. - 2022-11-16
@@ -54,15 +54,16 @@ Completion Key:
     [N] Apply Dlang forum changes, 2022-11-19: Ring buffer isn't so interesting since atoms won't die in order 
     [N] T: Ask StackOverflow for feedback - 2022-11-17, Not for projects of this size
     [N] Apply StackOverflow changes - 2022-11-17, Not for projects of this size
-
-[>] Atom Size Reduction
+[Y] Atom Size Reduction - 2022-11-20, Several lines shorted
     [Y] Try unions: 1{car, str, num} + 2{cdr, err} - 2022-11-19, 72 --to-> 32 bytes!
-    [>] Integrate change into Little Schemer ---> Sparrow
+    [Y] Integrate change into Little Schemer ---> Sparrow - 2022-11-20, Several lines shorted
     
 [ ] Parse "Easy S-Expressions" instead: 2022-04-19, Ignore whitespace except to separate symbols
+    [ ] Lexer state machine
     [ ] Implicit open paren, `;` is close paren
     [ ] <funcName> <arg1> ... <argN>;
         [ ] E: What is the most ergonimic way to handle nested expressions?
+        
 [ ] Program Blocks
     [ ] Curly Braces {}
     [ ] New block == new context

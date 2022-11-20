@@ -464,7 +464,6 @@ string[] tokenize( string expStr, dchar sepChar = ' ' ){
     string[] tokens;
     dchar    c      = ' ';
     string   token  = "";
-    ulong    expLen = expStr.length;
     bool     testWhite = false;
     if( sepChar == ' ' ) testWhite = true;
 
@@ -1123,6 +1122,8 @@ void init_specials(){
 
     // specialForms["load"] = function ExprInContext( ExprInContext eINc ){ /* LOAD FILE */ } // FIXME: LOAD FILE
 }
+
+
 
 ////////// EVALUATION //////////////////////////////////////////////////////////////////////////////
 // This is the real living mechanism of the SPARROW interpreted language
