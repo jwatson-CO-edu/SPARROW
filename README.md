@@ -63,8 +63,6 @@ Completion Key:
     [ ] Implicit open paren, `;` is close paren
     [ ] <funcName> <arg1> ... <argN>;
         [ ] E: What is the most ergonimic way to handle nested expressions?
-    [ ] T: Parse and run a plaintext file
-        [ ] E: File extension: .BRD, .SPRW, .FNC,
 [ ] Program Blocks
     [ ] Curly Braces {}
     [ ] New block == new context
@@ -85,6 +83,8 @@ Completion Key:
 [ ] Allow SPARROW to either run a file or run a REPL, depending on how it is called
     [ ] Execute file: `sparrow <FILENAME>`
     [ ] Run REPL: `sparrow`
+    [ ] E: File extension: .BRD, .SPRW, .FNC,
+[ ] (Simple!) Install script
 ```
 ### Modest Extensions
 ```
