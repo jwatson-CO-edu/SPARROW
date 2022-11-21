@@ -890,6 +890,9 @@ Atom* consify_token_sequence( string[] tokens ){
                     // else element is either an easy list or an atom
                     }else{
 
+                        // FIXME, START HERE: REMOVE NESTED EZ LIST, THE BEGINNING IS AMBIGUOUS
+                        // ALLOW IT WITHIN BLOCKS AT A LATER TIME
+
                         scratch   = []; // Erase scratch list
                         lastDex   = index;
                         semiFound = false;
