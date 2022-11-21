@@ -384,6 +384,7 @@ string[string] RESERVED;
 void init_reserved(){
     RESERVED["("] = "open_parn"; // Open  paren
     RESERVED[")"] = "clos_parn"; // Close paren
+    RESERVED[";"] = "semicolon"; // Semicolon
 }
 
 
@@ -393,6 +394,10 @@ string find_reserved( string token ){
     if( res !is null ){  return *res;  } // If key in dict, then return the string name of the reserved token
     else{  return "";  } // --------------- Else the search failed, return an empty string
 }
+
+bool p_open_paren( string token ){  return find_reserved( token ) == "open_parn";  } // Is an open  paren?
+bool p_clos_paren( string token ){  return find_reserved( token ) == "clos_parn";  } // Is an close paren?
+bool p_semicolon(  string token ){  return find_reserved( token ) == "semicolon";  } // Is a semicolon?
 
 
 string[] tokenize( string expStr, dchar sepChar = ' ' ){
@@ -417,9 +422,9 @@ string[] tokenize( string expStr, dchar sepChar = ' ' ){
         c = ch_i;
         // 3. Either add char to present token or create a new one
         // A. Case Open Paren
-        if ( find_reserved( c.to!string() ) == "open_parn" ){  stow_char();  }  
-        // B. Case Close Paren
-        else if( find_reserved( c.to!string() ) == "clos_parn" ){  
+        if ( p_open_paren( c.to!string() ) ){  stow_char();  }  
+        // B. Case end of expression or list
+        else if(  p_clos_paren( c.to!string() )  ||  p_semicolon( c.to!string() )  ){  
             if( token.length > 0 ){  stow_token();  }
             stow_char();  
         }
@@ -764,8 +769,7 @@ Atom* atomize_string( string token ){
 }
 
 
-bool p_open_paren( string token ){  return find_reserved( token ) == "open_parn";  } // Is an open  paren?
-bool p_clos_paren( string token ){  return find_reserved( token ) == "clos_parn";  } // Is an close paren?
+
 
 
 bool p_balanced_parens( string[] tokens ){
@@ -806,6 +810,15 @@ bool p_parent_parens( string[] tokens ){
 }
 
 
+bool p_parent_semi( string[] tokens ){
+    // Return true if the outermost level of the statement defines a list punctuated with a semicolon
+    ulong seqLen = tokens.length;
+    if( seqLen > 1 ){
+        return (  p_semicolon( tokens[$-1] )  &&  !p_semicolon( tokens[0] )  );
+    }else  return false;
+}
+
+
 Atom* consify_token_sequence( string[] tokens ){
     // Recursively render tokens as a cons structure
     // 2022-11: Rewritten
@@ -814,9 +827,11 @@ Atom* consify_token_sequence( string[] tokens ){
     ulong    end;
     int /**/ depth   = 0;
     ulong    index;
+    ulong    lastDex;
     string   token;
     string[] carPart;
-    string[] cdrPart;
+    string[] scratch;
+    bool     semiFound;
     Atom*    lstRoot = null;
 
     if( _DEBUG_VERBOSE ){
@@ -841,9 +856,12 @@ Atom* consify_token_sequence( string[] tokens ){
         if( p_balanced_parens( tokens ) ){
             
             // Are we building a list?
-            if( p_parent_parens( tokens ) ){
-                bgn++;
+            if(  p_parent_parens( tokens )  ||  p_parent_semi( tokens )  ){
                 end--;
+                if( p_parent_parens( tokens ) )  bgn++;
+                    
+            
+                
                 // Begin list
                 index   = bgn;
                 lstRoot = empty_cons();
@@ -869,10 +887,33 @@ Atom* consify_token_sequence( string[] tokens ){
                             index++;
                         }while( (depth > 0) && (index <= end) );
 
-                    // else element was atom
+                    // else element is either an easy list or an atom
                     }else{
-                        carPart ~= tokens[index];
-                        index++;
+
+                        scratch   = []; // Erase scratch list
+                        lastDex   = index;
+                        semiFound = false;
+
+                        // easy list case
+                        do{
+                            token = tokens[index];
+                            scratch ~= token;
+                            index++;
+                            if( p_semicolon( token ) && ( (index-1) < end ) ){
+                                semiFound = true;
+                                break;
+                            }  
+                        }while( index <= end );
+
+                        // If we found a semicolon before the terminator
+                        if( semiFound ){
+                            carPart = scratch;
+                        // atom case
+                        }else{
+                            index = lastDex;
+                            carPart ~= tokens[index];
+                            index++;
+                        }
                     }
 
                     // Append element to list
@@ -1289,8 +1330,6 @@ ExprInContext meaning( ExprInContext eINc ){
     if( p_string( e ) ){  name = e.str;  }
 
     if( _DEBUG_VERBOSE )  writeln( "\t`meaning`" ~ ": init done" );
-
-    
 
     /// Base Cases ///
 
