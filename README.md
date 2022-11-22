@@ -102,12 +102,12 @@ Completion Key:
 ```
 ### Structural Changes
 ```
+[ ] T: Will SPARROW compile & run in Windows without modification?
+    [ ] Q: Is selective compilation required and/or possible in Dlang?
 [ ] E: Identify Implementation Choices
     [ ] What are the advantages    of being a LISP?
     [ ] What are the disadvantages of being a LISP?
     [ ] Identify Dynamic Typing handler code, Where does the language burn time matching?
-[ ] T: Will SPARROW compile & run in Windows without modification?
-    [ ] Q: Is selective compilation required and/or possible in Dlang?
 [ ] E: Single-threaded Efficiency and Readability
     [ ] Efficiency
         [ ] Develop a benchmark use case
@@ -116,6 +116,11 @@ Completion Key:
         [ ] Compare same algo to Python3.11
     [ ] Readability
         [ ] Is the algo easy or hard to read in SPARROW?
+[ ] E: AST Nodes? The parser outputs AST nodes that can have multiple children, not just 2 in the case of conses
+     *  At this point SPARROW moves away from being Scheme and becomes its own language!
+    [ ] T: Repeat efficiency test(s)
+    [ ] E: Was this easier or harder to parse?
+    [ ] E: Did you notice any advantages?
 ```
 ### **FINCH Transition**: What are you even doing?
 `[ ]` Manage the FINCH vision 
@@ -136,7 +141,7 @@ Completion Key:
 * `[ ]` [Racket is an Acceptable Python](https://dustycloud.org/blog/racket-is-an-acceptable-python/)
 * `[ ]` [Computer Language Design in the Real World](https://blog.sigplan.org/2022/05/19/language-design-in-the-real-world/)  
 
-`[ ]` Investigate languages and their philosophies
+`[ ]` Investigate small(ish) languages and their philosophies
 * `[ ]` [Duck](http://ducklang.org/designing-a-programming-language-i)
 * `[ ]` [Lil](https://beyondloom.com/decker/lil.html)
 * `[ ]` [LISP](https://texdraft.github.io/lisp-compiler/internals.html)
@@ -145,7 +150,11 @@ Completion Key:
 `[ ]` Absorb PL Advice
 * `[ ]` [Programming Language Design Notes](https://cs.lmu.edu/~ray/notes/languagedesignnotes/)
 * `[ ]` [Great Works in PL](https://www.jsoftware.com/papers/tot.htm)
+    - `[ ]` Create reading list for the next phase  
 
+`[ ]` Investigate floaw language(s) and their philosophies  
+* `[ ]` Select Zotero materials
+* `[ ]` Read Zotero materials
 ## Phase 2: A different language ...
 
 # Resources
