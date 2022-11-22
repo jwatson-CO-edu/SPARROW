@@ -36,7 +36,7 @@ import std.algorithm.searching; // `canFind``
 alias  is_white = std.ascii.isWhite; 
 
 ///// Env Vars /////
-bool _DEBUG_VERBOSE  = false; // Set true for debug prints
+bool _DEBUG_VERBOSE  =  true; // Set true for debug prints
 bool _TEST_ALL_PARTS =  true; // Set true to run all unit tests
 
 
@@ -769,9 +769,6 @@ Atom* atomize_string( string token ){
 }
 
 
-
-
-
 bool p_balanced_parens( string[] tokens ){
     // Return true if parens open and close in a quantity and order that returns to root depth, Otherwise return false
     int depth = 0;
@@ -859,8 +856,6 @@ Atom* consify_token_sequence( string[] tokens ){
             if(  p_parent_parens( tokens )  ||  p_parent_semi( tokens )  ){
                 end--;
                 if( p_parent_parens( tokens ) )  bgn++;
-                    
-            
                 
                 // Begin list
                 index   = bgn;
@@ -890,11 +885,11 @@ Atom* consify_token_sequence( string[] tokens ){
                     // else element is either an easy list or an atom
                     }else{
 
-                        // FIXME, START HERE: REMOVE NESTED EZ LIST, THE BEGINNING IS AMBIGUOUS
-                        // ALLOW IT WITHIN BLOCKS AT A LATER TIME
+                        // 2022-11-22: This would only allow S and EZ expressions to be nested in alternating fashion
 
                         scratch   = []; // Erase scratch list
                         lastDex   = index;
+                        // lastDex   = index+1;
                         semiFound = false;
 
                         // easy list case
@@ -902,7 +897,8 @@ Atom* consify_token_sequence( string[] tokens ){
                             token = tokens[index];
                             scratch ~= token;
                             index++;
-                            if( p_semicolon( token ) && ( (index-1) < end ) ){
+                            // if( p_semicolon( token ) && ( (index-1) < end ) ){
+                            if( p_semicolon( token ) ){
                                 semiFound = true;
                                 break;
                             }  
@@ -917,6 +913,10 @@ Atom* consify_token_sequence( string[] tokens ){
                             carPart ~= tokens[index];
                             index++;
                         }
+                    }
+
+                    if( _DEBUG_VERBOSE ){
+                        writeln( "\tappend list elem: " ~ carPart.to!string );
                     }
 
                     // Append element to list
@@ -1464,7 +1464,7 @@ void read_eval_prnt_loop(){
     Atom*  output = null; //- Eval result
     
     // Preamble //
-    writeln( "\n##### SPARROW Interpreter, Version 2022-11 #####" );
+    writeln( "\n##### SPARROW Interpreter, Version 2022.11.0 #####" );
     writeln( "Interpreter expects complete, well-formed s-expressions,\n" ~
              "and does not currently support multi-line input.\n" ~
              "Input validation is unsupported, your mistakes will crash the program. ;P" );

@@ -1,0 +1,15 @@
+##### SPARROW 2022.11.0 #####
+
+## EZ Tests ##
+
+# 1: 2022-11-22, PASSED
+(define fact (lambda (n) (cond ((eq? n 1) 1) (#t (* n (fact (- n 1)))))))
+fact 6;
+
+# 2: 2022-11-22, PASSED
+define fact (lambda (n) (cond ((eq? n 1) 1) (#t (* n (fact (- n 1))))));
+fact 6;
+
+# 3: FAILED
+define fact (lambda (n) (cond (eq? n 1) 1; #t (* n (fact (- n 1))); ));
+fact 6;
