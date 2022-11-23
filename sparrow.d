@@ -824,12 +824,12 @@ Atom* consify_token_sequence( string[] tokens ){
     ulong    end;
     int /**/ depth   = 0;
     ulong    index;
-    ulong    lastDex;
+    // ulong    lastDex; // Nested EZ
     string   token;
     string[] carPart;
-    string[] scratch;
-    string[] balance;
-    bool     semiFound;
+    // string[] scratch; // Nested EZ
+    // string[] balance; // Nested EZ
+    // bool     semiFound; // Nested EZ
     Atom*    lstRoot = null;
 
     if( _DEBUG_VERBOSE ){
@@ -883,39 +883,12 @@ Atom* consify_token_sequence( string[] tokens ){
                             index++;
                         }while( (depth > 0) && (index <= end) );
 
-                    // else element is either an easy list or an atom
+                    // else element is an atom
                     }else{
 
-                        // 2022-11-22: This would only allow S and EZ expressions to be nested in alternating fashion
-
-                        scratch   = []; // Erase scratch list
-                        balance   = []; // Erase balance list
-                        lastDex   = index;
-                        // lastDex   = index+1;
-                        semiFound = false;
-
-                        // easy list case
-                        do{
-                            token = tokens[index];
-                            scratch ~= token;
-                            index++;
-                            // if( p_semicolon( token ) && ( (index-1) < end ) ){
-                            if( p_semicolon( token ) ){
-                                semiFound = true;
-                                break;
-                            }  
-                        }while( index <= end );
-                        balance = tokens[index..$-1];
-
-                        // If we found a semicolon before the terminator and we did not grab an unbalanced part
-                        if( semiFound && p_balanced_parens( scratch ) && p_balanced_parens( balance ) ){
-                            carPart = scratch;
-                        // atom case
-                        }else{
-                            index = lastDex;
-                            carPart ~= tokens[index];
-                            index++;
-                        }
+                        // index = lastDex;
+                        carPart ~= tokens[index];
+                        index++;
                     }
 
                     if( _DEBUG_VERBOSE ){

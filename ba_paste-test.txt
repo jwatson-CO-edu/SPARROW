@@ -10,9 +10,9 @@ fact 6; --> 720
 define fact (lambda (n) (cond ((eq? n 1) 1) (#t (* n (fact (- n 1))))));
 fact 6; --> 720
 
-# 3: PASSED
+# 3: 2022-11-23, NOT ALLOWED
 (one two three; four five six;) --> A list of two lists of strings
 
-# 4: FAILED
+# 4: 2022-11-23, NOT ALLOWED
 define fact (lambda (n) (cond (eq? n 1) 1; #t (* n (fact (- n 1))); ));
 fact 6;

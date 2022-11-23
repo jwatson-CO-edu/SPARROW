@@ -57,21 +57,30 @@ Completion Key:
 [Y] Atom Size Reduction - 2022-11-20, Several lines shorted
     [Y] Try unions: 1{car, str, num} + 2{cdr, err} - 2022-11-19, 72 --to-> 32 bytes!
     [Y] Integrate change into Little Schemer ---> Sparrow - 2022-11-20, Several lines shorted
-    
-[ ] Parse "Easy S-Expressions" instead: 2022-04-19, Ignore whitespace except to separate symbols
-    [ ] Lexer state machine
-    [ ] Implicit open paren, `;` is close paren
-    [ ] <funcName> <arg1> ... <argN>;
-        [ ] E: What is the most ergonimic way to handle nested expressions?
+[Y] Parse "Easy S-Expressions" instead, 2022-11-23: ONLY at the top level!
+    [N] Lexer state machine, 2022-11-23: NOT needed at this time
+    [Y] Implicit open paren, `;` is close paren, 2022-11-23: ONLY at the top level!
+    [Y] <funcName> <arg1> ... <argN>;, 2022-11-23: ONLY at the top level!
+        [Y] E: What is the most ergonimic way to handle nested expressions?
+         *  A, 2022-11-23: At this time, semicolon endings are only allowed at the root level of each string expression
         
+[ ] Allow SPARROW to either run a file or run a REPL, depending on how it is called
+    2022-11-23: Program blocks are easiest from a file instead of the terminal
+    [ ] Compile to named executable
+    [ ] Execute file: `sparrow <FILENAME>`
+    [ ] Run REPL: `sparrow`
+    [ ] E: File extension: .BRD, .SPRW, .FNC,
+
 [ ] Program Blocks
     [ ] Curly Braces {}
     [ ] New block == new context
+    [ ] Treat a block as a list of instructions, instead of a list of values
     [ ] T: Verify that statement precedence with block brackets already exists in evaluator, If not then Implement it! 
     [ ] T: Make sure that nested statements and blocks do not cause ambiguity
+    [ ] Root of the parsed input file is a block
     [ ] Last line is the meaning of the block, (prog ... ) ?
-    [ ] Pythonic: Implicit by indentation
-        [ ] How to cleanly handle nested indented blocks?
+    [~] Pythonic: Implicit by indentation, 2022-11-23: Not needed at this time
+        [~] How to cleanly handle nested indented blocks?, 2022-11-23: Not needed at this time
 [ ] Implement loops
     [ ] for (<counter> <bgn> <end>) {<BLOCK>}; - Counter bounds inclusive, Note DOUBLE bounds!
         [ ] Loop iterates with <counter> == <end>
@@ -81,10 +90,7 @@ Completion Key:
     [ ] while (<cond>)
 [ ] Line Continuation: `\+`    
 [ ] Unify and/or streamline `ExprInContext` usage
-[ ] Allow SPARROW to either run a file or run a REPL, depending on how it is called
-    [ ] Execute file: `sparrow <FILENAME>`
-    [ ] Run REPL: `sparrow`
-    [ ] E: File extension: .BRD, .SPRW, .FNC,
+
 [ ] (Simple!) Install script
 ```
 ### Modest Extensions
