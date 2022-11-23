@@ -4,12 +4,15 @@
 
 # 1: 2022-11-22, PASSED
 (define fact (lambda (n) (cond ((eq? n 1) 1) (#t (* n (fact (- n 1)))))))
-fact 6;
+fact 6; --> 720
 
 # 2: 2022-11-22, PASSED
 define fact (lambda (n) (cond ((eq? n 1) 1) (#t (* n (fact (- n 1))))));
-fact 6;
+fact 6; --> 720
 
-# 3: FAILED
+# 3: PASSED
+(one two three; four five six;) --> A list of two lists of strings
+
+# 4: FAILED
 define fact (lambda (n) (cond (eq? n 1) 1; #t (* n (fact (- n 1))); ));
 fact 6;

@@ -828,6 +828,7 @@ Atom* consify_token_sequence( string[] tokens ){
     string   token;
     string[] carPart;
     string[] scratch;
+    string[] balance;
     bool     semiFound;
     Atom*    lstRoot = null;
 
@@ -888,6 +889,7 @@ Atom* consify_token_sequence( string[] tokens ){
                         // 2022-11-22: This would only allow S and EZ expressions to be nested in alternating fashion
 
                         scratch   = []; // Erase scratch list
+                        balance   = []; // Erase balance list
                         lastDex   = index;
                         // lastDex   = index+1;
                         semiFound = false;
@@ -903,9 +905,10 @@ Atom* consify_token_sequence( string[] tokens ){
                                 break;
                             }  
                         }while( index <= end );
+                        balance = tokens[index..$-1];
 
-                        // If we found a semicolon before the terminator
-                        if( semiFound ){
+                        // If we found a semicolon before the terminator and we did not grab an unbalanced part
+                        if( semiFound && p_balanced_parens( scratch ) && p_balanced_parens( balance ) ){
                             carPart = scratch;
                         // atom case
                         }else{
