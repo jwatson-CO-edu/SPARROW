@@ -48,7 +48,8 @@ enum F_Error{
     NAN, // --- Not A Number
     DNE, // --- Does Not Exist
     SYNTAX, //- Syntax error
-    LEXER, // - Eval machinery failed
+    LEXER, // - Tokenization failed
+    PARSER, //- Translation failed
 }
 
 
@@ -909,7 +910,7 @@ Atom* consify_token_sequence( string[] tokens ){
             return new Atom( F_Error.SYNTAX, "PARENTHESES MISMATCH" );
         }
     }
-    return new Atom( F_Error.LEXER, "LEXER FAILED, This branch was ?UNREACHABLE?" );
+    return new Atom( F_Error.PARSER, "PARSER FAILED, This branch was ?UNREACHABLE?" );
 }
 
 
