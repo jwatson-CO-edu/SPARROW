@@ -64,12 +64,13 @@ Completion Key:
         [Y] E: What is the most ergonimic way to handle nested expressions?
          *  A, 2022-11-23: At this time, semicolon endings are only allowed at the root level of each string expression
         
-[ ] Allow SPARROW to either run a file or run a REPL, depending on how it is called
+[>] Allow SPARROW to either run a file or run a REPL, depending on how it is called
     2022-11-23: Program blocks are easiest from a file instead of the terminal
-    [ ] Compile to named executable
-    [ ] Execute file: `sparrow <FILENAME>`
+    [Y] Compile to named executable, 2022-11-24: dmd sparrow.d -o- -of=sparrow.app // Named outfile and suppressed obj file
+    [>] Execute file: `sparrow <FILENAME>`
     [ ] Run REPL: `sparrow`
     [ ] E: File extension: .BRD, .SPRW, .FNC,
+    [ ] Handle multiple statements per line
 
 [ ] Program Blocks
     [ ] Curly Braces {}

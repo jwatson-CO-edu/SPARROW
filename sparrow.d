@@ -6,6 +6,7 @@ module sparrow;
    This is for entertainment only and comes with no warrantee whatsoever.
 
    rdmd sparrow.d
+   dmd sparrow.d -o- -of=sparrow.app
    
    James Watson, 2022-11 */
 
@@ -32,7 +33,8 @@ import std.uni; // -------------- `strip`
 import std.math.operations; // -- `NaN`
 import std.typecons; // ---------- Tuple
 import std.ascii; // ------------- Whitespace test
-import std.algorithm.searching; // `canFind``
+import std.algorithm.searching; // `canFind`
+// import std.file; // -------------- `readText`
 alias  is_white = std.ascii.isWhite; 
 
 ///// Env Vars /////
@@ -1477,6 +1479,40 @@ void read_eval_prnt_loop(){
     // End //
     writeln( "\nProgram exit by user request. ~ Goodbye!\n" );
 }
+
+////////// FILE OPERATIONS /////////////////////////////////////////////////////////////////////////
+
+bool p_complete_expression( string[] sExpr ){
+    // Return true if the tokenized statement has balanced parens and is terminated properly
+    if( p_balanced_parens( sExpr ) ){
+        if( p_parent_semi( sExpr ) ) // FIXME: If this is not true there could be multiple s-expr on a line!
+            return true;
+        else if( p_parent_parens( sExpr ) )
+            return true;
+        else
+            return false;
+    }else  return false;
+}
+
+string[][] lex_file( string fName ){
+    // Read the contents of the file and lex into serial statements    
+    string[]   sExpr;
+    string[][] statememts;
+    File /*-*/ f = File( fName );
+    foreach( line; f.byLine ){
+        sExpr ~= tokenize( line.to!string );
+        if( p_complete_expression( sExpr ) ){
+            statememts ~= sExpr;
+            sExpr = [];
+        }
+    }
+    if( sExpr.length > 0 )  statememts ~= sExpr;
+    f.close();
+    return statememts;
+}
+
+// FIXME, START HERE: PARSE SERIAL STATEMENTS INTO INTERPRETABLE CODE
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // MAIN  MAIN  MAIN  MAIN  MAIN  MAIN  MAIN  MAIN  MAIN  MAIN  MAIN  MAIN  MAIN  MAIN  MAIN  MAIN //
