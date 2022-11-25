@@ -82,8 +82,8 @@ Completion Key:
     [ ] T: Make sure that nested statements and blocks do not cause ambiguity
     [ ] Root of the parsed input file is a block
     [ ] Last line is the meaning of the block, (prog ... ) ?
-    [~] Pythonic: Implicit by indentation, 2022-11-23: Not needed at this time
-        [~] How to cleanly handle nested indented blocks?, 2022-11-23: Not needed at this time
+    [~] Pythonic: Implicit by indentation, 2022-11-23: Not needed at this time + adds complexity
+        [~] How to cleanly handle nested indented blocks?, 2022-11-23: Not needed at this time + adds complexity
 [ ] Implement loops
     [ ] for (<counter> <bgn> <end>) {<BLOCK>}; - Counter bounds inclusive, Note DOUBLE bounds!
         [ ] Loop iterates with <counter> == <end>
@@ -94,15 +94,21 @@ Completion Key:
         [ ] Implement `rand`, Uniform random sampling in [0,1)
         [ ] As a function with settable rows and columns
     [ ] while (<cond>)
-[ ] Line Continuation: `\+`   
+[~] Line Continuation: `\+`, 2022-11-25: Block parser possibly already covers this? Only implement `\+` if needed!
 ```
 ### Modest Extensions
 ```
+{ } E: Source file too long? 
+    { } Yes: Split functions into separate categories and organize as a project
+    { } No:  Are the functions at least arranged in a meaningful way?
 [ ] Experiment with memory models
-    [ ] Read: How does Dlang allocate memory?
-    [ ] Q: Can a block of "null pointer" memory be allocated?
-    [ ] Q: Can a large array of `Atoms` be allocated? 
-    [ ] T: Which is faster; (Pre-allocated block -vs- Dynamic vars); 
+    [ ] Research
+        [ ] Read: How does Dlang allocate memory?
+        [ ] Q: Can a block of "null pointer" memory be allocated?
+    [ ] Test 
+        [ ] SPARROW Implementation with Pre-allocated block of var memory (No GC)
+            [ ] Q: Can a large array of `Atoms` be allocated from a null pointer block? 
+            { } If not, then implement var memory as an array of `Atom`s
         [ ] Create 10k vars and assign randomly for 10k steps
 [ ] Unify and/or streamline `ExprInContext` usage
 [ ] (Simple!) Install script
@@ -123,6 +129,7 @@ Completion Key:
     [ ] Efficiency
         [ ] Develop a benchmark use case
         [ ] Run solving algo in SPARROW
+            [ ] Does D have a benchmarking facility like Python's `timeit`?
         [ ] Compare same algo to Python3.10
         [ ] Compare same algo to Python3.11
     [ ] Readability
@@ -132,6 +139,7 @@ Completion Key:
     [ ] T: Repeat efficiency test(s)
     [ ] E: Was this easier or harder to parse?
     [ ] E: Did you notice any advantages?
+{ } Garbage Collection, 2022-11-25 - If SPARROW has a pre-allocated implementation by this point, then investigate GC
 ```
 ### **FINCH Transition**: What are you even doing?
 `[ ]` Manage the FINCH vision 
