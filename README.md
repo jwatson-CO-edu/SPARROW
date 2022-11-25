@@ -68,6 +68,7 @@ Completion Key:
     2022-11-23: Program blocks are easiest from a file instead of the terminal
     [Y] Compile to named executable, 2022-11-24: dmd sparrow.d -o- -of=sparrow.app // Named outfile and suppressed obj file
     [>] Execute file: `sparrow <FILENAME>`
+    [ ] Implement print function to test serial statements
     [ ] Run REPL: `sparrow`
     [ ] E: File extension: .BRD, .SPRW, .FNC,
     [ ] Handle multiple statements per line

@@ -1087,7 +1087,9 @@ void init_specials(){
         );
     };
 
-    // specialForms["load"] = function ExprInContext( ExprInContext eINc ){ /* LOAD FILE */ } // FIXME: LOAD FILE
+    // FIXME, START HERE: LOAD FILE
+    // specialForms["load"] = function ExprInContext( ExprInContext eINc ){ /* LOAD FILE */ } 
+
 }
 
 
@@ -1494,16 +1496,69 @@ bool p_complete_expression( string[] sExpr ){
     }else  return false;
 }
 
+string[][] lex_many_one_line( string[] tokens ){
+    // If there are multiple statements on the same line, then lex and return, Otherwise return empty
+    string[][] statements;
+    string[]   sttmnt;
+    ulong /**/ seqLen = tokens.length;
+    ulong /**/ index  = 0;
+    uint /*-*/ depth  = 0;
+    string     token;
+
+    while( index < seqLen ){
+        // token  = tokens[ index ];
+        sttmnt = [];
+        depth  = 0;
+        if( p_open_paren( token ) ){
+            do{
+                token = tokens[ index ];
+                if( p_open_paren( token ) ) depth++; 
+                else
+                if( p_clos_paren( token ) ) depth--;
+                sttmnt ~= token;
+                index++;
+            }while( (depth > 0) && (index < seqLen) );
+        }else{
+            do{
+                token = tokens[ index ];
+                sttmnt ~= token;
+                index++;
+                if( p_semicolon( token ) )  break;
+            }while( index < seqLen );
+        }
+        statements ~= sttmnt; // Can be complete, partial, or empty; checked elsewhere
+    }
+    return statements;
+}
+
 string[][] lex_file( string fName ){
     // Read the contents of the file and lex into serial statements    
     string[]   sExpr;
     string[][] statememts;
+    string[][] lineContents;
+    ulong /**/ seqLen;
+    ulong /**/ index;
     File /*-*/ f = File( fName );
     foreach( line; f.byLine ){
         sExpr ~= tokenize( line.to!string );
+        // If the line is one complete statement on its own
         if( p_complete_expression( sExpr ) ){
             statememts ~= sExpr;
             sExpr = [];
+        // Else check for multiple statements on the line
+        }else{
+            lineContents = lex_many_one_line( sExpr );
+            seqLen /*-*/ = lineContents.length;
+            index /*--*/ = 0;
+            while( index < seqLen ){
+                // WARNING: Assume statements before the last are complete ;P
+                if( index < (seqLen-1) )  
+                    statememts ~= lineContents[ index ];
+                // Assume a non-empty last statement is partial
+                else if( lineContents[ index ].length > 0 )  
+                    sExpr = lineContents[ index ];
+                index++;
+            }
         }
     }
     if( sExpr.length > 0 )  statememts ~= sExpr;
@@ -1511,7 +1566,17 @@ string[][] lex_file( string fName ){
     return statememts;
 }
 
-// FIXME, START HERE: PARSE SERIAL STATEMENTS INTO INTERPRETABLE CODE
+Atom*[] parse_serial_statements( string[][] statememts ){
+    // Parse a block of tokenized string code into serial executable statements
+    Atom*[] program;
+    foreach( string[] sttmnt; statememts ){
+        program ~= consify_token_sequence( sttmnt );
+    }
+    return program;
+}
+
+// Parse an entire file into AST conses
+Atom*[] parse_file( string fName ){  return parse_serial_statements( lex_file( fName ) );  }
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
