@@ -68,11 +68,12 @@ Completion Key:
     2022-11-23: Program blocks are easiest from a file instead of the terminal
     [Y] Compile to named executable, 2022-11-24: dmd sparrow.d -o- -of=sparrow.app // Named outfile and suppressed obj file
     [>] Execute file: `sparrow <FILENAME>`
-    [ ] Implement print function to test serial statements
+        [ ] Handle multiple statements per line
+        [ ] E: File extension: .BRD, .SPRW, .FNC,
     [ ] Run REPL: `sparrow`
-    [ ] E: File extension: .BRD, .SPRW, .FNC,
-    [ ] Handle multiple statements per line
-
+    [ ] Implement print function to test serial statements
+        [ ] Test multiline, multi-print
+    
 [ ] Program Blocks
     [ ] Curly Braces {}
     [ ] New block == new context
@@ -89,11 +90,11 @@ Completion Key:
         [ ] Loop exits    with <counter> > <end>
          *  At this time not allowing the user to specify custom conditions!
     [ ] for (<counter> <bgn> <incr> <end>) {<BLOCK>}; - Counter bounds inclusive with increment value
+    [ ] T: Print Slash Maze
+        [ ] Implement `rand`, Uniform random sampling in [0,1)
+        [ ] As a function with settable rows and columns
     [ ] while (<cond>)
-[ ] Line Continuation: `\+`    
-[ ] Unify and/or streamline `ExprInContext` usage
-
-[ ] (Simple!) Install script
+[ ] Line Continuation: `\+`   
 ```
 ### Modest Extensions
 ```
@@ -103,6 +104,8 @@ Completion Key:
     [ ] Q: Can a large array of `Atoms` be allocated? 
     [ ] T: Which is faster; (Pre-allocated block -vs- Dynamic vars); 
         [ ] Create 10k vars and assign randomly for 10k steps
+[ ] Unify and/or streamline `ExprInContext` usage
+[ ] (Simple!) Install script
 [ ] Evaluate "The Seasoned Schemer" for useful features and structures (If yes, then expand this bullet with REQUIRED topics ONLY )
 [ ] E: Evaluate "Practical Common Lisp" (PCL) for useful features and structures (If yes, then expand this bullet with REQUIRED topics ONLY )
 [ ] E: R6RS, Complete Scheme without Error System (If yes, then expand this bullet with SELECTED topics ONLY )
