@@ -6,7 +6,7 @@ module sparrow;
    This is for entertainment only and comes with no warrantee whatsoever.
 
    rdmd sparrow.d
-   dmd sparrow.d -o- -of=sparrow.app
+   dmd sparrow.d -of=sparrow.app
    
    James Watson, 2022-11 */
 
@@ -38,7 +38,7 @@ import std.algorithm.searching; // `canFind`
 alias  is_white = std.ascii.isWhite; 
 
 ///// Env Vars /////
-bool _DEBUG_VERBOSE  =  true; // Set true for debug prints
+bool _DEBUG_VERBOSE  =  false; // Set true for debug prints
 bool _TEST_ALL_PARTS =  true; // Set true to run all unit tests
 
 
@@ -62,6 +62,7 @@ enum F_Type{
     EROR, // Error object
     BOOL, // Boolean value
     FUNC, // Function
+    BLOK, // Code block
 }
 
 struct Atom{
@@ -70,6 +71,7 @@ struct Atom{
         double  num; // NMBR: Number value
         string  str; // STRN: String value, D-string 
         bool    bul; // BOOL: Boolean value
+        Atom*[] blk; // BLOK: A sequence of statements
         struct{ // ---- CONS: pair
             Atom* car; // Left  `Atom` Pointer
             Atom* cdr; // Right `Atom` Pointer
@@ -86,6 +88,7 @@ struct Atom{
     this( Atom* a, Atom* d ){ kind = F_Type.CONS; car = a; cdr = d; } // make cons
     this( Atom* a ){ kind = F_Type.CONS; car = a; cdr = null; } // make left-handed cons
     this( F_Error e, string m ){ kind = F_Type.EROR; err = e; msg = m; } // make error
+    this( Atom*[] blockStatements ){ kind = F_Type.BLOK; blk = blockStatements; } // make block
 }
 
 ///// Empty / Terminator /////
@@ -368,6 +371,9 @@ string str( Atom* item ){
                 break;
             case F_Type.EROR:
                 rtnStr = "( ERROR: " ~ item.err.to!string ~ ", " ~ item.str ~ " )";
+                break;
+            case F_Type.BLOK:
+                rtnStr = "{<CODE BLOCK>}";
                 break;
             default: break;
         }
@@ -1579,16 +1585,56 @@ Atom*[] parse_serial_statements( string[][] statememts ){
 Atom*[] parse_file( string fName ){  return parse_serial_statements( lex_file( fName ) );  }
 
 
+ExprInContext block_meaning( ExprInContext block ){
+    Atom*[] statememts = block.expr.blk;
+    ExprInContext lastResult;
+    foreach( Atom* sttmnt; statememts ){
+        lastResult = meaning(
+            ExprInContext(
+                sttmnt, // ----- Expression to be evaluated
+                block.context, // -------- Global context
+                str( sttmnt ) // String representation of the original expression
+            )
+        );
+    }
+    return lastResult;
+}
+
+
+Atom* run_file( string fName ){
+    // Execute every statement in a file and return the result of the last expression
+    Atom*[] code = parse_file( fName );
+    return block_meaning(
+        ExprInContext(
+            new Atom( code ), // ----- Expression to be evaluated
+            baseEnv, // -------- Global context
+            fName // String representation of the original expression
+        )
+    ).expr;
+}
+
+
+
+
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // MAIN  MAIN  MAIN  MAIN  MAIN  MAIN  MAIN  MAIN  MAIN  MAIN  MAIN  MAIN  MAIN  MAIN  MAIN  MAIN //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void main(){
+void main( string[] args ){
+
+    if( _DEBUG_VERBOSE )  writeln( "Args are: " ~ args.to!string );
 
     // Populate necessary interpreter components
     init_SPARROW();
     
-    // Begin REPL
-    read_eval_prnt_loop();
+    if( args.length > 1 ){
+        prnt( run_file( args[1] ) );
+    }else{
+        // Begin REPL
+        read_eval_prnt_loop();
+    }
+
+    
 }
     

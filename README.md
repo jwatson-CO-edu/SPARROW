@@ -66,22 +66,24 @@ Completion Key:
         
 [>] Allow SPARROW to either run a file or run a REPL, depending on how it is called
     2022-11-23: Program blocks are easiest from a file instead of the terminal
-    [Y] Compile to named executable, 2022-11-24: dmd sparrow.d -o- -of=sparrow.app // Named outfile and suppressed obj file
+    [Y] Compile to named executable, 2022-11-24: dmd sparrow.d -of=sparrow.app // Named outfile and suppressed obj file
+    [ ] Implement `print` special form to test serial statements
+        [ ] Test multiline, multi-print
     [>] Execute file: `sparrow <FILENAME>`
         [ ] Handle multiple statements per line
-        [ ] E: File extension: .BRD, .SPRW, .FNC,
-    [ ] Run REPL: `sparrow`
-    [ ] Implement print function to test serial statements
-        [ ] Test multiline, multi-print
+        [Y] E: File extension: .BRD, .SPRW, .FNC, 2022-11-27: .SPRW chosen
+    [Y] Run REPL: `sparrow`, 2022-11-27: May exec file or use REPL
+    
     
 [ ] Program Blocks
+    [Y] Treat a block as a list of instructions, instead of a list of values, 2022-11-27: New block atom
     [ ] Curly Braces {}
     [ ] New block == new context
-    [ ] Treat a block as a list of instructions, instead of a list of values
+    [ ] Special `meaning` actions for encountering a block
     [ ] T: Verify that statement precedence with block brackets already exists in evaluator, If not then Implement it! 
     [ ] T: Make sure that nested statements and blocks do not cause ambiguity
-    [ ] Root of the parsed input file is a block
-    [ ] Last line is the meaning of the block, (prog ... ) ?
+    [Y] Root of the parsed input file is a block, 2022-11-27: Executed in the `baseEnv` context
+    [Y] Last line is the meaning of the block, (prog ... ) ?, 2022-11-27: Needs to be a special form as well 
     [~] Pythonic: Implicit by indentation, 2022-11-23: Not needed at this time + adds complexity
         [~] How to cleanly handle nested indented blocks?, 2022-11-23: Not needed at this time + adds complexity
 [ ] Implement loops
@@ -98,6 +100,8 @@ Completion Key:
 ```
 ### Modest Extensions
 ```
+[ ] Parser change: Allow for statements within a nested block to be EZ lists
+[ ] Change Closures to block implementation
 { } E: Source file too long? 
     { } Yes: Split functions into separate categories and organize as a project
     { } No:  Are the functions at least arranged in a meaningful way?

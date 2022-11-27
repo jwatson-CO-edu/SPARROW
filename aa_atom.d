@@ -27,6 +27,7 @@ enum F_Type{
     EROR, // Error object
     BOOL, // Boolean value
     FUNC, // Function
+    BLOK, // Code block
 }
 
 struct Atom{
@@ -35,6 +36,7 @@ struct Atom{
         double  num; // NMBR: Number value
         string  str; // STRN: String value, D-string 
         bool    bul; // BOOL: Boolean value
+        Atom*[] blk; // BLOK: A sequence of statements
         struct{ // ---- CONS: pair
             Atom* car; // Left  `Atom` Pointer
             Atom* cdr; // Right `Atom` Pointer
