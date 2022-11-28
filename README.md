@@ -68,24 +68,27 @@ Completion Key:
     2022-11-23: Program blocks are easiest from a file instead of the terminal
     [Y] Compile to named executable, 2022-11-24: dmd sparrow.d -of=sparrow.app // Named outfile and suppressed obj file
     [ ] Implement `print` special form to test serial statements
+        [ ] End print statements with newline
         [ ] Test multiline, multi-print
     [>] Execute file: `sparrow <FILENAME>`
         [ ] Handle multiple statements per line
         [Y] E: File extension: .BRD, .SPRW, .FNC, 2022-11-27: .SPRW chosen
     [Y] Run REPL: `sparrow`, 2022-11-27: May exec file or use REPL
-    
-    
-[ ] Program Blocks
+        
+[>] Program Blocks
     [Y] Treat a block as a list of instructions, instead of a list of values, 2022-11-27: New block atom
-    [ ] Curly Braces {}
-    [ ] New block == new context
-    [ ] Special `meaning` actions for encountering a block
-    [ ] T: Verify that statement precedence with block brackets already exists in evaluator, If not then Implement it! 
-    [ ] T: Make sure that nested statements and blocks do not cause ambiguity
+    [Y] Curly Braces {}, 2022-11-28: Added to lexer and parser, requires testing!
+        [Y] Parser change: Allow for statements within a nested block to be EZ lists, 2022-11-28: Added to lexer and parser, requires testing!
+    [>] Special `meaning` actions for encountering a block
+        [ ] New block == new context
+        [ ] T: Local block variable(s)
+        [ ] T: Verify that statement precedence with block brackets already exists in evaluator, If not then Implement it! 
+        [ ] T: Make sure that nested statements and blocks do not cause ambiguity
     [Y] Root of the parsed input file is a block, 2022-11-27: Executed in the `baseEnv` context
     [Y] Last line is the meaning of the block, (prog ... ) ?, 2022-11-27: Needs to be a special form as well 
     [~] Pythonic: Implicit by indentation, 2022-11-23: Not needed at this time + adds complexity
         [~] How to cleanly handle nested indented blocks?, 2022-11-23: Not needed at this time + adds complexity
+
 [ ] Implement loops
     [ ] for (<counter> <bgn> <end>) {<BLOCK>}; - Counter bounds inclusive, Note DOUBLE bounds!
         [ ] Loop iterates with <counter> == <end>
@@ -100,9 +103,9 @@ Completion Key:
 ```
 ### Modest Extensions
 ```
-[ ] Parser change: Allow for statements within a nested block to be EZ lists
+[ ] Replace `ExprInContext` with global `Env` pointer, Assume one context per interpreter/thread
 [ ] Change Closures to block implementation
-{ } E: Source file too long? 
+{ } E: Source file > 2k lines? 
     { } Yes: Split functions into separate categories and organize as a project
     { } No:  Are the functions at least arranged in a meaningful way?
 [ ] Experiment with memory models
@@ -114,7 +117,6 @@ Completion Key:
             [ ] Q: Can a large array of `Atoms` be allocated from a null pointer block? 
             { } If not, then implement var memory as an array of `Atom`s
         [ ] Create 10k vars and assign randomly for 10k steps
-[ ] Unify and/or streamline `ExprInContext` usage
 [ ] (Simple!) Install script
 [ ] Evaluate "The Seasoned Schemer" for useful features and structures (If yes, then expand this bullet with REQUIRED topics ONLY )
 [ ] E: Evaluate "Practical Common Lisp" (PCL) for useful features and structures (If yes, then expand this bullet with REQUIRED topics ONLY )

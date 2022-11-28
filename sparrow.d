@@ -394,6 +394,8 @@ void init_reserved(){
     RESERVED["("] = "open_parn"; // Open  paren
     RESERVED[")"] = "clos_parn"; // Close paren
     RESERVED[";"] = "semicolon"; // Semicolon
+    RESERVED["{"] = "open_crly"; // Open  curly brace
+    RESERVED["}"] = "clos_crly"; // Close curly brace
 }
 
 
@@ -407,12 +409,15 @@ string find_reserved( string token ){
 bool p_open_paren( string token ){  return find_reserved( token ) == "open_parn";  } // Is an open  paren?
 bool p_clos_paren( string token ){  return find_reserved( token ) == "clos_parn";  } // Is an close paren?
 bool p_semicolon(  string token ){  return find_reserved( token ) == "semicolon";  } // Is a semicolon?
+bool p_open_curly( string token ){  return find_reserved( token ) == "open_crly";  } // Is an open  curly?
+bool p_clos_curly( string token ){  return find_reserved( token ) == "clos_crly";  } // Is an close curly?
 
 
 string[] tokenize( string expStr, dchar sepChar = ' ' ){
     // Separate an expression string into tokens
     string[] tokens;
     dchar    c      = ' ';
+    string   cStr;
     string   token  = "";
     bool     testWhite = false;
     if( sepChar == ' ' ) testWhite = true;
@@ -428,12 +433,13 @@ string[] tokenize( string expStr, dchar sepChar = ' ' ){
     // 1. For every character in the string
     foreach( i, ch_i; expStr ){
         // 2. Fetch character
-        c = ch_i;
+        c    = ch_i;
+        cStr = c.to!string();
         // 3. Either add char to present token or create a new one
         // A. Case Open Paren
-        if ( p_open_paren( c.to!string() ) ){  stow_char();  }  
+        if ( p_open_paren( cStr ) || p_open_curly( cStr ) ){  stow_char();  }  
         // B. Case end of expression or list
-        else if(  p_clos_paren( c.to!string() )  ||  p_semicolon( c.to!string() )  ){  
+        else if(  p_clos_paren( cStr )  ||  p_clos_curly( cStr )  ||  p_semicolon( cStr )  ){  
             if( token.length > 0 ){  stow_token();  }
             stow_char();  
         }
@@ -798,8 +804,16 @@ bool p_bounded_parens( string[] tokens ){
 }
 
 
+bool p_bounded_curlies( string[] tokens ){
+    // Return true if the token sequence begins and ends with open and close curly braces, respectively
+    if( p_open_curly( tokens[0] ) ){
+        if( p_clos_curly( tokens[$-1] ) )  return true;  else  return false;
+    }else return false;
+}
+
+
 bool p_parent_parens( string[] tokens ){
-    // Return true if the outermost parens define a simple list
+    // Return true if the outermost parens define a single root list, possibly with nested lists
     int   depth  = 0;
     ulong i      = 0;
     ulong seqLen = tokens.length;
@@ -809,6 +823,24 @@ bool p_parent_parens( string[] tokens ){
             if( p_open_paren( token ) ) depth++; 
             else
             if( p_clos_paren( token ) ) depth--;
+            if( (depth == 0) && (i<seqLen) ) return false;
+        }
+        return true;
+    }else return false;
+}
+
+
+bool p_parent_curlies( string[] tokens ){
+    // Return true if the outermost curlies define a single root block, possibly with nested blocks
+    int   depth  = 0;
+    ulong i      = 0;
+    ulong seqLen = tokens.length;
+    if( p_bounded_curlies( tokens ) ){
+        foreach( string token; tokens ){
+            i++;
+            if( p_open_curly( token ) ) depth++; 
+            else
+            if( p_clos_curly( token ) ) depth--;
             if( (depth == 0) && (i<seqLen) ) return false;
         }
         return true;
@@ -833,13 +865,10 @@ Atom* consify_token_sequence( string[] tokens ){
     ulong    end;
     int /**/ depth   = 0;
     ulong    index;
-    // ulong    lastDex; // Nested EZ
     string   token;
     string[] carPart;
-    // string[] scratch; // Nested EZ
-    // string[] balance; // Nested EZ
-    // bool     semiFound; // Nested EZ
     Atom*    lstRoot = null;
+    Atom*[]  blockStatements;
 
     if( _DEBUG_VERBOSE ){
         writeln("`consify_token_sequence`");
@@ -862,8 +891,53 @@ Atom* consify_token_sequence( string[] tokens ){
         // Are the parens correct?
         if( p_balanced_parens( tokens ) ){
             
+            // Are we building a block?
+            if(  p_parent_curlies( tokens )  ){
+                // WARNING: This will also scoop up the last INCOMPLETE statement in the block!
+
+                blockStatements = [];
+                bgn++;
+                end--;
+
+                // Begin block
+                index = bgn;
+
+                // While we are in the block bounds, find and append statements
+                while( index <= end ){
+
+                    // Find an statement
+                    carPart = [];
+
+                    // If element is a list
+                    if( p_open_paren( tokens[index] ) ){
+                        do{
+                            token = tokens[index];
+                            if( p_open_paren( token ) ) depth++; 
+                            else
+                            if( p_clos_paren( token ) ) depth--;
+                            carPart ~= token;
+                            index++;
+                        }while( (depth > 0) && (index <= end) );
+
+                    // else scan for an EZ list
+                    }else{
+                        do{
+                            token = tokens[index];
+                            carPart ~= token;
+                            index++;
+                            if( p_semicolon( token ) )  break;
+                        }while( (index <= end) );
+                    }
+
+                    // Collect statement
+                    blockStatements ~= consify_token_sequence( carPart );
+                }
+
+                // Return a block atom
+                return new Atom( blockStatements );
+
             // Are we building a list?
-            if(  p_parent_parens( tokens )  ||  p_parent_semi( tokens )  ){
+            }else if(  p_parent_parens( tokens )  ||  p_parent_semi( tokens )  ){
                 end--;
                 if( p_parent_parens( tokens ) )  bgn++;
                 
@@ -875,7 +949,7 @@ Atom* consify_token_sequence( string[] tokens ){
                     writeln( "\tRoot: " ~ lstRoot.kind.to!string ~ ", " ~ str( lstRoot ) );
                 }  
 
-                // While we are in the list bounds
+                // While we are in the list bounds, find and append items
                 while( index <= end ){
                     
                     // Find an element
@@ -986,6 +1060,10 @@ void init_specials(){
             "quote"
         );
     };
+
+
+    // FIXME, START HERE: Implement `print` special form to test serial statements
+    // Grab the remainder of the list, interpret it, and print it
     
 
     specialForms["lambda"] = function ExprInContext( ExprInContext eINc ){  
