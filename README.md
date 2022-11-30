@@ -63,15 +63,14 @@ Completion Key:
     [Y] <funcName> <arg1> ... <argN>;, 2022-11-23: ONLY at the top level!
         [Y] E: What is the most ergonimic way to handle nested expressions?
          *  A, 2022-11-23: At this time, semicolon endings are only allowed at the root level of each string expression
-        
-[>] Allow SPARROW to either run a file or run a REPL, depending on how it is called
+[Y] Allow SPARROW to either run a file or run a REPL, depending on how it is called, 2022-11-30: Forgot to commit work from home, but remembered all my hard-won gains
     2022-11-23: Program blocks are easiest from a file instead of the terminal
     [Y] Compile to named executable, 2022-11-24: dmd sparrow.d -of=sparrow.app // Named outfile and suppressed obj file
-    [ ] Implement `print` special form to test serial statements
-        [ ] End print statements with newline
-        [ ] Test multiline, multi-print
-    [>] Execute file: `sparrow <FILENAME>`
-        [ ] Handle multiple statements per line
+    [Y] Implement `print` special form to test serial statements
+        [Y] End print statements with newline, 2022-11-30
+        [Y] Test multiline, multi-print, 2022-11-30
+    [Y] Execute file: `sparrow <FILENAME>`, 2022-11-30
+        [Y] Handle multiple statements per line, 2022-11-30
         [Y] E: File extension: .BRD, .SPRW, .FNC, 2022-11-27: .SPRW chosen
     [Y] Run REPL: `sparrow`, 2022-11-27: May exec file or use REPL
         
@@ -99,6 +98,7 @@ Completion Key:
         [ ] Implement `rand`, Uniform random sampling in [0,1)
         [ ] As a function with settable rows and columns
     [ ] while (<cond>)
+[ ] Streamline `ExprInContext` by reusing the input struct as it will be copied anyway
 [~] Line Continuation: `\+`, 2022-11-25: Block parser possibly already covers this? Only implement `\+` if needed!
 ```
 ### Modest Extensions

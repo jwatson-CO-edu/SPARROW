@@ -864,7 +864,8 @@ bool p_parent_semi( string[] tokens ){
 
 Atom* consify_token_sequence( string[] tokens ){
     // Recursively render tokens as a cons structure
-    // 2022-11: Rewritten
+    // 2022-11-XX: Rewritten
+    // 2022-11-30: EZ List CANNOT begin with a LISP list! AMBIGUOUS!, Acceptable bug until LISP lists abandoned
     ulong    seqLen  = tokens.length;
     ulong    bgn;
     ulong    end;
@@ -1070,7 +1071,8 @@ void init_specials(){
     specialForms["print"] = function ExprInContext( ExprInContext eINc ){  
         // Passthru for expression args 
         ExprInContext res = meaning( ExprInContext(
-            textOf( eINc.expr ),
+            textOf( eINc.expr ), 
+            // get_cdr( eINc.expr ),
             eINc.context,
             "print"
         ) );
@@ -1448,6 +1450,16 @@ ExprInContext meaning( ExprInContext eINc ){
     /// Recursive Cases ///
     }else{
 
+        // Case Code Block
+        // FIXME, START HERE: CREATE A NEW CONTEXT AND PASS IT TO THE BLOCK RUNNER
+
+        // Create a nested context
+        // Pass that context to meaning
+        // ExprInContext block_meaning( ExprInContext block ) // BLOCK RUNNER
+        // Return the meaning of the last statement in the block
+        
+        // FIXME: CREATE A TEST FILE THAT ASSIGNS TO LOCAL VARS IN A BLOCK
+
         if( p_cons( e ) && p_string( get_car( e ) ) ){  name = get_car( e ).str;  }
         
         // Case Primitive Function
@@ -1682,9 +1694,9 @@ ExprInContext block_meaning( ExprInContext block ){
     foreach( Atom* sttmnt; statememts ){
         lastResult = meaning(
             ExprInContext(
-                sttmnt, // ----- Expression to be evaluated
-                block.context, // -------- Global context
-                str( sttmnt ) // String representation of the original expression
+                sttmnt, // ------ Expression to be evaluated
+                block.context, // Given context
+                str( sttmnt ) //- String representation of the original expression
             )
         );
     }
@@ -1703,8 +1715,6 @@ Atom* run_file( string fName ){
         )
     ).expr;
 }
-
-
 
 
 
