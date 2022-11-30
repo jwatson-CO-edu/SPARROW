@@ -852,7 +852,12 @@ bool p_parent_semi( string[] tokens ){
     // Return true if the outermost level of the statement defines a list punctuated with a semicolon
     ulong seqLen = tokens.length;
     if( seqLen > 1 ){
-        return (  p_semicolon( tokens[$-1] )  &&  !p_semicolon( tokens[0] )  );
+        if(  p_semicolon( tokens[$-1] )  &&  !p_semicolon( tokens[0] )  ){
+            foreach( string token; tokens[1..$-2] ){
+                if( p_semicolon( token ) )  return false;
+            }
+            return true;
+        }else  return false;
     }else  return false;
 }
 
@@ -1062,9 +1067,17 @@ void init_specials(){
     };
 
 
-    // FIXME, START HERE: Implement `print` special form to test serial statements
-    // Grab the remainder of the list, interpret it, and print it
-    
+    specialForms["print"] = function ExprInContext( ExprInContext eINc ){  
+        // Passthru for expression args 
+        ExprInContext res = meaning( ExprInContext(
+            textOf( eINc.expr ),
+            eINc.context,
+            "print"
+        ) );
+        prnt( res.expr );
+        return res;
+    };
+
 
     specialForms["lambda"] = function ExprInContext( ExprInContext eINc ){  
         // Package anonymous function for eval
@@ -1700,6 +1713,7 @@ Atom* run_file( string fName ){
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void main( string[] args ){
+    Atom* res = null;
 
     if( _DEBUG_VERBOSE )  writeln( "Args are: " ~ args.to!string );
 
@@ -1707,7 +1721,7 @@ void main( string[] args ){
     init_SPARROW();
     
     if( args.length > 1 ){
-        prnt( run_file( args[1] ) );
+        res = run_file( args[1] );
     }else{
         // Begin REPL
         read_eval_prnt_loop();
