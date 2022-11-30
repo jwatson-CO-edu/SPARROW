@@ -99,7 +99,10 @@ Completion Key:
         [ ] As a function with settable rows and columns
     [ ] while (<cond>)
 [ ] Streamline `ExprInContext` by reusing the input struct as it will be copied anyway
-[~] Line Continuation: `\+`, 2022-11-25: Block parser possibly already covers this? Only implement `\+` if needed!
+[ ] Ergonomics Testing - Multiline and Indented
+    [ ] T: S-expressions
+    [ ] T: EZ Lists
+    [~] Line Continuation: `\+`, 2022-11-25: Block parser possibly already covers this? Only implement `\+` if needed!
 ```
 ### Modest Extensions
 ```
