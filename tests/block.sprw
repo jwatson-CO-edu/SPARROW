@@ -1,0 +1,8 @@
+{
+    define foo 42;
+    print foo;
+    define bar 64;
+    print bar;
+}
+print foo;
+print xur;

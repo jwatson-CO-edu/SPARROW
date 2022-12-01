@@ -38,7 +38,7 @@ import std.algorithm.searching; // `canFind`
 alias  is_white = std.ascii.isWhite; 
 
 ///// Env Vars /////
-bool _DEBUG_VERBOSE  =  false; // Set true for debug prints
+bool _DEBUG_VERBOSE  =  true; // Set true for debug prints
 bool _TEST_ALL_PARTS =  true; // Set true to run all unit tests
 
 
@@ -168,6 +168,7 @@ bool p_number( Atom* atm ){  return (atm.kind == F_Type.NMBR);  }
 bool p_string( Atom* atm ){  return (atm.kind == F_Type.STRN);  }
 bool p_bool( Atom* atm ){  return (atm.kind == F_Type.BOOL);  }
 bool p_zero( Atom* atm ){  return (atm.kind == F_Type.NMBR) && (atm.num == 0.0);  }
+bool p_block( Atom* atm ){  return (atm.kind == F_Type.BLOK);  }
 
 
 ////////// MATHEMATIC PRIMITIVE HELPERS ////////////////////////////////////////////////////////////
@@ -1408,6 +1409,7 @@ ExprInContext meaning( ExprInContext eINc ){
     Atom* /*---*/ rtnRoot  = null;
     Atom* /*---*/ inputPtr = null;
     string /*--*/ name     = "";
+    Env* /*----*/ nuEnv    = null;
     ExprInContext rntResult;
 
     if( p_string( e ) ){  name = e.str;  }
@@ -1450,20 +1452,25 @@ ExprInContext meaning( ExprInContext eINc ){
     /// Recursive Cases ///
     }else{
 
-        // Case Code Block
-        // FIXME, START HERE: CREATE A NEW CONTEXT AND PASS IT TO THE BLOCK RUNNER
-
-        // Create a nested context
-        // Pass that context to meaning
-        // ExprInContext block_meaning( ExprInContext block ) // BLOCK RUNNER
-        // Return the meaning of the last statement in the block
-        
-        // FIXME: CREATE A TEST FILE THAT ASSIGNS TO LOCAL VARS IN A BLOCK
-
+        // Fetch name for some cases, if it exists
         if( p_cons( e ) && p_string( get_car( e ) ) ){  name = get_car( e ).str;  }
+
+        // Case Code Block
+        if( p_block( e ) ){
+
+            // Create a nested context
+            nuEnv = new Env();
+            nuEnv.parent = eINc.context;
+
+            // Pass that context to meaning && Return the meaning of the last statement in the block
+            rntResult = block_meaning( ExprInContext(
+                e,
+                nuEnv,
+                "block meaning"
+            ) );
         
         // Case Primitive Function
-        if( p_primitve_function( name ) ){
+        }else if( p_primitve_function( name ) ){
 
             if( _DEBUG_VERBOSE ){
                 writeln( "\t`meaning`: " ~ "Primitive Function" );
@@ -1650,6 +1657,13 @@ string[][] lex_file( string fName ){
     File /*-*/ f = File( fName );
     foreach( line; f.byLine ){
         sExpr ~= tokenize( line.to!string );
+
+        // Make curlies their own "statements", see `parse_serial_statements`
+        if( p_open_curly( sExpr[0] ) || p_clos_curly( sExpr[0] ) ){
+            statememts ~= [ sExpr[0], ];
+            sExpr = sExpr[1..$-1];
+        }
+
         // If the line is one complete statement on its own
         if( p_complete_expression( sExpr ) ){
             statememts ~= sExpr;
@@ -1679,6 +1693,9 @@ Atom*[] parse_serial_statements( string[][] statememts ){
     // Parse a block of tokenized string code into serial executable statements
     Atom*[] program;
     foreach( string[] sttmnt; statememts ){
+
+        // FIXME, START HERE: DETECT AND ASSEMBLE BLOCKS
+        
         program ~= consify_token_sequence( sttmnt );
     }
     return program;
