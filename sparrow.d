@@ -1661,7 +1661,10 @@ string[][] lex_file( string fName ){
         // Make curlies their own "statements", see `parse_serial_statements`
         if( p_open_curly( sExpr[0] ) || p_clos_curly( sExpr[0] ) ){
             statememts ~= [ sExpr[0], ];
-            sExpr = sExpr[1..$-1];
+            if( sExpr.length > 1 ) 
+                sExpr = sExpr[1..$-1];
+            else     
+                sExpr = [];
         }
 
         // If the line is one complete statement on its own
@@ -1691,12 +1694,35 @@ string[][] lex_file( string fName ){
 
 Atom*[] parse_serial_statements( string[][] statememts ){
     // Parse a block of tokenized string code into serial executable statements
-    Atom*[] program;
-    foreach( string[] sttmnt; statememts ){
+    Atom*[]  program;
+    ulong    seqLen = statememts.length;
+    ulong    index  = 0;
+    string[] sttmnt;
+    Atom*[]  blockProg;
+    while( index < seqLen ){
 
-        // FIXME, START HERE: DETECT AND ASSEMBLE BLOCKS
-        
+        sttmnt = statememts[ index ];
+
+        // Case: Standalone blocks
+        // 2022-12-02: Lexing blocks that belong to loops will require changes to how complete statements are detected
+        if( (sttmnt.length == 1) && p_open_curly( sttmnt[0] ) ){
+            blockProg = [];
+            index++;
+            do{
+                sttmnt = statememts[ index ];
+                if( (sttmnt.length == 1) && p_clos_curly( sttmnt[0] ) ){
+                    index++;
+                    break;
+                }  
+                blockProg ~= consify_token_sequence( sttmnt );
+            }while( index < seqLen );
+            if( blockProg.length > 0 )  program ~= new Atom( blockProg );
+            // Reset for normal line by line lexing
+            index++;
+            sttmnt = statememts[ index ];
+        }
         program ~= consify_token_sequence( sttmnt );
+        index++;
     }
     return program;
 }
