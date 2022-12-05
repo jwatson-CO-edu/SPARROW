@@ -72,17 +72,16 @@ Completion Key:
     [Y] Execute file: `sparrow <FILENAME>`, 2022-11-30
         [Y] Handle multiple statements per line, 2022-11-30
         [Y] E: File extension: .BRD, .SPRW, .FNC, 2022-11-27: .SPRW chosen
-    [Y] Run REPL: `sparrow`, 2022-11-27: May exec file or use REPL
-        
-[>] Program Blocks
+    [Y] Run REPL: `sparrow`, 2022-11-27: May exec file or use REPL      
+[Y] Program Blocks, 2022-12-05: Excellent!
     [Y] Treat a block as a list of instructions, instead of a list of values, 2022-11-27: New block atom
     [Y] Curly Braces {}, 2022-11-28: Added to lexer and parser, requires testing!
         [Y] Parser change: Allow for statements within a nested block to be EZ lists, 2022-11-28: Added to lexer and parser, requires testing!
-    [>] Special `meaning` actions for encountering a block
-        [ ] New block == new context
-        [ ] T: Local block variable(s)
-        [ ] T: Verify that statement precedence with block brackets already exists in evaluator, If not then Implement it! 
-        [ ] T: Make sure that nested statements and blocks do not cause ambiguity
+    [Y] Special `meaning` actions for encountering a block, 2022-12-05: Excellent!
+        [Y] New block == new context, 2022-12-05: Excellent!
+        [Y] T: Local block variable(s), 2022-12-05: Excellent!
+        [Y] T: Verify that statement precedence with block brackets already exists in evaluator, If not then Implement it!, 2022-12-05: No issue!
+        [Y] T: Make sure that nested statements and blocks do not cause ambiguity, 2022-12-05: No issue!
     [Y] Root of the parsed input file is a block, 2022-11-27: Executed in the `baseEnv` context
     [Y] Last line is the meaning of the block, (prog ... ) ?, 2022-11-27: Needs to be a special form as well 
     [~] Pythonic: Implicit by indentation, 2022-11-23: Not needed at this time + adds complexity
@@ -93,15 +92,32 @@ Completion Key:
         [ ] Loop iterates with <counter> == <end>
         [ ] Loop exits    with <counter> > <end>
          *  At this time not allowing the user to specify custom conditions!
+    [ ] Allow for all types of ergonomic loops
+        [ ] for (<counter> <bgn> <end>) {
+                <BLOCK>
+            };
+        [ ] for (<counter> <bgn> <end>) 
+            {
+                <BLOCK>
+            };
+        [ ] (for (<counter> <bgn> <end>) {
+                <BLOCK>
+            })
+        [ ] (for (<counter> <bgn> <end>) 
+            {
+                <BLOCK>
+            })
     [ ] for (<counter> <bgn> <incr> <end>) {<BLOCK>}; - Counter bounds inclusive with increment value
     [ ] T: Print Slash Maze
         [ ] Implement `rand`, Uniform random sampling in [0,1)
         [ ] As a function with settable rows and columns
     [ ] while (<cond>)
+
 [ ] Streamline `ExprInContext` by reusing the input struct as it will be copied anyway
 [ ] Ergonomics Testing - Multiline and Indented
     [ ] T: S-expressions
-    [ ] T: EZ Lists
+    [Y] T: EZ Lists, 2022-12-05: Excellent!
+    [ ] T: Loop within a block!
     [~] Line Continuation: `\+`, 2022-11-25: Block parser possibly already covers this? Only implement `\+` if needed!
 ```
 ### Modest Extensions
