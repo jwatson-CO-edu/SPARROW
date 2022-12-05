@@ -38,7 +38,7 @@ import std.algorithm.searching; // `canFind`
 alias  is_white = std.ascii.isWhite; 
 
 ///// Env Vars /////
-bool _DEBUG_VERBOSE  =  true; // Set true for debug prints
+bool _DEBUG_VERBOSE  = false; // Set true for debug prints
 bool _TEST_ALL_PARTS =  true; // Set true to run all unit tests
 
 
@@ -64,6 +64,7 @@ enum F_Type{
     FUNC, // Function
     BLOK, // Code block
 }
+
 
 struct Atom{
     F_Type  kind; // What kind of atom this is
@@ -1187,7 +1188,7 @@ void init_specials(){
         );
     };
 
-    // FIXME, START HERE: LOAD FILE
+    // FIXME: LOAD FILE, A WAY TO IMPORT FILES WITHIN EITHER FILES OR REPL
     // specialForms["load"] = function ExprInContext( ExprInContext eINc ){ /* LOAD FILE */ } 
 
 }
@@ -1649,14 +1650,21 @@ string[][] lex_many_one_line( string[] tokens ){
 
 string[][] lex_file( string fName ){
     // Read the contents of the file and lex into serial statements    
+    string     tExpr;
     string[]   sExpr;
     string[][] statememts;
     string[][] lineContents;
     ulong /**/ seqLen;
     ulong /**/ index;
     File /*-*/ f = File( fName );
+
+    if( _DEBUG_VERBOSE )  writeln( "`lex_file`" );
+
     foreach( line; f.byLine ){
-        sExpr ~= tokenize( line.to!string );
+        tExpr = line.to!string; // Fetch text expression
+        if( strip( tExpr ).length == 0 )  continue; // If newline only, there is nothing to do
+
+        sExpr ~= tokenize( tExpr ); // Text Expression --to-> S-Expression
 
         // Make curlies their own "statements", see `parse_serial_statements`
         if( p_open_curly( sExpr[0] ) || p_clos_curly( sExpr[0] ) ){
@@ -1666,6 +1674,7 @@ string[][] lex_file( string fName ){
             else     
                 sExpr = [];
         }
+        if( sExpr.length == 0 )  continue; // If we processed a lone curly, there is nothing else to do
 
         // If the line is one complete statement on its own
         if( p_complete_expression( sExpr ) ){
@@ -1699,6 +1708,9 @@ Atom*[] parse_serial_statements( string[][] statememts ){
     ulong    index  = 0;
     string[] sttmnt;
     Atom*[]  blockProg;
+
+    if( _DEBUG_VERBOSE )  writeln( "`parse_serial_statements`" );
+
     while( index < seqLen ){
 
         sttmnt = statememts[ index ];
@@ -1715,6 +1727,7 @@ Atom*[] parse_serial_statements( string[][] statememts ){
                     break;
                 }  
                 blockProg ~= consify_token_sequence( sttmnt );
+                index++; // 2022-12-05: Forgot to advance the counter!
             }while( index < seqLen );
             if( blockProg.length > 0 )  program ~= new Atom( blockProg );
             // Reset for normal line by line lexing

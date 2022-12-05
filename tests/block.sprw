@@ -4,5 +4,6 @@
     define bar 64;
     print bar;
 }
-print foo;
+
 print xur;
+print foo;
