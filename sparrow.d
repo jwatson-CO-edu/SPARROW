@@ -38,7 +38,7 @@ import std.algorithm.searching; // `canFind`
 alias  is_white = std.ascii.isWhite; 
 
 ///// Env Vars /////
-bool _DEBUG_VERBOSE  = false; // Set true for debug prints
+bool _DEBUG_VERBOSE  =  false; // Set true for debug prints
 bool _TEST_ALL_PARTS =  true; // Set true to run all unit tests
 
 
@@ -1662,6 +1662,9 @@ string[][] lex_file( string fName ){
 
     foreach( line; f.byLine ){
         tExpr = line.to!string; // Fetch text expression
+
+        if( _DEBUG_VERBOSE )  writeln( "\tLex line: " ~ tExpr );
+
         if( strip( tExpr ).length == 0 )  continue; // If newline only, there is nothing to do
 
         sExpr ~= tokenize( tExpr ); // Text Expression --to-> S-Expression
@@ -1682,6 +1685,7 @@ string[][] lex_file( string fName ){
             sExpr = [];
         // Else check for multiple statements on the line
         }else{
+            if( _DEBUG_VERBOSE )  writeln( "\tLex incomplete line: " ~ sExpr.to!string );
             lineContents = lex_many_one_line( sExpr );
             seqLen /*-*/ = lineContents.length;
             index /*--*/ = 0;
@@ -1714,6 +1718,7 @@ Atom*[] parse_serial_statements( string[][] statememts ){
     while( index < seqLen ){
 
         sttmnt = statememts[ index ];
+        if( _DEBUG_VERBOSE )  writeln( "\tSerial Statement: " ~ sttmnt.to!string );
 
         // Case: Standalone blocks
         // 2022-12-02: Lexing blocks that belong to loops will require changes to how complete statements are detected
@@ -1722,8 +1727,9 @@ Atom*[] parse_serial_statements( string[][] statememts ){
             index++;
             do{
                 sttmnt = statememts[ index ];
+                if( _DEBUG_VERBOSE )  writeln( "\tBlock Statement: " ~ sttmnt.to!string );
                 if( (sttmnt.length == 1) && p_clos_curly( sttmnt[0] ) ){
-                    index++;
+                    // index++; // 2022-12-05: There were too many increments!
                     break;
                 }  
                 blockProg ~= consify_token_sequence( sttmnt );
