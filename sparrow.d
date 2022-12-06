@@ -38,7 +38,7 @@ import std.algorithm.searching; // `canFind`
 alias  is_white = std.ascii.isWhite; 
 
 ///// Env Vars /////
-bool _DEBUG_VERBOSE  =  false; // Set true for debug prints
+bool _DEBUG_VERBOSE  =  true; // Set true for debug prints
 bool _TEST_ALL_PARTS =  true; // Set true to run all unit tests
 
 
@@ -798,6 +798,18 @@ bool p_balanced_parens( string[] tokens ){
 }
 
 
+bool p_balanced_curlies( string[] tokens ){
+    // Return true if parens open and close in a quantity and order that returns to root depth, Otherwise return false
+    int depth = 0;
+    foreach( string token; tokens ){
+        if( p_open_curly( token ) ) depth++; 
+        else
+        if( p_clos_curly( token ) ) depth--;
+    }
+    return (depth == 0);
+}
+
+
 bool p_bounded_parens( string[] tokens ){
     // Return true if the token sequence begins and ends with open and close parens, respectively
     if( p_open_paren( tokens[0] ) ){
@@ -1188,8 +1200,70 @@ void init_specials(){
         );
     };
 
+
+    specialForms["for"] = function ExprInContext( ExprInContext eINc ){
+        // Execute a `for` loop, Loop meaning is the last statement of the last iteration, 
+        // Default is to increment up by one, inclusive bounds
+
+        // 1. Parse loop args
+        Atom*[] loopArgs  = flatten_atom_list( second( eINc.expr ) ); // Fetch args as atom vector
+        string  iVarName  = loopArgs[0].str; // ------------------------ Get the counter var name, WARNING: TYPE NOT CHECKED
+        bool    incrByOne = (loopArgs.length == 3); // ----------------- Default is to increment up by one, inclusive bounds
+        double  loBound   = 0.0;
+        double  hiBound   = 0.0;
+        double  incr      = 1.0;
+        double  i /*---*/ = 0.0;
+        Atom*   loopProg  = third( eINc.expr ); // WARNING: TYPE NOT CHECKED
+        Atom*   rtnExpr   = null; 
+
+        // Case: Default loop increments by 1.0
+        if( incrByOne ){
+            loBound = loopArgs[1].num;
+            hiBound = loopArgs[2].num;
+
+        // Case: User-specified increment
+        }else if(loopArgs.length == 4){
+            loBound = loopArgs[1].num;
+            incr    = loopArgs[2].num;
+            hiBound = loopArgs[3].num;
+
+        // Else: There is a syntax error
+        }else  return ExprInContext( 
+            new Atom( F_Error.SYNTAX, loopArgs.length.to!string ~ " was an incorrect number to loop args. Expected 3 or 4." ),
+            eINc.context,
+            "`for` got an unexpected number of args"
+        );
+
+        // 2. Create a new nested context, bind the counter var
+        Env* nuEnv   = new Env();
+        nuEnv.parent = eINc.context;
+        i /*------*/ = loBound;
+        bind_atom( nuEnv, iVarName, new Atom( loBound ) );
+
+        // 3. LOOP: If loop condition met, run block in nested context && increment, otherwise exit loop
+        while( i <= hiBound ){
+            // run block in nested context, Loop meaning is the last statement of the last iteration
+            rtnExpr = block_meaning( ExprInContext (
+                loopProg,
+                nuEnv,
+                "loop body"
+            ) ).expr;
+            i += incr; // increment
+            bind_atom( nuEnv, iVarName, new Atom( i ) ); // Store new counter value so that loop body can access it
+        }
+
+        return ExprInContext( 
+            rtnExpr,
+            eINc.context,
+            "loop result"
+        );
+
+    };
+
     // FIXME: LOAD FILE, A WAY TO IMPORT FILES WITHIN EITHER FILES OR REPL
     // specialForms["load"] = function ExprInContext( ExprInContext eINc ){ /* LOAD FILE */ } 
+
+
 
 }
 
@@ -1599,11 +1673,14 @@ void read_eval_prnt_loop(){
     writeln( "\nProgram exit by user request. ~ Goodbye!\n" );
 }
 
+
+
 ////////// FILE OPERATIONS /////////////////////////////////////////////////////////////////////////
 
+
 bool p_complete_expression( string[] sExpr ){
-    // Return true if the tokenized statement has balanced parens and is terminated properly
-    if( p_balanced_parens( sExpr ) ){
+    // Return true if the tokenized statement has balanced parens / curly braces, and is terminated properly
+    if( p_balanced_parens( sExpr ) && p_balanced_curlies( sExpr ) ){
         if( p_parent_semi( sExpr ) ) // FIXME: If this is not true there could be multiple s-expr on a line!
             return true;
         else if( p_parent_parens( sExpr ) )
@@ -1612,6 +1689,7 @@ bool p_complete_expression( string[] sExpr ){
             return false;
     }else  return false;
 }
+
 
 string[][] lex_many_one_line( string[] tokens ){
     // If there are multiple statements on the same line, then lex and return, Otherwise return empty
@@ -1647,6 +1725,7 @@ string[][] lex_many_one_line( string[] tokens ){
     }
     return statements;
 }
+
 
 string[][] lex_file( string fName ){
     // Read the contents of the file and lex into serial statements    
@@ -1705,6 +1784,7 @@ string[][] lex_file( string fName ){
     return statememts;
 }
 
+
 Atom*[] parse_serial_statements( string[][] statememts ){
     // Parse a block of tokenized string code into serial executable statements
     Atom*[]  program;
@@ -1745,6 +1825,7 @@ Atom*[] parse_serial_statements( string[][] statememts ){
     }
     return program;
 }
+
 
 // Parse an entire file into AST conses
 Atom*[] parse_file( string fName ){  return parse_serial_statements( lex_file( fName ) );  }
@@ -1792,8 +1873,11 @@ void main( string[] args ){
     // Populate necessary interpreter components
     init_SPARROW();
     
+    // Case: File passed as CLI arg
     if( args.length > 1 ){
         res = run_file( args[1] );
+    
+    // Case: No file, start REPL
     }else{
         // Begin REPL
         read_eval_prnt_loop();
