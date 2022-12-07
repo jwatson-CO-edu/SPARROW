@@ -1901,6 +1901,8 @@ Atom* parse_token_seqeunce( string[] tokens ){
     // Init
     F_Parser state     = F_Parser.RUN;
     Atom*[]  currBlock = null;
+    ulong    index     = 0;
+    string   token;
 
     do{
         // Handle state
