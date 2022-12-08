@@ -1871,8 +1871,8 @@ Atom* run_file( string fName ){
     ).expr;
 }
 
-// FIXME: REWRITE THE PARSER
-
+// FIXME: UPON COMPLETION DELETE THE FOLLOWING FUNCTIONS: 
+//        `tokenize_file`, `lex_many_one_line`, `lex_file`,
 string[] tokenize_file( string fName ){
     string   tExpr;
     string[] sExpr;
@@ -1889,6 +1889,7 @@ string[] tokenize_file( string fName ){
 enum F_Parser{ 
     // Parser States
     RUN,
+    ONE_ATOM,
     CONSUME_STATEMENT,
     CONSUME_BLOCK,
     PARSE_STATEMENT,
@@ -1897,12 +1898,18 @@ enum F_Parser{
     FAULT
 }
 
-Atom* parse_token_seqeunce( string[] tokens ){
+// FIXME: UPON COMPLETION DELETE THE FOLLOWING FUNCTIONS: 
+//        `consify_token_sequence`,  `parse_serial_statements`, `parse_serial_statements`
+Atom* parse_token_sequence( string[] tokens ){
     // Init
-    F_Parser state     = F_Parser.RUN;
-    Atom*[]  currBlock = null;
-    ulong    index     = 0;
-    string   token;
+    F_Parser state     = F_Parser.RUN; //- Current parser state
+    bool     parsing   = true;
+    Atom*[]  progBlock = null; // -------- Block for this depth
+    string[] sttmntReg = []; // ---------- Statement "register"
+    ulong    seqLen    = tokens.length; // Input length
+    ulong    tokeDex   = 0; // ----------- Index of current input token
+    string   token; // ------------------- Current input token
+    Atom*    rtnProg;
 
     do{
         // Handle state
@@ -1910,25 +1917,106 @@ Atom* parse_token_seqeunce( string[] tokens ){
             
             /// Case RUN: Decide on the next mode of the parser ///////////
             case F_Parser.RUN:
-                // FIXME, START HERE: PARSE IN A SANE WAY
-                // CHECK IF CONSUMING A BLOCK OR A STATEMENT
+                
+                if( seqLen < 2 )
+                    state = F_Parser.ONE_ATOM;
+                else{
+                    // CHECK IF CONSUMING A BLOCK OR A STATEMENT
+                    token = tokens[ index ];
+                    if( p_open_curly( token ) )  
+                        state = F_Parser.CONSUME_BLOCK;
+                    else
+                        state = F_Parser.CONSUME_STATEMENT;
+                    break;
+                }
+                    
+
+            /// Case ONE_ATOM: Parse one or empty ////////////////////
+            case F_Parser.ONE_ATOM:                
+                // Base Case: There were no tokens, return Empty
+                if( seqLen == 0 ){  rtnProg = empty_atom();  }
+                // Base Case: There was one token, Return it
+                if( seqLen == 1 ){  rtnProg = atomize_string( tokens[0] );  }
+                // Flag success
+                state = F_Parser.SUCCESS;
                 break;
 
-            /// Case CONSUME_STATEMENT: Load statement ////////////////////
-            /// Case CONSUME_BLOCK: Load block statements /////////////////
-            /// Case PARSE_STATEMENT: Parse loaded statement //////////////
-            /// Case PARSE_BLOCK: Recur on block //////////////////////////
-            /// Case SUCCESS: End of input with no errors /////////////////
-            /// Case FAULT: The input has caused problems /////////////////
 
+            /// Case CONSUME_STATEMENT: Load statement ////////////////////
+            case F_Parser.CONSUME_STATEMENT:
+
+                sttmntReg = [];
+                token     = tokens[ index ];
+
+                // If element is a list then scan it into the statement register
+                if( p_open_paren( tokens[index] ) ){
+                    do{
+                        token = tokens[index];
+                        if( p_open_paren( token ) ) depth++; 
+                        else
+                        if( p_clos_paren( token ) ) depth--;
+                        sttmntReg ~= token;
+                        index++;
+                    }while( (depth > 0) && (index <= end) );
+
+                // else scan in an EZ list
+                }else{
+                    do{
+                        token = tokens[index];
+                        sttmntReg ~= token;
+                        index++;
+                        if( p_semicolon( token ) )  break;
+                    }while( (index <= end) );
+                }
+
+                // Flag statement register for parsing
+                state = F_Parser.PARSE_STATEMENT;
+
+                break;
+
+            /// Case CONSUME_BLOCK: Load block statements /////////////////
+
+
+            /// Case PARSE_STATEMENT: Parse loaded statement //////////////
+            case F_Parser.PARSE_STATEMENT:
+                // FIXME, START HERE: PARSE IN A SANE WAY
+                // BORROW FROM LINE 960 OF "sparrow.d"
+            
+
+            /// Case PARSE_BLOCK: Recur on block //////////////////////////
+
+
+            /// Case SUCCESS: End of input with no errors /////////////////
+            case F_Parser.SUCCESS:
+
+                if( _DEBUG_VERBOSE ){
+                    writeln( "\tSUCCESS, result: " ~ str( rtnProg ) );
+                }
+
+                parsing = false;
+                break;
+            
+
+            /// Case FAULT: The input has caused problems /////////////////
+            case F_Parser.FAULT:
+
+                if( _DEBUG_VERBOSE ){
+                    writeln( "\tFAULT, result: " ~ str( rtnProg ) );
+                }
+
+                parsing = false;
+                break;
+
+            
             /// Case BAD: SOMETHING UNEXPECTED HAPPENED ///////////////////
             default: 
                 state = F_Parser.FAULT;
-                // FIXME: NOTIFY IMPOSSIBLE CASE
+                rtnProg = new Atom( F_Error.PARSER, "IMPOSSIBLE PARSER CASE ENCOUNTERED" );
                 break;
         }
-    }while( (state != F_Parser.SUCCESS) && (state != F_Parser.FAULT) );
+    }while( parsing );
     
+    return rtnProg;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
