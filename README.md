@@ -87,11 +87,18 @@ Completion Key:
     [~] Pythonic: Implicit by indentation, 2022-11-23: Not needed at this time + adds complexity
         [~] How to cleanly handle nested indented blocks?, 2022-11-23: Not needed at this time + adds complexity
 
-[ ] Implement loops
-    [ ] for (<counter> <bgn> <end>) {<BLOCK>}; - Counter bounds inclusive, Note DOUBLE bounds!
-        [ ] Loop iterates with <counter> == <end>
-        [ ] Loop exits    with <counter> > <end>
-         *  At this time not allowing the user to specify custom conditions!
+[>] Implement loops
+    [>] Write a new parser!
+         *  A stack is required to handle arbitrarily nested blocks, and possibly other nested things!
+        [>] Implement FSM operating on a stack
+        [ ] T: Run all existing examples other than the loop example
+        [ ] Tear out the old parser (See notes next to new functions)
+    [>] for (<counter> <bgn> <end>) {<BLOCK>}; - Counter bounds inclusive, Note DOUBLE bounds!
+        [Y] Special Form, 2022-12-06: Wrote special form, requires a new parser and also testing
+        [Y] Loop iterates with <counter> <= <end>, 2022-12-06: Requires a new parser and also testing
+        [Y] Loop exits    with <counter> > <end>, 2022-12-06: Requires a new parser and also testing
+         *  2022-12-06: At this time not allowing the user to specify custom conditions!
+        [>] T: Loop that accesses the counter var within the loop body
     [ ] Allow for all types of ergonomic loops
         [ ] for (<counter> <bgn> <end>) {
                 <BLOCK>
