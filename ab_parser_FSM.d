@@ -1886,32 +1886,84 @@ string[] tokenize_file( string fName ){
     return sExpr;
 }
 
+// bool 
+
 enum F_Parser{ 
-    // Parser States
-    RUN,
-    ONE_ATOM,
-    CONSUME_STATEMENT,
-    CONSUME_BLOCK,
-    PARSE_STATEMENT,
-    PARSE_BLOCK,
-    SUCCESS,
-    FAULT
+    // Possible States of Parser Jobs
+    RUN, // ------------- Beginning state
+    ONE_ATOM, // -------- There was one atom or less in the input
+    CONSUME_STATEMENT, // Read one statement into the statement register
+    CONSUME_BLOCK, // --- Read one block into the block register
+    PARSE_STATEMENT, // - Parse statement into an executable AST
+    PARSE_BLOCK, // ----- Parse block into a list of executable ASTs
+    SUCCESS, // --------- Exit this job with success
+    FAULT, // ----------- Exit this job with failure
+    NO_JOB // ----------- NO-OP, nothing to do
 }
+
+struct ParserJobStack{
+    // Global parser job stack
+    
+    // Members //
+    F_Parser[] jobs; // All current parsing jobs
+    
+    // Methods //
+    
+    this(){  jobs = [];   } // Constructor
+    
+    bool     p_has_job(){  return (jobs.length > 0);  } //- Are there are one or more jobs?
+    bool     p_has_prev(){  return (jobs.length > 1);  } // Is the job depth at least 2?
+    void     push( F_Parser job ){  jobs ~= job;  } // ---- Add a job to the stack top
+    
+    F_Parser pop(){  
+        // Remove job from stack top and return it
+        if( p_has_job() )
+            return jobs.popBack();  
+        else 
+            return F_Parser.NO_JOB;
+    } 
+
+    F_Parser get_current(){  
+        // Return status of the current job without removing it
+        if( p_has_job() )
+            return jobs[$-1];  
+        else 
+            return F_Parser.NO_JOB;
+        
+    }
+
+    void set_current( F_Parser job ){  
+        // Set status of the current job without adding it
+        if( p_has_job() )  jobs[$-1] = job;  
+    } 
+    
+}
+
+// Global parser job stack
+ParserJobStack parserJobs = ParserJobStack();
 
 // FIXME: UPON COMPLETION DELETE THE FOLLOWING FUNCTIONS: 
 //        `consify_token_sequence`,  `parse_serial_statements`, `parse_serial_statements`
 Atom* parse_token_sequence( string[] tokens ){
     // Init
-    F_Parser state     = F_Parser.RUN; //- Current parser state
-    bool     parsing   = true;
+    F_Parser state; // ------------------- Current parser state
+    bool     parsing   = true; // -------- Is the parser at this depth running?
     Atom*[]  progBlock = null; // -------- Block for this depth
     string[] sttmntReg = []; // ---------- Statement "register"
     ulong    seqLen    = tokens.length; // Input length
+    ulong    regLen    = 0; // ----------- Input length
+    ulong    bgn       = 0; // ----------- Input begin index
+    ulong    end       = 0; // ----------- Input end   index
     ulong    tokeDex   = 0; // ----------- Index of current input token
     string   token; // ------------------- Current input token
-    Atom*    rtnProg;
+    Atom*    rtnProg; // ----------------- Output returned at this depth
+
+    parserJobs.push( F_Parser.RUN ); // Parser always begins in the `RUN` state
 
     do{
+
+        state = parserJobs.get_current(); // Model is to keep job on the stack until it is done
+
         // Handle state
         switch( state ){
             
@@ -1980,8 +2032,19 @@ Atom* parse_token_sequence( string[] tokens ){
             /// Case PARSE_STATEMENT: Parse loaded statement //////////////
             case F_Parser.PARSE_STATEMENT:
                 // FIXME, START HERE: PARSE IN A SANE WAY
+                
+                // Establish bounds
+                regLen = sttmntReg.length;
+                bgn    = 0;
+                end   = regLen-1;
+
                 // BORROW FROM LINE 960 OF "sparrow.d"
-            
+                if(  p_parent_parens( sttmntReg )  ||  p_parent_semi( sttmntReg )  ){
+                    end--;
+                    if( p_parent_parens( sttmntReg ) )  bgn++;
+                }
+
+                break;            
 
             /// Case PARSE_BLOCK: Recur on block //////////////////////////
 
