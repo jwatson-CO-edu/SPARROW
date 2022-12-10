@@ -2047,7 +2047,10 @@ Atom* parse_token_sequence( string[] tokens ){
                 else{
                     token = tokens[ index ]; // Fetch token
                     if( p_open_curly( token ) ) // Open curly: Consume block
-                        parserJobs.set_current( F_Parser.CONSUME_BLOCK );
+
+                        // parserJobs.set_current( F_Parser.CONSUME_BLOCK );
+                        parserJobs.push( F_Parser.CONSUME_BLOCK ); // Push so that we can peek block context
+
                     else // else is an s-expression or an EZ list
                         parserJobs.set_current( F_Parser.CONSUME_STATEMENT );
                     break;
