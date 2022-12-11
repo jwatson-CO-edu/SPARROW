@@ -1913,6 +1913,7 @@ struct ParserJobStack{
     
     bool p_has_job(){  return (jobs.length > 0);  } //- Are there are one or more jobs?
     bool p_has_prev(){  return (jobs.length > 1);  } // Is the job depth at least 2?
+    bool p_has_three(){  return (jobs.length > 2);  } // Is the job depth at least 3?
     void push( F_Parser job ){  jobs ~= job;  } // ---- Add a job to the stack top
     
     F_Parser pop(){  
@@ -1922,6 +1923,14 @@ struct ParserJobStack{
         else 
             return F_Parser.NO_JOB;
     } 
+
+    F_Parser get_prev(){  
+        // Return status of the previous job without removing it
+        if( p_has_prev() )
+            return jobs[$-2];  
+        else 
+            return F_Parser.NO_JOB;
+    }
 
     F_Parser get_current(){  
         // Return status of the current job without removing it
@@ -2013,9 +2022,11 @@ ParserJobStack parserJobs = ParserJobStack();
 Atom* parse_token_sequence( string[] tokens ){
     // Init
     F_Parser state; // ------------------- Current parser state
+    F_Parser prevState; // ------------------- Current parser state
     bool     parsing   = true; // -------- Is the parser at this depth running?
     Atom*[]  progBlock = null; // -------- Block for this depth
     string[] sttmntReg = []; // ---------- Statement "register"
+    string   faultMsg;
     Atom*    blockReg  = null;
     Atom*    loopReg   = null;
     ulong    seqLen    = tokens.length; // Input length
@@ -2100,6 +2111,7 @@ Atom* parse_token_sequence( string[] tokens ){
                 parserJobs.set_current( F_Parser.PARSE_STATEMENT );
                 break;
 
+
             /// Case CONSUME_LOOP_BODY: Load block statements /////////////////
             /// Case CONSUME_BLOCK: Load block statements /////////////////
             case F_Parser.CONSUME_BLOCK:
@@ -2120,17 +2132,39 @@ Atom* parse_token_sequence( string[] tokens ){
                 parserJobs.set_current( F_Parser.PARSE_BLOCK );
                 break;
 
+
             /// Case PARSE_STATEMENT: Parse loaded statement //////////////
             case F_Parser.PARSE_STATEMENT:
                 progBlock ~= parse_one_statement( sttmntReg );
                 parserJobs.set_current( F_Parser.RUN );
                 break;            
 
+
             /// Case PARSE_BLOCK: Recur on block //////////////////////////
             case F_Parser.PARSE_BLOCK:
+                // Descend one depth and parse the consumed block
                 blockReg = parse_token_sequence( sttmntReg );
-                // FIXME, START HERE:
+                // Ascended one depth, now put the job in context
+                // prevState = ;
+                
+                switch( parserJobs.get_prev() ){
+                    
+                    case F_Parser.RUN:
+                        progBlock ~= blockReg;
+                        break;
+                    
+                    case F_Parser.NO_JOB:
+                        faultMsg = "A code block was built without context";
+                        parserJobs.push( F_Parser.FAULT );
+                        break;
+
+                    default:
+                        faultMsg = "IMPOSSIBLE CODE BLOCK CASE";
+                        parserJobs.push( F_Parser.FAULT );
+                        break;
+                }
                 break;
+
 
             /// Case SUCCESS: End of input with no errors /////////////////
             case F_Parser.SUCCESS:
@@ -2138,7 +2172,7 @@ Atom* parse_token_sequence( string[] tokens ){
                 if( _DEBUG_VERBOSE ){
                     writeln( "\tSUCCESS, result: " ~ str( rtnProg ) );
                 }
-
+                state   = parserJobs.pop();
                 parsing = false;
                 break;
             
@@ -2149,19 +2183,35 @@ Atom* parse_token_sequence( string[] tokens ){
                 if( _DEBUG_VERBOSE ){
                     writeln( "\tFAULT, result: " ~ str( rtnProg ) );
                 }
-
+                state   = parserJobs.pop();
                 parsing = false;
+                rtnProg = new Atom( F_Error.PARSER, "Parser FAULT: " ~ faultMsg );
                 break;
 
+
+            /// Case NO_JOB: Input exhausted //////////////////////////////
+            case F_Parser.NO_JOB:
+
+                if( _DEBUG_VERBOSE ){
+                    writeln( "\tNO_JOB, parser job stack is EMPTY!" );
+                }
+                parsing = false;
+                break;
+            
             
             /// Case BAD: SOMETHING UNEXPECTED HAPPENED ///////////////////
             default: 
-                state = F_Parser.FAULT;
+                state = parserJobs.pop();
+                if( _DEBUG_VERBOSE ){
+                    writeln( "\tdefault, SOMETHING UNEXPECTED HAPPENED!, Final State: " ~ state.to!string );
+                }
                 rtnProg = new Atom( F_Error.PARSER, "IMPOSSIBLE PARSER CASE ENCOUNTERED" );
                 break;
         }
     }while( parsing );
-    
+    if( _DEBUG_VERBOSE ){
+        writeln( "\tParser EXIT!, Final State: " ~ state.to!string );
+    }
     return rtnProg;
 }
 
