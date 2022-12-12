@@ -5,8 +5,8 @@ module ab_parser_FSM;
    The concept is to make small changes to it until it becomes my own language.
    This is for entertainment only and comes with no warrantee whatsoever.
 
-   rdmd sparrow.d
-   dmd sparrow.d -of=sparrow.app
+   rdmd ab_parser_FSM.d
+   dmd ab_parser_FSM.d -of=sparrow.app
    
    James Watson, 2022-11 */
 
@@ -34,8 +34,9 @@ import std.math.operations; // -- `NaN`
 import std.typecons; // ---------- Tuple
 import std.ascii; // ------------- Whitespace test
 import std.algorithm.searching; // `canFind`
+import std.range.primitives; // `popBack`
 // import std.file; // -------------- `readText`
-alias  is_white = std.ascii.isWhite; 
+alias  p_whitespace = std.ascii.isWhite; 
 
 ///// Env Vars /////
 bool _DEBUG_VERBOSE  =  true; // Set true for debug prints
@@ -446,7 +447,7 @@ string[] tokenize( string expStr, dchar sepChar = ' ' ){
             stow_char();  
         }
         // C. Case separator
-        else if( (testWhite && is_white(c)) || (c == sepChar)){
+        else if( (testWhite && p_whitespace(c)) || (c == sepChar)){
             if(token.length > 0){  stow_token();  }
         // D. Case any other char
         }else{  cache_char();  } 
@@ -1726,75 +1727,75 @@ string[][] lex_many_one_line( string[] tokens ){
     return statements;
 }
 
-string[] tokenize_file( string fName ){
-    string   tExpr;
-    string[] sExpr;
-    File     f = File( fName );
-    foreach( line; f.byLine ){
-        tExpr = line.to!string; // Fetch text expression
-        if( _DEBUG_VERBOSE )  writeln( "\tLex line: " ~ tExpr );
-        if( strip( tExpr ).length == 0 )  continue; // If newline only, there is nothing to do
-        sExpr ~= tokenize( tExpr );
-    }
-    return sExpr;
-}
+// string[] tokenize_file( string fName ){
+//     string   tExpr;
+//     string[] sExpr;
+//     File     f = File( fName );
+//     foreach( line; f.byLine ){
+//         tExpr = line.to!string; // Fetch text expression
+//         if( _DEBUG_VERBOSE )  writeln( "\tLex line: " ~ tExpr );
+//         if( strip( tExpr ).length == 0 )  continue; // If newline only, there is nothing to do
+//         sExpr ~= tokenize( tExpr );
+//     }
+//     return sExpr;
+// }
 
-string[][] lex_file( string fName ){
-    // Read the contents of the file and lex into serial statements    
-    string     tExpr;
+// string[][] lex_file( string fName ){
+//     // Read the contents of the file and lex into serial statements    
+//     string     tExpr;
     
-    string[][] statememts;
-    string[][] lineContents;
-    ulong /**/ seqLen;
-    ulong /**/ index;
-    File /*-*/ f = File( fName );
+//     string[][] statememts;
+//     string[][] lineContents;
+//     ulong /**/ seqLen;
+//     ulong /**/ index;
+//     File /*-*/ f = File( fName );
 
-    if( _DEBUG_VERBOSE )  writeln( "`lex_file`" );
+//     if( _DEBUG_VERBOSE )  writeln( "`lex_file`" );
 
-    foreach( line; f.byLine ){
-        tExpr = line.to!string; // Fetch text expression
+//     foreach( line; f.byLine ){
+//         tExpr = line.to!string; // Fetch text expression
 
-        if( _DEBUG_VERBOSE )  writeln( "\tLex line: " ~ tExpr );
+//         if( _DEBUG_VERBOSE )  writeln( "\tLex line: " ~ tExpr );
 
-        if( strip( tExpr ).length == 0 )  continue; // If newline only, there is nothing to do
+//         if( strip( tExpr ).length == 0 )  continue; // If newline only, there is nothing to do
 
-        sExpr ~= tokenize( tExpr ); // Text Expression --to-> S-Expression
+//         sExpr ~= tokenize( tExpr ); // Text Expression --to-> S-Expression
 
-        // Make curlies their own "statements", see `parse_serial_statements`
-        if( p_open_curly( sExpr[0] ) || p_clos_curly( sExpr[0] ) ){
-            statememts ~= [ sExpr[0], ];
-            if( sExpr.length > 1 ) 
-                sExpr = sExpr[1..$-1];
-            else     
-                sExpr = [];
-        }
-        if( sExpr.length == 0 )  continue; // If we processed a lone curly, there is nothing else to do
+//         // Make curlies their own "statements", see `parse_serial_statements`
+//         if( p_open_curly( sExpr[0] ) || p_clos_curly( sExpr[0] ) ){
+//             statememts ~= [ sExpr[0], ];
+//             if( sExpr.length > 1 ) 
+//                 sExpr = sExpr[1..$-1];
+//             else     
+//                 sExpr = [];
+//         }
+//         if( sExpr.length == 0 )  continue; // If we processed a lone curly, there is nothing else to do
 
-        // If the line is one complete statement on its own
-        if( p_complete_expression( sExpr ) ){
-            statememts ~= sExpr;
-            sExpr = [];
-        // Else check for multiple statements on the line
-        }else{
-            if( _DEBUG_VERBOSE )  writeln( "\tLex incomplete line: " ~ sExpr.to!string );
-            lineContents = lex_many_one_line( sExpr );
-            seqLen /*-*/ = lineContents.length;
-            index /*--*/ = 0;
-            while( index < seqLen ){
-                // WARNING: Assume statements before the last are complete ;P
-                if( index < (seqLen-1) )  
-                    statememts ~= lineContents[ index ];
-                // Assume a non-empty last statement is partial
-                else if( lineContents[ index ].length > 0 )  
-                    sExpr = lineContents[ index ];
-                index++;
-            }
-        }
-    }
-    if( sExpr.length > 0 )  statememts ~= sExpr;
-    f.close();
-    return statememts;
-}
+//         // If the line is one complete statement on its own
+//         if( p_complete_expression( sExpr ) ){
+//             statememts ~= sExpr;
+//             sExpr = [];
+//         // Else check for multiple statements on the line
+//         }else{
+//             if( _DEBUG_VERBOSE )  writeln( "\tLex incomplete line: " ~ sExpr.to!string );
+//             lineContents = lex_many_one_line( sExpr );
+//             seqLen /*-*/ = lineContents.length;
+//             index /*--*/ = 0;
+//             while( index < seqLen ){
+//                 // WARNING: Assume statements before the last are complete ;P
+//                 if( index < (seqLen-1) )  
+//                     statememts ~= lineContents[ index ];
+//                 // Assume a non-empty last statement is partial
+//                 else if( lineContents[ index ].length > 0 )  
+//                     sExpr = lineContents[ index ];
+//                 index++;
+//             }
+//         }
+//     }
+//     if( sExpr.length > 0 )  statememts ~= sExpr;
+//     f.close();
+//     return statememts;
+// }
 
 
 Atom*[] parse_serial_statements( string[][] statememts ){
@@ -1840,7 +1841,7 @@ Atom*[] parse_serial_statements( string[][] statememts ){
 
 
 // Parse an entire file into AST conses
-Atom*[] parse_file( string fName ){  return parse_serial_statements( lex_file( fName ) );  }
+// Atom*[] parse_file( string fName ){  return parse_serial_statements( lex_file( fName ) );  }
 
 
 ExprInContext block_meaning( ExprInContext block ){
@@ -1872,11 +1873,14 @@ ExprInContext block_meaning( ExprInContext block ){
 // }
 
 // FIXME: UPON COMPLETION DELETE THE FOLLOWING FUNCTIONS: 
-//        `tokenize_file`, `lex_many_one_line`, `lex_file`,
+//        `tokenize_file` (old), `lex_many_one_line`, `lex_file`,
 string[] tokenize_file( string fName ){
     string   tExpr;
     string[] sExpr;
     File     f = File( fName );
+
+    if( _DEBUG_VERBOSE )  writeln( "`tokenize_file`" );
+
     foreach( line; f.byLine ){
         tExpr = line.to!string; // Fetch text expression
         if( _DEBUG_VERBOSE )  writeln( "\tLex line: " ~ tExpr );
@@ -1909,7 +1913,7 @@ struct ParserJobStack{
     
     // Methods //
     
-    this(){  jobs = [];   } // Constructor
+    // this(){  jobs = [];   } // Constructor
     
     bool p_has_job(){  return (jobs.length > 0);  } //- Are there are one or more jobs?
     bool p_has_prev(){  return (jobs.length > 1);  } // Is the job depth at least 2?
@@ -1918,10 +1922,10 @@ struct ParserJobStack{
     
     F_Parser pop(){  
         // Remove job from stack top and return it
+        F_Parser rtnJob = get_current();
         if( p_has_job() )
-            return jobs.popBack();  
-        else 
-            return F_Parser.NO_JOB;
+            jobs.popBack();  
+        return rtnJob;
     } 
 
     F_Parser get_prev(){  
@@ -1950,11 +1954,14 @@ struct ParserJobStack{
 
 Atom* parse_one_statement( string[] tokens ){
     // Return to simpler days of Scheme parsing
-    ulong seqLen  = tokens.length;
-    ulong bgn     = 0;
-    ulong end     = seqLen-1;
-    ulong index   = 0;
-    Atom* lstRoot = null;
+    ulong    seqLen  = tokens.length;
+    ulong    bgn     = 0;
+    ulong    end     = seqLen-1;
+    ulong    index   = 0;
+    Atom*    lstRoot = null;
+    string[] carPart;
+    string   token;
+    uint     depth = 0;
     
     // Are the parens correct?
     if( p_balanced_parens( tokens ) ){
@@ -1977,6 +1984,7 @@ Atom* parse_one_statement( string[] tokens ){
                 
                 // Find an element
                 carPart = [];
+                depth   = 0;
                 
                 // If element is a list
                 if( p_open_paren( tokens[index] ) ){
@@ -2034,7 +2042,7 @@ Atom* parse_token_sequence( string[] tokens ){
     ulong    regLen    = 0; // ----------- Input length
     ulong    bgn       = 0; // ----------- Input begin index
     ulong    end       = 0; // ----------- Input end   index
-    ulong    tokeDex   = 0; // ----------- Index of current input token
+    ulong    index     = 0; // ----------- Index of current input token
     uint     depth     = 0;
     string   token; // ------------------- Current input token
     Atom*    rtnProg = null; // ----------------- Output returned at this depth
@@ -2209,7 +2217,7 @@ Atom* parse_token_sequence( string[] tokens ){
                 rtnProg = new Atom( F_Error.PARSER, "IMPOSSIBLE PARSER CASE ENCOUNTERED" );
                 break;
         }
-    }while( parsing );
+    }while( parsing && (index < seqLen) );
     
     if( _DEBUG_VERBOSE ){
         writeln( "\tParser EXIT!, Final State: " ~ state.to!string );
