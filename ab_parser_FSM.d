@@ -1859,17 +1859,17 @@ ExprInContext block_meaning( ExprInContext block ){
 }
 
 
-Atom* run_file( string fName ){
-    // Execute every statement in a file and return the result of the last expression
-    Atom*[] code = parse_file( fName );
-    return block_meaning(
-        ExprInContext(
-            new Atom( code ), // ----- Expression to be evaluated
-            baseEnv, // -------- Global context
-            fName // String representation of the original expression
-        )
-    ).expr;
-}
+// Atom* run_file( string fName ){
+//     // Execute every statement in a file and return the result of the last expression
+//     Atom*[] code = parse_file( fName );
+//     return block_meaning(
+//         ExprInContext(
+//             new Atom( code ), // ----- Expression to be evaluated
+//             baseEnv, // -------- Global context
+//             fName // String representation of the original expression
+//         )
+//     ).expr;
+// }
 
 // FIXME: UPON COMPLETION DELETE THE FOLLOWING FUNCTIONS: 
 //        `tokenize_file`, `lex_many_one_line`, `lex_file`,
@@ -2025,7 +2025,8 @@ Atom* parse_token_sequence( string[] tokens ){
     F_Parser prevState; // ------------------- Current parser state
     bool     parsing   = true; // -------- Is the parser at this depth running?
     Atom*[]  progBlock = null; // -------- Block for this depth
-    string[] sttmntReg = []; // ---------- Statement "register"
+    string[] sttmntReg  = []; // ---------- Statement "register"
+    string[] progTokens = []; // ---------- Statement "register" for a loop body or other block
     string   faultMsg;
     Atom*    blockReg  = null;
     Atom*    loopReg   = null;
@@ -2036,7 +2037,7 @@ Atom* parse_token_sequence( string[] tokens ){
     ulong    tokeDex   = 0; // ----------- Index of current input token
     uint     depth     = 0;
     string   token; // ------------------- Current input token
-    Atom*    rtnProg; // ----------------- Output returned at this depth
+    Atom*    rtnProg = null; // ----------------- Output returned at this depth
 
     parserJobs.push( F_Parser.RUN ); // Parser always begins in the `RUN` state
 
@@ -2209,10 +2210,31 @@ Atom* parse_token_sequence( string[] tokens ){
                 break;
         }
     }while( parsing );
+    
     if( _DEBUG_VERBOSE ){
         writeln( "\tParser EXIT!, Final State: " ~ state.to!string );
     }
+
+    if( (rtnProg == null) && (progBlock.length > 0) )
+        rtnProg = new Atom( progBlock );
+    else if( _DEBUG_VERBOSE )
+        writeln( "\tNO PROGRAM STORED" );
+
     return rtnProg;
+}
+
+
+Atom* run_file( string fName ){
+    // Execute every statement in a file and return the result of the last expression
+    string[] allTokens = tokenize_file( fName );
+    Atom*    code = parse_token_sequence( allTokens );
+    return block_meaning(
+        ExprInContext(
+            code, // ----- Expression to be evaluated
+            baseEnv, // -------- Global context
+            fName // String representation of the original expression
+        )
+    ).expr;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
