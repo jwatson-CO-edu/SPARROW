@@ -2031,8 +2031,8 @@ Atom* parse_token_sequence( string[] tokens ){
     // Init
     F_Parser state; // ------------------- Current parser state
     F_Parser prevState; // ------------------- Current parser state
-    bool     parsing   = true; // -------- Is the parser at this depth running?
-    Atom*[]  progBlock = null; // -------- Block for this depth
+    bool     parsing    = true; // -------- Is the parser at this depth running?
+    Atom*[]  progBlock  = []; // -------- Block for this depth
     string[] sttmntReg  = []; // ---------- Statement "register"
     string[] progTokens = []; // ---------- Statement "register" for a loop body or other block
     string   faultMsg;
@@ -2040,14 +2040,16 @@ Atom* parse_token_sequence( string[] tokens ){
     Atom*    loopReg   = null;
     ulong    seqLen    = tokens.length; // Input length
     ulong    regLen    = 0; // ----------- Input length
-    ulong    bgn       = 0; // ----------- Input begin index
-    ulong    end       = 0; // ----------- Input end   index
+    // ulong    bgn       = 0; // ----------- Input begin index
+    // ulong    end       = 0; // ----------- Input end   index
     ulong    index     = 0; // ----------- Index of current input token
     uint     depth     = 0;
     string   token; // ------------------- Current input token
     Atom*    rtnProg = null; // ----------------- Output returned at this depth
 
     parserJobs.push( F_Parser.RUN ); // Parser always begins in the `RUN` state
+
+    if( _DEBUG_VERBOSE )  writeln( "`parse_token_sequence`" );
 
     ///// Parser Loop ////////////////////////////
     do{
@@ -2059,6 +2061,7 @@ Atom* parse_token_sequence( string[] tokens ){
             
             /// Case RUN: Decide on the next mode of the parser ///////////
             case F_Parser.RUN:
+                if( _DEBUG_VERBOSE )  writeln( "\tCase RUN: Decide on the next mode of the parser" );
                 
                 // If there are one or less tokens, we can only return one atom
                 if( seqLen < 2 )
@@ -2079,7 +2082,9 @@ Atom* parse_token_sequence( string[] tokens ){
                     
 
             /// Case ONE_ATOM: Parse one or empty ////////////////////
-            case F_Parser.ONE_ATOM:                
+            case F_Parser.ONE_ATOM:    
+                if( _DEBUG_VERBOSE )  writeln( "\tCase ONE_ATOM: Parse one or empty" );
+
                 // Base Case: There were no tokens, return Empty
                 if( seqLen == 0 ){  progBlock ~= empty_atom();  }
                 // Base Case: There was one token, Return it
@@ -2091,12 +2096,14 @@ Atom* parse_token_sequence( string[] tokens ){
 
             /// Case CONSUME_STATEMENT: Load statement ////////////////////
             case F_Parser.CONSUME_STATEMENT:
+                if( _DEBUG_VERBOSE )  writeln( "\tCONSUME_STATEMENT: Load statement" );
 
                 sttmntReg = [];
                 token     = tokens[ index ];
 
                 // If element is a list then scan it into the statement register
                 if( p_open_paren( tokens[index] ) ){
+                    if( _DEBUG_VERBOSE )  writeln( "\tScanning s-expression ..." );
                     do{
                         token = tokens[index];
                         if( p_open_paren( token ) ) depth++; 
@@ -2104,17 +2111,26 @@ Atom* parse_token_sequence( string[] tokens ){
                         if( p_clos_paren( token ) ) depth--;
                         sttmntReg ~= token;
                         index++;
-                    }while( (depth > 0) && (index <= end) );
+                    }while( (depth > 0) && (index <= seqLen) );
 
                 // else scan in an EZ list
                 }else{
+                    if( _DEBUG_VERBOSE )  writeln( "\tScanning EZ list ..." );
                     do{
+                        if( _DEBUG_VERBOSE )  writeln( "\t`index` == " ~ index.to!string );
+
                         token = tokens[index];
                         sttmntReg ~= token;
                         index++;
-                        if( p_semicolon( token ) )  break;
-                    }while( (index <= end) );
+                        if( p_semicolon( token ) ){
+                            if( _DEBUG_VERBOSE )  writeln( "\tSemicolon!: " ~ token );
+                            break;
+                        }  
+                    }while( (index <= seqLen) );
                 }
+
+                if( _DEBUG_VERBOSE )  writeln( "\tStatement Tokens: " ~ sttmntReg.to!string );
+
 
                 // Flag statement register for parsing
                 parserJobs.set_current( F_Parser.PARSE_STATEMENT );
@@ -2124,6 +2140,8 @@ Atom* parse_token_sequence( string[] tokens ){
             /// Case CONSUME_LOOP_BODY: Load block statements /////////////////
             /// Case CONSUME_BLOCK: Load block statements /////////////////
             case F_Parser.CONSUME_BLOCK:
+                if( _DEBUG_VERBOSE )  writeln( "\tCase CONSUME_BLOCK: Load block statements" );
+
                 sttmntReg = [];
                 index++;
                 depth = 1;
@@ -2144,6 +2162,7 @@ Atom* parse_token_sequence( string[] tokens ){
 
             /// Case PARSE_STATEMENT: Parse loaded statement //////////////
             case F_Parser.PARSE_STATEMENT:
+                if( _DEBUG_VERBOSE )  writeln( "\tCase PARSE_STATEMENT: Parse loaded statement" );
                 progBlock ~= parse_one_statement( sttmntReg );
                 parserJobs.set_current( F_Parser.RUN );
                 break;            
@@ -2152,6 +2171,8 @@ Atom* parse_token_sequence( string[] tokens ){
             /// Case PARSE_BLOCK: Recur on block //////////////////////////
             case F_Parser.PARSE_BLOCK:
                 // Descend one depth and parse the consumed block
+                if( _DEBUG_VERBOSE )  writeln( "\tCase PARSE_BLOCK: Recur on block" );
+
                 blockReg = parse_token_sequence( sttmntReg );
                 // Ascended one depth, now put the job in context
                 // prevState = ;
@@ -2179,6 +2200,7 @@ Atom* parse_token_sequence( string[] tokens ){
             case F_Parser.SUCCESS:
 
                 if( _DEBUG_VERBOSE ){
+                    writeln( "\tCase SUCCESS: End of input with no errors" );
                     writeln( "\tSUCCESS, result: " ~ str( rtnProg ) );
                 }
                 state   = parserJobs.pop();
@@ -2190,6 +2212,8 @@ Atom* parse_token_sequence( string[] tokens ){
             case F_Parser.FAULT:
 
                 if( _DEBUG_VERBOSE ){
+                    writeln( "\tCase FAULT: The input has caused problems" );
+
                     writeln( "\tFAULT, result: " ~ str( rtnProg ) );
                 }
                 state   = parserJobs.pop();
@@ -2202,6 +2226,8 @@ Atom* parse_token_sequence( string[] tokens ){
             case F_Parser.NO_JOB:
 
                 if( _DEBUG_VERBOSE ){
+                    writeln( "\tCase NO_JOB: Input exhausted" );
+
                     writeln( "\tNO_JOB, parser job stack is EMPTY!" );
                 }
                 parsing = false;
@@ -2212,6 +2238,8 @@ Atom* parse_token_sequence( string[] tokens ){
             default: 
                 state = parserJobs.pop();
                 if( _DEBUG_VERBOSE ){
+                    writeln( "\tCase BAD: SOMETHING UNEXPECTED HAPPENED" );
+
                     writeln( "\tdefault, SOMETHING UNEXPECTED HAPPENED!, Final State: " ~ state.to!string );
                 }
                 rtnProg = new Atom( F_Error.PARSER, "IMPOSSIBLE PARSER CASE ENCOUNTERED" );
@@ -2221,10 +2249,20 @@ Atom* parse_token_sequence( string[] tokens ){
     
     if( _DEBUG_VERBOSE ){
         writeln( "\tParser EXIT!, Final State: " ~ state.to!string );
+        writeln( "\tThere are " ~ progBlock.length.to!string ~ " statements in program at this level." );
+        int forDex = 1;
+        foreach( Atom* atm; progBlock ){
+            write( "\t\t" ~ forDex.to!string ~ "/" ~ progBlock.length.to!string  ~ ", " );
+            writeln( str( atm ) ); 
+            forDex++;
+        }
     }
 
-    if( (rtnProg == null) && (progBlock.length > 0) )
+    if( (rtnProg == null) && (progBlock.length > 0) ){
+        if( _DEBUG_VERBOSE )  writeln( "\tReturn program" );
         rtnProg = new Atom( progBlock );
+    }
+        
     else if( _DEBUG_VERBOSE )
         writeln( "\tNO PROGRAM STORED" );
 
