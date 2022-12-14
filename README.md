@@ -92,7 +92,8 @@ Completion Key:
          *  A stack is required to handle arbitrarily nested blocks, and possibly other nested things!
         [>] Implement FSM operating on a stack
         [ ] T: Run all existing examples other than the loop example
-        [ ] Tear out the old parser (See notes next to new functions)
+        [ ] T: Inline block { <BLOCK> } <OUTSIDE>
+        [ ] Tear out the old parser (See notes near to new functions)
     [>] for (<counter> <bgn> <end>) {<BLOCK>}; - Counter bounds inclusive, Note DOUBLE bounds!
         [Y] Special Form, 2022-12-06: Wrote special form, requires a new parser and also testing
         [Y] Loop iterates with <counter> <= <end>, 2022-12-06: Requires a new parser and also testing
