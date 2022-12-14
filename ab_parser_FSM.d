@@ -39,7 +39,7 @@ import std.range.primitives; // `popBack`
 alias  p_whitespace = std.ascii.isWhite; 
 
 ///// Env Vars /////
-bool _DEBUG_VERBOSE  =  true; // Set true for debug prints
+bool _DEBUG_VERBOSE  =  false; // Set true for debug prints
 bool _TEST_ALL_PARTS =  true; // Set true to run all unit tests
 
 
@@ -1962,9 +1962,19 @@ Atom* parse_one_statement( string[] tokens ){
     string[] carPart;
     string   token;
     uint     depth = 0;
+
+    if( _DEBUG_VERBOSE )  writeln( "`parse_one_statement`" );
     
+    if( seqLen == 0 ){
+
+        lstRoot = empty_atom();
+
+    }else if( seqLen == 1 ){
+
+        lstRoot = atomize_string( tokens[0] );
+
     // Are the parens correct?
-    if( p_balanced_parens( tokens ) ){
+    }else if( p_balanced_parens( tokens ) ){
 
         // Are we building a list?
         if(  p_parent_parens( tokens )  ||  p_parent_semi( tokens )  ){
@@ -2019,6 +2029,9 @@ Atom* parse_one_statement( string[] tokens ){
     }else{
         return new Atom( F_Error.SYNTAX, "PARENTHESES MISMATCH" );
     }
+    if( _DEBUG_VERBOSE ){
+        writeln( "\tabout to return: " ~ str( lstRoot ) );
+    }    
     return lstRoot;
 }
 
