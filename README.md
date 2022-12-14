@@ -166,6 +166,13 @@ Completion Key:
         [ ] Compare same algo to Python3.11
     [ ] Readability
         [ ] Is the algo easy or hard to read in SPARROW?
+```
+### Deferred to FINCH
+* FINCH is an interpretted, flow-based language in which computation graphs (for differentiation and backpropagation) and tensors (to build neural models from elementary layers) are first-class structures.
+* The purpose is to support my own investigation into cognitive architecture and simulation.
+* Possible transpilation to D in the far future?
+* Possible bytecode interpreter in the far far future?
+```
 [ ] E: AST Nodes? The parser outputs AST nodes that can have multiple children, not just 2 in the case of conses
      *  At this point SPARROW moves away from being Scheme and becomes its own language!
     [ ] T: Repeat efficiency test(s)
@@ -197,6 +204,7 @@ Completion Key:
 * `[ ]` [Lil](https://beyondloom.com/decker/lil.html)
 * `[ ]` [LISP](https://texdraft.github.io/lisp-compiler/internals.html)
 * `[ ]` [Om](http://www.om-language.org/)  
+* `[ ]` [Pony](https://www.ponylang.io/)  
 
 `[ ]` Absorb PL Advice
 * `[ ]` [Programming Language Design Notes](https://cs.lmu.edu/~ray/notes/languagedesignnotes/)
