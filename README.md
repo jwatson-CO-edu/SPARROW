@@ -31,7 +31,7 @@ Completion Key:
 * `[N]` Will NOT Be Done
 * `[~]` Partially Done and/or Skipped for Now
 
-## Phase 1: Learn Computer Language Design via Scheme -- SPARROW
+# Phase 1: Learn Computer Language Design via Scheme -- SPARROW
 ### Basic Implementation
 ```
 [Y] Translate first "ab_" evaluator to Dlang - 2022-09-07: COMPLETE
@@ -168,7 +168,7 @@ Completion Key:
     [ ] Readability
         [ ] Is the algo easy or hard to read in SPARROW?
 ```
-### Deferred to FINCH
+## Deferred to FINCH
 * FINCH is an interpretted, flow-based language based on a graph structure instead of a stack structure
 * The purpose is to support my own investigation into cognitive architecture and simulation.
 * Possible transpilation to D in the far future?
@@ -182,9 +182,11 @@ Completion Key:
 { } Garbage Collection, 2022-11-25 - If SPARROW has a pre-allocated implementation by this point, then investigate GC
 ```
 # Phase 2: **FINCH Transition**: What are you even doing?
-`[ ]` Manage the FINCH vision 
+### Manage the FINCH vision 
 * `[ ]` What is the purpose of FINCH?
     - Construct a flow-based language and the structure to support it
+    - Imagine a modular language that is **not** based on *stacks*
+    - Prelude to research in cognitive architecture and cognitive robotics  
 * `[ ]` Gather non-parallel goals from FINCH paper notes.
 * `[ ]` Read the next phase's goals.  
 * `[ ]` Consolidate paper and README goals.
@@ -196,27 +198,28 @@ Completion Key:
     - There were a number of times I let it interfere.
     - Have I managed to keep it from becoming an obsession?
 
-`[ ]` Read & Take Notes
+### Read & Take Notes
 * `[ ]` [Minimalism in Programming Language Design](https://pointersgonewild.com/2022/05/23/minimalism-in-programming-language-design/)
 * `[ ]` [Racket is an Acceptable Python](https://dustycloud.org/blog/racket-is-an-acceptable-python/)
 * `[ ]` [Computer Language Design in the Real World](https://blog.sigplan.org/2022/05/19/language-design-in-the-real-world/)  
 
-`[ ]` Investigate small(ish) languages and their philosophies
+### Investigate small(ish) languages and their philosophies
 * `[ ]` [Duck](http://ducklang.org/designing-a-programming-language-i)
 * `[ ]` [Lil](https://beyondloom.com/decker/lil.html)
 * `[ ]` [LISP](https://texdraft.github.io/lisp-compiler/internals.html)
 * `[ ]` [Om](http://www.om-language.org/)  
 * `[ ]` [Pony](https://www.ponylang.io/)  
 
-`[ ]` Absorb PL Advice
+### Absorb PL Advice
 * `[ ]` [Programming Language Design Notes](https://cs.lmu.edu/~ray/notes/languagedesignnotes/)
 * `[ ]` [Great Works in PL](https://www.jsoftware.com/papers/tot.htm)
     - `[ ]` Create reading list for the next phase  
 
-`[ ]` Investigate floaw language(s) and their philosophies  
+### Investigate flow language(s) and their philosophies  
 * `[ ]` Select Zotero materials
 * `[ ]` Read Zotero materials
-## Language 3
+
+# Language 3
 A programming language in which computation graphs (for differentiation and backpropagation) and tensors (to build neural models from elementary layers) are first-class structures.
 * `[ ]`  Choose a name
     - MAGPIE: Multiple Agency Graph Program for Intelligent Execution
