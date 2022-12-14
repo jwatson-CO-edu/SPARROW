@@ -150,7 +150,7 @@ Completion Key:
 [ ] E: R6RS, Complete Scheme without Error System (If yes, then expand this bullet with SELECTED topics ONLY )
 [ ] E: R7RS, Complete Scheme *with*  Error System (If yes, then expand this bullet with SELECTED topics ONLY )
 ```
-### Structural Changes
+### Compatibility Testing & Structural Evaluation
 ```
 [ ] T: Will SPARROW compile & run in Windows without modification?
     [ ] Q: Is selective compilation required and/or possible in Dlang?
