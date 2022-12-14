@@ -169,7 +169,7 @@ Completion Key:
         [ ] Is the algo easy or hard to read in SPARROW?
 ```
 ### Deferred to FINCH
-* FINCH is an interpretted, flow-based language in which computation graphs (for differentiation and backpropagation) and tensors (to build neural models from elementary layers) are first-class structures.
+* FINCH is an interpretted, flow-based language based on a graph structure instead of a stack structure
 * The purpose is to support my own investigation into cognitive architecture and simulation.
 * Possible transpilation to D in the far future?
 * Possible bytecode interpreter in the far far future?
@@ -181,9 +181,10 @@ Completion Key:
     [ ] E: Did you notice any advantages?
 { } Garbage Collection, 2022-11-25 - If SPARROW has a pre-allocated implementation by this point, then investigate GC
 ```
-### **FINCH Transition**: What are you even doing?
+# Phase 2: **FINCH Transition**: What are you even doing?
 `[ ]` Manage the FINCH vision 
 * `[ ]` What is the purpose of FINCH?
+    - Construct a flow-based language and the structure to support it
 * `[ ]` Gather non-parallel goals from FINCH paper notes.
 * `[ ]` Read the next phase's goals.  
 * `[ ]` Consolidate paper and README goals.
@@ -215,10 +216,13 @@ Completion Key:
 `[ ]` Investigate floaw language(s) and their philosophies  
 * `[ ]` Select Zotero materials
 * `[ ]` Read Zotero materials
-## Phase 2: A different language ...
+## Language 3
+A programming language in which computation graphs (for differentiation and backpropagation) and tensors (to build neural models from elementary layers) are first-class structures.
 * `[ ]`  Choose a name
     - MAGPIE: Multiple Agency Graph Program for Intelligent Execution
-    - FINCH: Flexible Intepreter for Novel Cognition Heirarchies     
+    - FINCH: 
+        * Flexible Intepreter for Novel Cognition Heirarchies
+        * Flow Interpreter for Novice Computer language Hacking
     - CASSOWARI: Cognitive Agent Simulation System, Objects With ANN, RL, and Ingenuity
     - CROW: Cognitive REPL Object Wrangler
     - GRACKLE: Graph Routing of Agent Cognition for Knowledge, Learning, and Execution
