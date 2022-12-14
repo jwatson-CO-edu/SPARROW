@@ -12,10 +12,25 @@ The concept is to slowly morph it into my own language.
 1. Begin simply, and add justifiable complexity with caution!
 
 # Purpose & Roadmap
-## Phase 1: Learn Computer Language Design via Scheme -- SPARROW
+
+### Phase 1: Learn Computer Language Design via Scheme -- SPARROW
 1. Parsing & Syntax
 1. Program Blocks
 1. Memory Management & Garbage Collection
+
+### Phase 2: **FINCH Transition**: What are you even doing?
+1. Establish design goals
+1. Gather ideas and thoughts
+1. Attain knowledge and wisdom concerning programming language design and Implementation
+
+### Phase 3: **FINCH Implementation**
+1. Decide which Phase 2 ideas are most important
+1. Construct a flow-based language and the structure to support it
+    - No stacks
+
+### Phase N: Language 3
+1. Create a language that has the current basic structures of machine cognition as first-class structures
+1. Make lashing those structures together ergonomic and straightforward
 
 
 # `DEV PLAN` 
@@ -168,19 +183,7 @@ Completion Key:
     [ ] Readability
         [ ] Is the algo easy or hard to read in SPARROW?
 ```
-## Deferred to FINCH
-* FINCH is an interpretted, flow-based language based on a graph structure instead of a stack structure
-* The purpose is to support my own investigation into cognitive architecture and simulation.
-* Possible transpilation to D in the far future?
-* Possible bytecode interpreter in the far far future?
-```
-[ ] E: AST Nodes? The parser outputs AST nodes that can have multiple children, not just 2 in the case of conses
-     *  At this point SPARROW moves away from being Scheme and becomes its own language!
-    [ ] T: Repeat efficiency test(s)
-    [ ] E: Was this easier or harder to parse?
-    [ ] E: Did you notice any advantages?
-{ } Garbage Collection, 2022-11-25 - If SPARROW has a pre-allocated implementation by this point, then investigate GC
-```
+
 # Phase 2: **FINCH Transition**: What are you even doing?
 ### Manage the FINCH vision 
 * `[ ]` What is the purpose of FINCH?
@@ -219,7 +222,21 @@ Completion Key:
 * `[ ]` Select Zotero materials
 * `[ ]` Read Zotero materials
 
-# Language 3
+# Phase 3: **FINCH Implementation**
+* FINCH is an interpretted, flow-based language based on a graph structure instead of a stack structure
+* The purpose is to support my own investigation into cognitive architecture and simulation.
+* Possible transpilation to D in the far future?
+* Possible bytecode interpreter in the far far future?
+```
+[ ] E: AST Nodes? The parser outputs AST nodes that can have multiple children, not just 2 in the case of conses
+     *  At this point SPARROW moves away from being Scheme and becomes its own language!
+    [ ] T: Repeat efficiency test(s)
+    [ ] E: Was this easier or harder to parse?
+    [ ] E: Did you notice any advantages?
+{ } Garbage Collection, 2022-11-25 - If SPARROW has a pre-allocated implementation by this point, then investigate GC
+```
+
+# Phase N: Language 3
 A programming language in which computation graphs (for differentiation and backpropagation) and tensors (to build neural models from elementary layers) are first-class structures.
 * `[ ]`  Choose a name
     - MAGPIE: Multiple Agency Graph Program for Intelligent Execution
