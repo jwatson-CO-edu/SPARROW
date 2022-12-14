@@ -216,6 +216,13 @@ Completion Key:
 * `[ ]` Select Zotero materials
 * `[ ]` Read Zotero materials
 ## Phase 2: A different language ...
+* `[ ]`  Choose a name
+    - MAGPIE: Multiple Agency Graph Program for Intelligent Execution
+    - FINCH: Flexible Intepreter for Novel Cognition Heirarchies     
+    - CASSOWARI: Cognitive Agent Simulation System, Objects With ANN, RL, and Ingenuity
+    - CROW: Cognitive REPL Object Wrangler
+    - GRACKLE: Graph Routing of Agent Cognition for Knowledge, Learning, and Execution
+    - BIRD: Basic Instruction REPL Demonstrator
 
 # Resources
 ## Novice Language Design
