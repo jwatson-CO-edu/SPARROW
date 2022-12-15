@@ -13,22 +13,22 @@ The concept is to slowly morph it into my own language.
 
 # Purpose & Roadmap
 
-### Phase 1: Learn Computer Language Design via Scheme -- SPARROW
+### Phase 1: **SPARROW**, Learn Computer Language Design via Scheme 
 1. Parsing & Syntax
 1. Program Blocks
 1. Memory Management & Garbage Collection
 
-### Phase 2: **FINCH Transition**: What are you even doing?
+### Phase 2: **FINCH Transition**, What are you even doing?
 1. Establish design goals
 1. Gather ideas and thoughts
 1. Attain knowledge and wisdom concerning programming language design and Implementation
 
-### Phase 3: **FINCH Implementation**
+### Phase 3: **FINCH Implementation**, Intermediate Language Design
 1. Decide which Phase 2 ideas are most important
 1. Construct a flow-based language and the structure to support it
     - No stacks
 
-### Phase N: Language 3
+### Phase N: Language 3, Domain Specific Language
 1. Create a language that has the current basic structures of machine cognition as first-class structures
 1. Make lashing those structures together ergonomic and straightforward
 
