@@ -247,6 +247,13 @@ A programming language in which computation graphs (for differentiation and back
     - CROW: Cognitive REPL Object Wrangler
     - GRACKLE: Graph Routing of Agent Cognition for Knowledge, Learning, and Execution
     - BIRD: Basic Instruction REPL Demonstrator
+### Language 3 Reseouces
+* [DNN and Optimization Library](https://github.com/henrygouk/dopt) written in D
+    - Successor to [dnnet](https://github.com/henrygouk/dnnet), May want to mine this one for examples and simpler code
+* [Vectorflow](https://github.com/Netflix/vectorflow) is a minimalist neural network library optimized for sparse data and single machine environments.
+* [FANN](http://leenissen.dk/fann/wp/): C library for ANN
+* [List of ANN libs](https://james-william-fletcher.medium.com/a-new-alternative-to-the-fast-artificial-neural-network-library-fann-in-c-4f7a7018cce4)
+
 
 # Resources
 ## Novice Language Design
