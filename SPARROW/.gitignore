@@ -1,0 +1,16 @@
+.dub
+docs.json
+__dummy.html
+docs/
+/sparrow
+sparrow.so
+sparrow.dylib
+sparrow.dll
+sparrow.a
+sparrow.lib
+sparrow-test-*
+*.exe
+*.pdb
+*.o
+*.obj
+*.lst

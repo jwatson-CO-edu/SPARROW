@@ -103,12 +103,12 @@ Completion Key:
         [~] How to cleanly handle nested indented blocks?, 2022-11-23: Not needed at this time + adds complexity
 
 [>] Implement loops
-    [>] Write a new parser!, 2022-12-18: RESTORED FUNCTIONALITY!
+    [Y] Write a new parser!, 2022-12-18: PARSING IS GREAT!
          *  A stack is required to handle arbitrarily nested blocks, and possibly other nested things!
         [Y] Implement FSM operating on a stack, 2022-12-18: RESTORED FUNCTIONALITY!
         [Y] T: Run all existing examples other than the loop example, 2022-12-18: RESTORED FUNCTIONALITY!
         [Y] T: Inline block { <BLOCK> } <OUTSIDE>, 2022-12-18: No change required!
-        [>] Tear out the old parser (See notes near to new functions)
+        [Y] Tear out the old parser (See notes near to new functions), 2022-12-18: PARSING IS GREAT!
     [>] for (<counter> <bgn> <end>) {<BLOCK>}; - Counter bounds inclusive, Note DOUBLE bounds!
         [Y] Special Form, 2022-12-06: Wrote special form, requires a new parser and also testing
         [Y] Loop iterates with <counter> <= <end>, 2022-12-06: Requires a new parser and also testing
@@ -147,9 +147,9 @@ Completion Key:
 ```
 [ ] Replace `ExprInContext` with global `Env` pointer, Assume one context per interpreter/thread
 [ ] Change Closures to block implementation
-{ } E: Source file > 2k lines? 
-    { } Yes: Split functions into separate categories and organize as a project
-    { } No:  Are the functions at least arranged in a meaningful way?
+{Y} E: Source file > 2k lines?, 2022-12-18: Split into logical sections without getting crazy.
+    {Y} Yes: Split functions into separate categories and organize as a project, 2022-12-18: Split into logical sections without getting crazy.
+    {N} No:  Are the functions at least arranged in a meaningful way?, N/A
 [ ] Experiment with memory models
     [ ] Research
         [ ] Read: How does Dlang allocate memory?

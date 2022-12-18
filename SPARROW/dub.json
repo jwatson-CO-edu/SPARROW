@@ -1,0 +1,9 @@
+{
+	"authors": [
+		"james"
+	],
+	"copyright": "Copyright © 2022, james",
+	"description": "A tiny programming language based on Little Scheme, made for educational purposes",
+	"license": "MIT",
+	"name": "sparrow"
+}
