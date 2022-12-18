@@ -39,7 +39,7 @@ import std.range.primitives; // `popBack`
 alias  p_whitespace = std.ascii.isWhite; 
 
 ///// Env Vars /////
-bool _DEBUG_VERBOSE  =  false; // Set true for debug prints
+bool _DEBUG_VERBOSE  =  true; // Set true for debug prints
 bool _TEST_ALL_PARTS =  true; // Set true to run all unit tests
 
 
@@ -2076,20 +2076,26 @@ Atom* parse_token_sequence( string[] tokens ){
             case F_Parser.RUN:
                 if( _DEBUG_VERBOSE )  writeln( "\tCase RUN: Decide on the next mode of the parser" );
                 
-                // If there are one or less tokens, we can only return one atom
-                if( seqLen < 2 )
-                    parserJobs.set_current( F_Parser.ONE_ATOM );
-                // Else there are many, check if we need to consume a block or a statement
-                else{
-                    token = tokens[ index ]; // Fetch token
-                    if( p_open_curly( token ) ) // Open curly: Consume block
+                if(index < seqLen){
+                    // If there are one or less tokens, we can only return one atom
+                    if( seqLen < 2 )
+                        parserJobs.set_current( F_Parser.ONE_ATOM );
+                    // Else there are many, check if we need to consume a block or a statement
+                    else{
+                        token = tokens[ index ]; // Fetch token
+                        if( p_open_curly( token ) ) // Open curly: Consume block
 
-                        // parserJobs.set_current( F_Parser.CONSUME_BLOCK );
-                        parserJobs.push( F_Parser.CONSUME_BLOCK ); // Push so that we can peek block context
+                            // parserJobs.set_current( F_Parser.CONSUME_BLOCK );
+                            parserJobs.push( F_Parser.CONSUME_BLOCK ); // Push so that we can peek block context
 
-                    else // else is an s-expression or an EZ list
-                        parserJobs.set_current( F_Parser.CONSUME_STATEMENT );
-                    break;
+                        else // else is an s-expression or an EZ list
+                            parserJobs.set_current( F_Parser.CONSUME_STATEMENT );
+                        break;
+                    }
+                }else if( sttmntReg.length > 0 ){
+                    parserJobs.set_current( F_Parser.PARSE_STATEMENT );
+                }else{
+                    parserJobs.set_current( F_Parser.SUCCESS );
                 }
                 break;
                     
@@ -2178,6 +2184,7 @@ Atom* parse_token_sequence( string[] tokens ){
                 if( _DEBUG_VERBOSE )  writeln( "\tCase PARSE_STATEMENT: Parse loaded statement" );
                 progBlock ~= parse_one_statement( sttmntReg );
                 parserJobs.set_current( F_Parser.RUN );
+                sttmntReg = [];
                 break;            
 
 
@@ -2206,6 +2213,7 @@ Atom* parse_token_sequence( string[] tokens ){
                         parserJobs.push( F_Parser.FAULT );
                         break;
                 }
+                sttmntReg = [];
                 break;
 
 
@@ -2258,7 +2266,7 @@ Atom* parse_token_sequence( string[] tokens ){
                 rtnProg = new Atom( F_Error.PARSER, "IMPOSSIBLE PARSER CASE ENCOUNTERED" );
                 break;
         }
-    }while( parsing && (index < seqLen) );
+    }while( parsing );
     
     if( _DEBUG_VERBOSE ){
         writeln( "\tParser EXIT!, Final State: " ~ state.to!string );
