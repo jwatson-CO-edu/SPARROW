@@ -228,6 +228,14 @@ Completion Key:
 * Possible transpilation to D in the far future?
 * Possible bytecode interpreter in the far far future?
 ```
+/// (Possible?) Comparison of SPARROW and FINCH ///
+Feature/Structure | SPARROW      | FINCH
+-------------------------------------------
+Structure           Cons           Object   // Can an object be versatile, lightweight, and fast?  Needs study
+Syntax Unit         Atom           Atom     // Would like to have a lightweight atom for FINCH
+Eval Unit           ExprInContext  Fragment // `ExprInContext` was a happy accident in partially modelling a Fragment
+Context             Scoped         Flow     // Is flow based programming relevant outside of an event loop?
+
 [ ] E: AST Nodes? The parser outputs AST nodes that can have multiple children, not just 2 in the case of conses
      *  At this point SPARROW moves away from being Scheme and becomes its own language!
     [ ] T: Repeat efficiency test(s)
