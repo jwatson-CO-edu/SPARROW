@@ -39,7 +39,7 @@ import std.range.primitives; // `popBack`
 alias  p_whitespace = std.ascii.isWhite; 
 
 ///// Env Vars /////
-bool _DEBUG_VERBOSE  =  true; // Set true for debug prints
+bool _DEBUG_VERBOSE  =  false; // Set true for debug prints
 bool _TEST_ALL_PARTS =  true; // Set true to run all unit tests
 
 
@@ -2201,6 +2201,8 @@ Atom* parse_token_sequence( string[] tokens ){
                     
                     case F_Parser.RUN:
                         progBlock ~= blockReg;
+                        parserJobs.pop();
+                        blockReg = null;
                         break;
                     
                     case F_Parser.NO_JOB:
