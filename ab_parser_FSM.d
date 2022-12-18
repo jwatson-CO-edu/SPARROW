@@ -2170,11 +2170,15 @@ Atom* parse_token_sequence( string[] tokens ){
                         depth++;
                     else if( p_clos_curly( token ) ){
                         depth--;
-                        if(depth == 0) break;
+                        if(depth == 0){
+                            index++; // Move past the final curly
+                            break;
+                        } 
                     }
                     sttmntReg ~= token;
                     index++;
                 }while( index < seqLen );
+                
                 parserJobs.set_current( F_Parser.PARSE_BLOCK );
                 break;
 

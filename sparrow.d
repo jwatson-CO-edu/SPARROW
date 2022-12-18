@@ -8,7 +8,7 @@ module sparrow;
    rdmd sparrow.d
    dmd sparrow.d -of=sparrow.app
    
-   James Watson, 2022-11 */
+   James Watson, 2022-12 */
 
 /*
 ///// DEV THOUGHTS & PLANS /////
@@ -34,11 +34,12 @@ import std.math.operations; // -- `NaN`
 import std.typecons; // ---------- Tuple
 import std.ascii; // ------------- Whitespace test
 import std.algorithm.searching; // `canFind`
+import std.range.primitives; // `popBack`
 // import std.file; // -------------- `readText`
-alias  is_white = std.ascii.isWhite; 
+alias  p_whitespace = std.ascii.isWhite; 
 
 ///// Env Vars /////
-bool _DEBUG_VERBOSE  =  true; // Set true for debug prints
+bool _DEBUG_VERBOSE  =  false; // Set true for debug prints
 bool _TEST_ALL_PARTS =  true; // Set true to run all unit tests
 
 
@@ -446,7 +447,7 @@ string[] tokenize( string expStr, dchar sepChar = ' ' ){
             stow_char();  
         }
         // C. Case separator
-        else if( (testWhite && is_white(c)) || (c == sepChar)){
+        else if( (testWhite && p_whitespace(c)) || (c == sepChar)){
             if(token.length > 0){  stow_token();  }
         // D. Case any other char
         }else{  cache_char();  } 
@@ -876,151 +877,12 @@ bool p_parent_semi( string[] tokens ){
 }
 
 
-Atom* consify_token_sequence( string[] tokens ){
-    // Recursively render tokens as a cons structure
-    // 2022-11-XX: Rewritten
-    // 2022-11-30: EZ List CANNOT begin with a LISP list! AMBIGUOUS!, Acceptable bug until LISP lists abandoned
-    ulong    seqLen  = tokens.length;
-    ulong    bgn;
-    ulong    end;
-    int /**/ depth   = 0;
-    ulong    index;
-    string   token;
-    string[] carPart;
-    Atom*    lstRoot = null;
-    Atom*[]  blockStatements;
-
-    if( _DEBUG_VERBOSE ){
-        writeln("`consify_token_sequence`");
-        writeln( "\tInput: " ~ tokens );
-    }  
-
-    // Base Case: There were no tokens, return Empty
-    if( seqLen == 0 ){  return empty_atom();  }
-    
-    // Base Case: There was one token, Return it
-    if( seqLen == 1 ){  return atomize_string( tokens[0] );  }
-
-    // Recursive Case: Multiple tokens, is at least a list
-    if( seqLen > 1 ){
-
-        // Establish bounds
-        bgn = 0;
-        end = seqLen-1;
-
-        // Are the parens correct?
-        if( p_balanced_parens( tokens ) ){
-            
-            // Are we building a block?
-            if(  p_parent_curlies( tokens )  ){
-                // WARNING: This will also scoop up the last INCOMPLETE statement in the block!
-
-                blockStatements = [];
-                bgn++;
-                end--;
-
-                // Begin block
-                index = bgn;
-
-                // While we are in the block bounds, find and append statements
-                while( index <= end ){
-
-                    // Find an statement
-                    carPart = [];
-
-                    // If element is a list
-                    if( p_open_paren( tokens[index] ) ){
-                        do{
-                            token = tokens[index];
-                            if( p_open_paren( token ) ) depth++; 
-                            else
-                            if( p_clos_paren( token ) ) depth--;
-                            carPart ~= token;
-                            index++;
-                        }while( (depth > 0) && (index <= end) );
-
-                    // else scan for an EZ list
-                    }else{
-                        do{
-                            token = tokens[index];
-                            carPart ~= token;
-                            index++;
-                            if( p_semicolon( token ) )  break;
-                        }while( (index <= end) );
-                    }
-
-                    // Collect statement
-                    blockStatements ~= consify_token_sequence( carPart );
-                }
-
-                // Return a block atom
-                return new Atom( blockStatements );
-
-            // Are we building a list?
-            }else if(  p_parent_parens( tokens )  ||  p_parent_semi( tokens )  ){
-                end--;
-                if( p_parent_parens( tokens ) )  bgn++;
-                
-                // Begin list
-                index   = bgn;
-                lstRoot = empty_cons();
-                if( _DEBUG_VERBOSE ){
-                    writeln( "\tInput: " ~ tokens.to!string );
-                    writeln( "\tRoot: " ~ lstRoot.kind.to!string ~ ", " ~ str( lstRoot ) );
-                }  
-
-                // While we are in the list bounds, find and append items
-                while( index <= end ){
-                    
-                    // Find an element
-                    carPart = [];
-                    
-                    // If element is a list
-                    if( p_open_paren( tokens[index] ) ){
-                        do{
-                            token = tokens[index];
-                            if( p_open_paren( token ) ) depth++; 
-                            else
-                            if( p_clos_paren( token ) ) depth--;
-                            carPart ~= token;
-                            index++;
-                        }while( (depth > 0) && (index <= end) );
-
-                    // else element is an atom
-                    }else{
-
-                        // index = lastDex;
-                        carPart ~= tokens[index];
-                        index++;
-                    }
-
-                    if( _DEBUG_VERBOSE ){
-                        writeln( "\tappend list elem: " ~ carPart.to!string );
-                    }
-
-                    // Append element to list
-                    lstRoot = append( 
-                        lstRoot,
-                        consify_token_sequence( carPart )
-                    );
-                }
-                return lstRoot;
-            }else{
-                return new Atom( F_Error.SYNTAX, "BAD LIST CASE" );
-            }
-        }else{
-            return new Atom( F_Error.SYNTAX, "PARENTHESES MISMATCH" );
-        }
-    }
-    return new Atom( F_Error.PARSER, "PARSER FAILED, This branch was ?UNREACHABLE?" );
-}
-
-
 Atom* expression_from_string( string expStr, dchar sepChar = ' ' ){
     // Tokenize the `expStr`, express it as a nested cons struct, and return
     string[] tokens = tokenize( expStr, sepChar );
     // writeln( tokens );
-    return consify_token_sequence( tokens );
+    // return consify_token_sequence( tokens );
+    return parse_one_statement( tokens );
 }
 
 
@@ -1691,146 +1553,6 @@ bool p_complete_expression( string[] sExpr ){
 }
 
 
-string[][] lex_many_one_line( string[] tokens ){
-    // If there are multiple statements on the same line, then lex and return, Otherwise return empty
-    string[][] statements;
-    string[]   sttmnt;
-    ulong /**/ seqLen = tokens.length;
-    ulong /**/ index  = 0;
-    uint /*-*/ depth  = 0;
-    string     token;
-
-    while( index < seqLen ){
-        // token  = tokens[ index ];
-        sttmnt = [];
-        depth  = 0;
-        if( p_open_paren( token ) ){
-            do{
-                token = tokens[ index ];
-                if( p_open_paren( token ) ) depth++; 
-                else
-                if( p_clos_paren( token ) ) depth--;
-                sttmnt ~= token;
-                index++;
-            }while( (depth > 0) && (index < seqLen) );
-        }else{
-            do{
-                token = tokens[ index ];
-                sttmnt ~= token;
-                index++;
-                if( p_semicolon( token ) )  break;
-            }while( index < seqLen );
-        }
-        statements ~= sttmnt; // Can be complete, partial, or empty; checked elsewhere
-    }
-    return statements;
-}
-
-
-string[][] lex_file( string fName ){
-    // Read the contents of the file and lex into serial statements    
-    string     tExpr;
-    string[]   sExpr;
-    string[][] statememts;
-    string[][] lineContents;
-    ulong /**/ seqLen;
-    ulong /**/ index;
-    File /*-*/ f = File( fName );
-
-    if( _DEBUG_VERBOSE )  writeln( "`lex_file`" );
-
-    foreach( line; f.byLine ){
-        tExpr = line.to!string; // Fetch text expression
-
-        if( _DEBUG_VERBOSE )  writeln( "\tLex line: " ~ tExpr );
-
-        if( strip( tExpr ).length == 0 )  continue; // If newline only, there is nothing to do
-
-        sExpr ~= tokenize( tExpr ); // Text Expression --to-> S-Expression
-
-        // Make curlies their own "statements", see `parse_serial_statements`
-        if( p_open_curly( sExpr[0] ) || p_clos_curly( sExpr[0] ) ){
-            statememts ~= [ sExpr[0], ];
-            if( sExpr.length > 1 ) 
-                sExpr = sExpr[1..$-1];
-            else     
-                sExpr = [];
-        }
-        if( sExpr.length == 0 )  continue; // If we processed a lone curly, there is nothing else to do
-
-        // If the line is one complete statement on its own
-        if( p_complete_expression( sExpr ) ){
-            statememts ~= sExpr;
-            sExpr = [];
-        // Else check for multiple statements on the line
-        }else{
-            if( _DEBUG_VERBOSE )  writeln( "\tLex incomplete line: " ~ sExpr.to!string );
-            lineContents = lex_many_one_line( sExpr );
-            seqLen /*-*/ = lineContents.length;
-            index /*--*/ = 0;
-            while( index < seqLen ){
-                // WARNING: Assume statements before the last are complete ;P
-                if( index < (seqLen-1) )  
-                    statememts ~= lineContents[ index ];
-                // Assume a non-empty last statement is partial
-                else if( lineContents[ index ].length > 0 )  
-                    sExpr = lineContents[ index ];
-                index++;
-            }
-        }
-    }
-    if( sExpr.length > 0 )  statememts ~= sExpr;
-    f.close();
-    return statememts;
-}
-
-
-Atom*[] parse_serial_statements( string[][] statememts ){
-    // Parse a block of tokenized string code into serial executable statements
-    Atom*[]  program;
-    ulong    seqLen = statememts.length;
-    ulong    index  = 0;
-    string[] sttmnt;
-    Atom*[]  blockProg;
-
-    if( _DEBUG_VERBOSE )  writeln( "`parse_serial_statements`" );
-
-    while( index < seqLen ){
-
-        sttmnt = statememts[ index ];
-        if( _DEBUG_VERBOSE )  writeln( "\tSerial Statement: " ~ sttmnt.to!string );
-
-        // Case: Standalone blocks
-        // 2022-12-02: Lexing blocks that belong to loops will require changes to how complete statements are detected
-        if( (sttmnt.length == 1) && p_open_curly( sttmnt[0] ) ){
-            blockProg = [];
-            index++;
-            do{
-                sttmnt = statememts[ index ];
-                if( _DEBUG_VERBOSE )  writeln( "\tBlock Statement: " ~ sttmnt.to!string );
-                if( (sttmnt.length == 1) && p_clos_curly( sttmnt[0] ) ){
-                    // index++; // 2022-12-05: There were too many increments!
-                    break;
-                }  
-                blockProg ~= consify_token_sequence( sttmnt );
-                index++; // 2022-12-05: Forgot to advance the counter!
-            }while( index < seqLen );
-            if( blockProg.length > 0 )  program ~= new Atom( blockProg );
-            // Reset for normal line by line lexing
-            index++;
-            sttmnt = statememts[ index ];
-        }
-        program ~= consify_token_sequence( sttmnt );
-        index++;
-    }
-    return program;
-}
-
-
-// Parse an entire file into AST conses
-Atom*[] parse_file( string fName ){  return parse_serial_statements( lex_file( fName ) );  }
-
-
 ExprInContext block_meaning( ExprInContext block ){
     Atom*[] statememts = block.expr.blk;
     ExprInContext lastResult;
@@ -1847,19 +1569,453 @@ ExprInContext block_meaning( ExprInContext block ){
 }
 
 
+// Atom* run_file( string fName ){
+//     // Execute every statement in a file and return the result of the last expression
+//     Atom*[] code = parse_file( fName );
+//     return block_meaning(
+//         ExprInContext(
+//             new Atom( code ), // ----- Expression to be evaluated
+//             baseEnv, // -------- Global context
+//             fName // String representation of the original expression
+//         )
+//     ).expr;
+// }
+
+
+string[] tokenize_file( string fName ){
+    string   tExpr;
+    string[] sExpr;
+    File     f = File( fName );
+
+    if( _DEBUG_VERBOSE )  writeln( "`tokenize_file`" );
+
+    foreach( line; f.byLine ){
+        tExpr = line.to!string; // Fetch text expression
+        if( _DEBUG_VERBOSE )  writeln( "\tLex line: " ~ tExpr );
+        if( strip( tExpr ).length == 0 )  continue; // If newline only, there is nothing to do
+        sExpr ~= tokenize( tExpr );
+    }
+    return sExpr;
+}
+
+// bool 
+
+enum F_Parser{ 
+    // Possible States of Parser Jobs
+    RUN, // ------------- Beginning state
+    ONE_ATOM, // -------- There was one atom or less in the input
+    CONSUME_STATEMENT, // Read one statement into the statement register
+    CONSUME_BLOCK, // --- Read one block into the block register
+    PARSE_STATEMENT, // - Parse statement into an executable AST
+    PARSE_BLOCK, // ----- Parse block into a list of executable ASTs
+    SUCCESS, // --------- Exit this job with success
+    FAULT, // ----------- Exit this job with failure
+    NO_JOB // ----------- NO-OP, nothing to do
+}
+
+struct ParserJobStack{
+    // Global parser job stack
+    
+    // Members //
+    F_Parser[] jobs; // All current parsing jobs
+    
+    // Methods //
+    
+    // this(){  jobs = [];   } // Constructor
+    
+    bool p_has_job(){  return (jobs.length > 0);  } //- Are there are one or more jobs?
+    bool p_has_prev(){  return (jobs.length > 1);  } // Is the job depth at least 2?
+    bool p_has_three(){  return (jobs.length > 2);  } // Is the job depth at least 3?
+    void push( F_Parser job ){  jobs ~= job;  } // ---- Add a job to the stack top
+    
+    F_Parser pop(){  
+        // Remove job from stack top and return it
+        F_Parser rtnJob = get_current();
+        if( p_has_job() )
+            jobs.popBack();  
+        return rtnJob;
+    } 
+
+    F_Parser get_prev(){  
+        // Return status of the previous job without removing it
+        if( p_has_prev() )
+            return jobs[$-2];  
+        else 
+            return F_Parser.NO_JOB;
+    }
+
+    F_Parser get_current(){  
+        // Return status of the current job without removing it
+        if( p_has_job() )
+            return jobs[$-1];  
+        else 
+            return F_Parser.NO_JOB;
+        
+    }
+
+    void set_current( F_Parser job ){  
+        // Set status of the current job without adding it
+        if( p_has_job() )  jobs[$-1] = job;  
+    } 
+    
+}
+
+Atom* parse_one_statement( string[] tokens ){
+    // Return to simpler days of Scheme parsing
+    ulong    seqLen  = tokens.length;
+    ulong    bgn     = 0;
+    ulong    end     = seqLen-1;
+    ulong    index   = 0;
+    Atom*    lstRoot = null;
+    string[] carPart;
+    string   token;
+    uint     depth = 0;
+
+    if( _DEBUG_VERBOSE )  writeln( "`parse_one_statement`" );
+    
+    if( seqLen == 0 ){
+
+        lstRoot = empty_atom();
+
+    }else if( seqLen == 1 ){
+
+        lstRoot = atomize_string( tokens[0] );
+
+    // Are the parens correct?
+    }else if( p_balanced_parens( tokens ) ){
+
+        // Are we building a list?
+        if(  p_parent_parens( tokens )  ||  p_parent_semi( tokens )  ){
+            end--;
+            if( p_parent_parens( tokens ) )  bgn++;
+            
+            // Begin list
+            index   = bgn;
+            lstRoot = empty_cons();
+            if( _DEBUG_VERBOSE ){
+                writeln( "\tInput: " ~ tokens.to!string );
+                writeln( "\tRoot: " ~ lstRoot.kind.to!string ~ ", " ~ str( lstRoot ) );
+            }  
+
+            // While we are in the list bounds, find and append items
+            while( index <= end ){
+                
+                // Find an element
+                carPart = [];
+                depth   = 0;
+                
+                // If element is a list
+                if( p_open_paren( tokens[index] ) ){
+                    do{
+                        token = tokens[index];
+                        if( p_open_paren( token ) ) depth++; 
+                        else
+                        if( p_clos_paren( token ) ) depth--;
+                        carPart ~= token;
+                        index++;
+                    }while( (depth > 0) && (index <= end) );
+
+                // else element is an atom
+                }else{
+
+                    // index = lastDex;
+                    carPart ~= tokens[index];
+                    index++;
+                }
+
+                if( _DEBUG_VERBOSE ){
+                    writeln( "\tappend list elem: " ~ carPart.to!string );
+                }
+
+                // Append element to list
+                lstRoot = append( 
+                    lstRoot,
+                    parse_one_statement( carPart )
+                );
+            }
+        }
+    }else{
+        return new Atom( F_Error.SYNTAX, "PARENTHESES MISMATCH" );
+    }
+    if( _DEBUG_VERBOSE ){
+        writeln( "\tabout to return: " ~ str( lstRoot ) );
+    }    
+    return lstRoot;
+}
+
+// Global parser job stack
+ParserJobStack parserJobs = ParserJobStack();
+
+
+Atom* parse_token_sequence( string[] tokens ){
+    // Init
+    F_Parser state; // ------------------- Current parser state
+    F_Parser prevState; // ------------------- Current parser state
+    bool     parsing    = true; // -------- Is the parser at this depth running?
+    Atom*[]  progBlock  = []; // -------- Block for this depth
+    string[] sttmntReg  = []; // ---------- Statement "register"
+    string[] progTokens = []; // ---------- Statement "register" for a loop body or other block
+    string   faultMsg;
+    Atom*    blockReg  = null;
+    Atom*    loopReg   = null;
+    ulong    seqLen    = tokens.length; // Input length
+    ulong    regLen    = 0; // ----------- Input length
+    // ulong    bgn       = 0; // ----------- Input begin index
+    // ulong    end       = 0; // ----------- Input end   index
+    ulong    index     = 0; // ----------- Index of current input token
+    uint     depth     = 0;
+    string   token; // ------------------- Current input token
+    Atom*    rtnProg = null; // ----------------- Output returned at this depth
+
+    parserJobs.push( F_Parser.RUN ); // Parser always begins in the `RUN` state
+
+    if( _DEBUG_VERBOSE )  writeln( "`parse_token_sequence`" );
+
+    ///// Parser Loop ////////////////////////////
+    do{
+
+        state = parserJobs.get_current(); // Model is to keep job on the stack until it is done
+
+        // Handle state
+        switch( state ){
+            
+            /// Case RUN: Decide on the next mode of the parser ///////////
+            case F_Parser.RUN:
+                if( _DEBUG_VERBOSE )  writeln( "\tCase RUN: Decide on the next mode of the parser" );
+                
+                if(index < seqLen){
+                    // If there are one or less tokens, we can only return one atom
+                    if( seqLen < 2 )
+                        parserJobs.set_current( F_Parser.ONE_ATOM );
+                    // Else there are many, check if we need to consume a block or a statement
+                    else{
+                        token = tokens[ index ]; // Fetch token
+                        if( p_open_curly( token ) ) // Open curly: Consume block
+
+                            // parserJobs.set_current( F_Parser.CONSUME_BLOCK );
+                            parserJobs.push( F_Parser.CONSUME_BLOCK ); // Push so that we can peek block context
+
+                        else // else is an s-expression or an EZ list
+                            parserJobs.set_current( F_Parser.CONSUME_STATEMENT );
+                        break;
+                    }
+                }else if( sttmntReg.length > 0 ){
+                    parserJobs.set_current( F_Parser.PARSE_STATEMENT );
+                }else{
+                    parserJobs.set_current( F_Parser.SUCCESS );
+                }
+                break;
+                    
+
+            /// Case ONE_ATOM: Parse one or empty ////////////////////
+            case F_Parser.ONE_ATOM:    
+                if( _DEBUG_VERBOSE )  writeln( "\tCase ONE_ATOM: Parse one or empty" );
+
+                // Base Case: There were no tokens, return Empty
+                if( seqLen == 0 ){  progBlock ~= empty_atom();  }
+                // Base Case: There was one token, Return it
+                if( seqLen == 1 ){  progBlock ~= atomize_string( tokens[0] );  }
+                // Flag success
+                parserJobs.set_current( F_Parser.SUCCESS );
+                break;
+
+
+            /// Case CONSUME_STATEMENT: Load statement ////////////////////
+            case F_Parser.CONSUME_STATEMENT:
+                if( _DEBUG_VERBOSE )  writeln( "\tCONSUME_STATEMENT: Load statement" );
+
+                sttmntReg = [];
+                token     = tokens[ index ];
+
+                // If element is a list then scan it into the statement register
+                if( p_open_paren( tokens[index] ) ){
+                    if( _DEBUG_VERBOSE )  writeln( "\tScanning s-expression ..." );
+                    do{
+                        token = tokens[index];
+                        if( p_open_paren( token ) ) depth++; 
+                        else
+                        if( p_clos_paren( token ) ) depth--;
+                        sttmntReg ~= token;
+                        index++;
+                    }while( (depth > 0) && (index <= seqLen) );
+
+                // else scan in an EZ list
+                }else{
+                    if( _DEBUG_VERBOSE )  writeln( "\tScanning EZ list ..." );
+                    do{
+                        if( _DEBUG_VERBOSE )  writeln( "\t`index` == " ~ index.to!string );
+
+                        token = tokens[index];
+                        sttmntReg ~= token;
+                        index++;
+                        if( p_semicolon( token ) ){
+                            if( _DEBUG_VERBOSE )  writeln( "\tSemicolon!: " ~ token );
+                            break;
+                        }  
+                    }while( (index <= seqLen) );
+                }
+
+                if( _DEBUG_VERBOSE )  writeln( "\tStatement Tokens: " ~ sttmntReg.to!string );
+
+
+                // Flag statement register for parsing
+                parserJobs.set_current( F_Parser.PARSE_STATEMENT );
+                break;
+
+
+            /// Case CONSUME_LOOP_BODY: Load block statements /////////////////
+            /// Case CONSUME_BLOCK: Load block statements /////////////////
+            case F_Parser.CONSUME_BLOCK:
+                if( _DEBUG_VERBOSE )  writeln( "\tCase CONSUME_BLOCK: Load block statements" );
+
+                sttmntReg = [];
+                index++;
+                depth = 1;
+                do{
+                    token = tokens[ index ];
+                    if( p_open_curly( token ) )
+                        depth++;
+                    else if( p_clos_curly( token ) ){
+                        depth--;
+                        if(depth == 0){
+                            index++; // Move past the final curly
+                            break;
+                        } 
+                    }
+                    sttmntReg ~= token;
+                    index++;
+                }while( index < seqLen );
+                
+                parserJobs.set_current( F_Parser.PARSE_BLOCK );
+                break;
+
+
+            /// Case PARSE_STATEMENT: Parse loaded statement //////////////
+            case F_Parser.PARSE_STATEMENT:
+                if( _DEBUG_VERBOSE )  writeln( "\tCase PARSE_STATEMENT: Parse loaded statement" );
+                progBlock ~= parse_one_statement( sttmntReg );
+                parserJobs.set_current( F_Parser.RUN );
+                sttmntReg = [];
+                break;            
+
+
+            /// Case PARSE_BLOCK: Recur on block //////////////////////////
+            case F_Parser.PARSE_BLOCK:
+                // Descend one depth and parse the consumed block
+                if( _DEBUG_VERBOSE )  writeln( "\tCase PARSE_BLOCK: Recur on block" );
+
+                blockReg = parse_token_sequence( sttmntReg );
+                // Ascended one depth, now put the job in context
+                // prevState = ;
+                
+                switch( parserJobs.get_prev() ){
+                    
+                    case F_Parser.RUN:
+                        progBlock ~= blockReg;
+                        parserJobs.pop();
+                        blockReg = null;
+                        break;
+                    
+                    case F_Parser.NO_JOB:
+                        faultMsg = "A code block was built without context";
+                        parserJobs.push( F_Parser.FAULT );
+                        break;
+
+                    default:
+                        faultMsg = "IMPOSSIBLE CODE BLOCK CASE";
+                        parserJobs.push( F_Parser.FAULT );
+                        break;
+                }
+                sttmntReg = [];
+                break;
+
+
+            /// Case SUCCESS: End of input with no errors /////////////////
+            case F_Parser.SUCCESS:
+
+                if( _DEBUG_VERBOSE ){
+                    writeln( "\tCase SUCCESS: End of input with no errors" );
+                    writeln( "\tSUCCESS, result: " ~ str( rtnProg ) );
+                }
+                state   = parserJobs.pop();
+                parsing = false;
+                break;
+            
+
+            /// Case FAULT: The input has caused problems /////////////////
+            case F_Parser.FAULT:
+
+                if( _DEBUG_VERBOSE ){
+                    writeln( "\tCase FAULT: The input has caused problems" );
+
+                    writeln( "\tFAULT, result: " ~ str( rtnProg ) );
+                }
+                state   = parserJobs.pop();
+                parsing = false;
+                rtnProg = new Atom( F_Error.PARSER, "Parser FAULT: " ~ faultMsg );
+                break;
+
+
+            /// Case NO_JOB: Input exhausted //////////////////////////////
+            case F_Parser.NO_JOB:
+
+                if( _DEBUG_VERBOSE ){
+                    writeln( "\tCase NO_JOB: Input exhausted" );
+
+                    writeln( "\tNO_JOB, parser job stack is EMPTY!" );
+                }
+                parsing = false;
+                break;
+            
+            
+            /// Case BAD: SOMETHING UNEXPECTED HAPPENED ///////////////////
+            default: 
+                state = parserJobs.pop();
+                if( _DEBUG_VERBOSE ){
+                    writeln( "\tCase BAD: SOMETHING UNEXPECTED HAPPENED" );
+
+                    writeln( "\tdefault, SOMETHING UNEXPECTED HAPPENED!, Final State: " ~ state.to!string );
+                }
+                rtnProg = new Atom( F_Error.PARSER, "IMPOSSIBLE PARSER CASE ENCOUNTERED" );
+                break;
+        }
+    }while( parsing );
+    
+    if( _DEBUG_VERBOSE ){
+        writeln( "\tParser EXIT!, Final State: " ~ state.to!string );
+        writeln( "\tThere are " ~ progBlock.length.to!string ~ " statements in program at this level." );
+        int forDex = 1;
+        foreach( Atom* atm; progBlock ){
+            write( "\t\t" ~ forDex.to!string ~ "/" ~ progBlock.length.to!string  ~ ", " );
+            writeln( str( atm ) ); 
+            forDex++;
+        }
+    }
+
+    if( (rtnProg == null) && (progBlock.length > 0) ){
+        if( _DEBUG_VERBOSE )  writeln( "\tReturn program" );
+        rtnProg = new Atom( progBlock );
+    }
+        
+    else if( _DEBUG_VERBOSE )
+        writeln( "\tNO PROGRAM STORED" );
+
+    return rtnProg;
+}
+
+
 Atom* run_file( string fName ){
     // Execute every statement in a file and return the result of the last expression
-    Atom*[] code = parse_file( fName );
+    string[] allTokens = tokenize_file( fName );
+    Atom*    code = parse_token_sequence( allTokens );
     return block_meaning(
         ExprInContext(
-            new Atom( code ), // ----- Expression to be evaluated
+            code, // ----- Expression to be evaluated
             baseEnv, // -------- Global context
             fName // String representation of the original expression
         )
     ).expr;
 }
-
-
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // MAIN  MAIN  MAIN  MAIN  MAIN  MAIN  MAIN  MAIN  MAIN  MAIN  MAIN  MAIN  MAIN  MAIN  MAIN  MAIN //

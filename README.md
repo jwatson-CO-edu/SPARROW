@@ -103,12 +103,12 @@ Completion Key:
         [~] How to cleanly handle nested indented blocks?, 2022-11-23: Not needed at this time + adds complexity
 
 [>] Implement loops
-    [>] Write a new parser!
+    [>] Write a new parser!, 2022-12-18: RESTORED FUNCTIONALITY!
          *  A stack is required to handle arbitrarily nested blocks, and possibly other nested things!
-        [>] Implement FSM operating on a stack
-        [ ] T: Run all existing examples other than the loop example
-        [ ] T: Inline block { <BLOCK> } <OUTSIDE>
-        [ ] Tear out the old parser (See notes near to new functions)
+        [Y] Implement FSM operating on a stack, 2022-12-18: RESTORED FUNCTIONALITY!
+        [Y] T: Run all existing examples other than the loop example, 2022-12-18: RESTORED FUNCTIONALITY!
+        [Y] T: Inline block { <BLOCK> } <OUTSIDE>, 2022-12-18: No change required!
+        [>] Tear out the old parser (See notes near to new functions)
     [>] for (<counter> <bgn> <end>) {<BLOCK>}; - Counter bounds inclusive, Note DOUBLE bounds!
         [Y] Special Form, 2022-12-06: Wrote special form, requires a new parser and also testing
         [Y] Loop iterates with <counter> <= <end>, 2022-12-06: Requires a new parser and also testing
