@@ -1,5 +1,22 @@
 module lexer;
 
+/*  lexer.d
+    Render raw text into meaningful tokens
+    James Watson, 2022-12 */
+
+////////// INIT ////////////////////////////////////////////////////////////////////////////////////
+
+///// Imports /////
+import std.string; //- `string` type
+import std.conv; // -- string conversions
+import std.ascii; // - Whitespace test
+import std.stdio; // - `writeln`, `File`
+import compile_env; // Compile-time flags and macros
+
+///// Aliases /////
+alias  p_whitespace = std.ascii.isWhite; 
+
+
 ////////// LEXING //////////////////////////////////////////////////////////////////////////////////
 
 string[string] RESERVED;

@@ -1,4 +1,24 @@
-module core;
+module sparrow_core;
+
+/*  atoms.d
+    Core structs and machinery for the SPARROW language
+    James Watson, 2022-12 */
+
+////////// INIT ////////////////////////////////////////////////////////////////////////////////////
+
+///// Imports /////
+import std.stdio; // ------------- `writeln`, `File`
+import std.math.operations; // --- `NaN`
+import std.conv; // -------------- string conversions
+import std.algorithm.searching; // `canFind`
+
+/// Language Components ///
+import atoms; // ----- Basic datatypes and structs
+import cons; // ------ Pair constructors, list processing, list structures
+import lexer; // ----- Render raw text into meaningful tokens
+import parser; // ---- Render meaningful tokens into executable AST
+import compile_env; // Compile-time flags and macros
+
 
 ////////// MATHEMATIC PRIMITIVE HELPERS ////////////////////////////////////////////////////////////
 
@@ -30,7 +50,7 @@ double minus( double[] args ){
             total -= x;
         return total;
     }
-    return NaN(0);
+    // return NaN(0);
 }
 
 
@@ -57,7 +77,7 @@ double divide( double[] args ){
             total /= x;
         return total;
     }
-    return NaN(0);
+    // return NaN(0);
 }
 
 

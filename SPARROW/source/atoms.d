@@ -1,6 +1,10 @@
 module atoms;
 
-////////// ATOMS /////////////////////////////////
+/*  atoms.d
+    Basic datatypes and structs for the SPARROW language
+    James Watson, 2022-12 */
+
+////////// ATOMS ///////////////////////////////////////////////////////////////////////////////////
 
 enum F_Error{ 
     OKAY, // -- No error code applicable

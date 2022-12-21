@@ -1,5 +1,26 @@
 module parser;
 
+/*  parser.d
+    Render meaningful tokens into executable AST 
+    James Watson, 2022-12 */
+
+////////// INIT ////////////////////////////////////////////////////////////////////////////////////
+
+///// Imports /////
+import std.stdio; // ------------ `writeln`, `File`
+import std.string; // ----------- `string` type
+import std.uni; // -------------- `strip`
+import std.conv; // ------------- string conversions
+import std.range.primitives; // `popBack`
+
+/// Language Components ///
+import atoms; // ------ Basic datatypes and structs
+import cons; // ------- Pair constructors, list processing, list structures
+import sparrow_core; // Core structs and machinery for the language
+import lexer; // ------ Render raw text into meaningful tokens
+import compile_env; //- Compile-time flags and macros
+
+
 ////////// PARSING /////////////////////////////////////////////////////////////////////////////////
 
 ///// Predicates /////

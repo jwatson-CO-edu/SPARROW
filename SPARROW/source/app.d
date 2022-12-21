@@ -8,30 +8,30 @@
    James Watson, 2022-12 */
 
 
-////////// INIT //////////////////////////////////
+////////// INIT ////////////////////////////////////////////////////////////////////////////////////
 
 ///// Imports /////
-import std.string; // ----------- `string` type
-import std.stdio; // ------------ `writeln`
+import std.stdio; // ------------ `writeln`, `File`
 import std.conv; // ------------- string conversions
-import std.uni; // -------------- `strip`
-import std.math.operations; // -- `NaN`
 import std.typecons; // ---------- Tuple
-import std.ascii; // ------------- Whitespace test
-import std.algorithm.searching; // `canFind`
-import std.range.primitives; // `popBack`
-// import std.file; // -------------- `readText`
-alias  p_whitespace = std.ascii.isWhite; 
 
-///// Env Vars /////
-bool _DEBUG_VERBOSE  =  false; // Set true for debug prints
-bool _TEST_ALL_PARTS =  true; // Set true to run all unit tests
+/// Language Components ///
+import atoms; // ------ Basic datatypes and structs
+import cons; // ------- Pair constructors, list processing, list structures
+import sparrow_core; // Core structs and machinery for the language
+import compile_env; //- Compile-time flags and macros
+
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // MAIN  MAIN  MAIN  MAIN  MAIN  MAIN  MAIN  MAIN  MAIN  MAIN  MAIN  MAIN  MAIN  MAIN  MAIN  MAIN //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void main( string[] args ){
+
+    // _DEBUG_VERBOSE  =  false;
+    // _TEST_ALL_PARTS =  true;
+
     Atom* res = null;
 
     if( _DEBUG_VERBOSE )  writeln( "Args are: " ~ args.to!string );

@@ -1,0 +1,1 @@
+{ define foo 42; print foo; define bar 64; print bar; print (+ 42 64); } print xur; print foo;
