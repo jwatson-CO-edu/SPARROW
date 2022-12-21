@@ -185,23 +185,29 @@ Completion Key:
 ```
 
 # Phase 2: **FINCH Transition**: What are you even doing?
-### Manage the FINCH vision 
-* `[ ]` What is the purpose of FINCH?
+### Manage the FINCH vision: Maintain feasibility for a brain snack format
+**NOTE**: FINCH is **NOT** going to help you graduate!
+* `[Y]` What is the purpose of FINCH?, 2022-12-21: This is a feasible goal and an appropriate brain snack
     - Construct a flow-based language and the structure to support it
     - Imagine a modular language that is **not** based on *stacks*
     - Prelude to research in cognitive architecture and cognitive robotics  
-* `[ ]` Gather non-parallel goals from FINCH paper notes.
-* `[ ]` Read the next phase's goals.  
-* `[ ]` Consolidate paper and README goals.
-* `[ ]` Choose the main theme and remove conflicting goals
-* `[ ]` Does your list of goals match your purpose in creating FINCH?
-* `[ ]` Do they make sense to you?
-* `[ ]` What is FINCH's value to you?
-* `[ ]` Does FINCH interfere with your professional goals? 
-    - There were a number of times I let it interfere.
-    - Have I managed to keep it from becoming an obsession?
+* `[ ]` Gather flow-based goals from FINCH paper notes.
+    -  `[ ]` Scan old notes & discard non-useful sections:
+        * {parallel, Petri obsession}
+* `[ ]` Read the next phase's goals. (Found either in repo archive or commit history)
+* `[ ]` Consolidate paper and past README goals.
+    - `[ ]` Remove goals conflicting with a flow-based language
+    - `[ ]` Create a FINCH-specific repo
+    - `[ ]` Migrate pertinent goals to the new repo's `DEV PLAN`
+* `[ ]` Evaluate goals    
+    - `[ ]` Does your list of goals match your purpose in creating FINCH?
+    - `[ ]` Do they make sense to you?
+    - `[ ]` What is FINCH's value to you?
+    - `[ ]` Does FINCH interfere with your professional goals? 
+        * There were a number of times I let it interfere.
+        * Have I managed to keep it from becoming an obsession?
 
-### Read & Take Notes
+### Read & Take Notes from those that have come before
 * `[ ]` [Minimalism in Programming Language Design](https://pointersgonewild.com/2022/05/23/minimalism-in-programming-language-design/)
 * `[ ]` [Racket is an Acceptable Python](https://dustycloud.org/blog/racket-is-an-acceptable-python/)
 * `[ ]` [Computer Language Design in the Real World](https://blog.sigplan.org/2022/05/19/language-design-in-the-real-world/)  
@@ -213,7 +219,7 @@ Completion Key:
 * `[ ]` [Om](http://www.om-language.org/)  
 * `[ ]` [Pony](https://www.ponylang.io/)  
 
-### Absorb PL Advice
+### Absorb PL Advice from the Academic side
 * `[ ]` [Programming Language Design Notes](https://cs.lmu.edu/~ray/notes/languagedesignnotes/)
 * `[ ]` [Great Works in PL](https://www.jsoftware.com/papers/tot.htm)
     - `[ ]` Create reading list for the next phase  
