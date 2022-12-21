@@ -29,9 +29,6 @@ import compile_env; //- Compile-time flags and macros
 
 void main( string[] args ){
 
-    // _DEBUG_VERBOSE  =  false;
-    // _TEST_ALL_PARTS =  true;
-
     Atom* res = null;
 
     if( _DEBUG_VERBOSE )  writeln( "Args are: " ~ args.to!string );
