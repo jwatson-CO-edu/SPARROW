@@ -109,12 +109,12 @@ Completion Key:
         [Y] T: Run all existing examples other than the loop example, 2022-12-18: RESTORED FUNCTIONALITY!
         [Y] T: Inline block { <BLOCK> } <OUTSIDE>, 2022-12-18: No change required!
         [Y] Tear out the old parser (See notes near to new functions), 2022-12-18: PARSING IS GREAT!
-    [>] for (<counter> <bgn> <end>) {<BLOCK>}; - Counter bounds inclusive, Note DOUBLE bounds!
+    [Y] for (<counter> <bgn> <end>) {<BLOCK>}; - Counter bounds inclusive, Note DOUBLE bounds!, 2022-12-21: Loops!
         [Y] Special Form, 2022-12-06: Wrote special form, requires a new parser and also testing
         [Y] Loop iterates with <counter> <= <end>, 2022-12-06: Requires a new parser and also testing
         [Y] Loop exits    with <counter> > <end>, 2022-12-06: Requires a new parser and also testing
          *  2022-12-06: At this time not allowing the user to specify custom conditions!
-        [>] T: Loop that accesses the counter var within the loop body
+        [Y] T: Loop that accesses the counter var within the loop body, 2022-12-21: Loops!
     [Y] Allow for all types of ergonomic loops, 2022-12-21: Loops!
         [Y] for (<counter> <bgn> <end>) { <BLOCK> };, 2022-12-21: Loops!
         [Y] for (<counter> <bgn> <end>) {
@@ -144,6 +144,7 @@ Completion Key:
     [ ] T: Loop within a block!
     [~] Line Continuation: `\+`, 2022-11-25: Block parser possibly already covers this? Only implement `\+` if needed!
 ```
+
 ### Modest Extensions
 ```
 [ ] Replace `ExprInContext` with global `Env` pointer, Assume one context per interpreter/thread
