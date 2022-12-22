@@ -132,14 +132,15 @@ Completion Key:
                 <BLOCK>
             }), 2022-12-21: Loops!
     [Y] for (<counter> <bgn> <incr> <end>) {<BLOCK>}; - Counter bounds inclusive with increment value, 2022-12-21: Loops!
-    [ ] T: Print Slash Maze
-        [ ] Implement `rand`, Uniform random sampling in [0,1)
+    [>] T: Print Slash Maze
+        [>] Implement `rand`, Uniform random sampling in [0,1)
+         *  Unsure about RNG behavior: https://forum.dlang.org/thread/dgaudzckrhcfqozsvmmq@forum.dlang.org
         [ ] As a function with settable rows and columns
     [ ] while (<cond>)
 
 [ ] Streamline `ExprInContext` by reusing the input struct as it will be copied anyway
 [ ] Ergonomics Testing - Multiline and Indented
-    [ ] T: S-expressions
+    [Y] T: S-expressions, 2022-11-XX: This has almost always worked! 
     [Y] T: EZ Lists, 2022-12-05: Excellent!
     [ ] T: Loop within a block!
     [~] Line Continuation: `\+`, 2022-11-25: Block parser possibly already covers this? Only implement `\+` if needed!
