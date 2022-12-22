@@ -633,6 +633,8 @@ void init_specials(){
         Atom*   rtnExpr   = null;
         Env*    nuEnv     = null; 
         ExprInContext runBlock;
+
+        // init_random();
         
         // Case: Default loop increments by 1.0
         if( incrByOne ){
