@@ -16,7 +16,7 @@ import std.algorithm.searching; // `canFind`
 import atoms; // ----- Basic datatypes and structs
 import cons; // ------ Pair constructors, list processing, list structures
 import lexer; // ----- Render raw text into meaningful tokens
-import parser; // ---- Render meaningful tokens into executable AST
+import parser; // ---- Render meaningful tokens into executable CST
 import compile_env; // Compile-time flags and macros
 
 

@@ -1,7 +1,7 @@
 module parser;
 
 /*  parser.d
-    Render meaningful tokens into executable AST 
+    Render meaningful tokens into executable CST 
     James Watson, 2022-12 */
 
 ////////// INIT ////////////////////////////////////////////////////////////////////////////////////
@@ -163,12 +163,14 @@ enum F_Parser{
     ONE_ATOM, // -------- There was one atom or less in the input
     CONSUME_STATEMENT, // Read one statement into the statement register
     CONSUME_BLOCK, // --- Read one block into the block register
+    CONSUME_FORM_BODY, // Read loop or function block into the block register
     PARSE_STATEMENT, // - Parse statement into an executable AST
     PARSE_BLOCK, // ----- Parse block into a list of executable ASTs
     SUCCESS, // --------- Exit this job with success
     FAULT, // ----------- Exit this job with failure
     NO_JOB // ----------- NO-OP, nothing to do
 }
+
 
 struct ParserJobStack{
     // Global parser job stack
@@ -177,8 +179,6 @@ struct ParserJobStack{
     F_Parser[] jobs; // All current parsing jobs
     
     // Methods //
-    
-    // this(){  jobs = [];   } // Constructor
     
     bool p_has_job(){  return (jobs.length > 0);  } //- Are there are one or more jobs?
     bool p_has_prev(){  return (jobs.length > 1);  } // Is the job depth at least 2?
@@ -213,11 +213,11 @@ struct ParserJobStack{
     void set_current( F_Parser job ){  
         // Set status of the current job without adding it
         if( p_has_job() )  jobs[$-1] = job;  
-    } 
-    
+    }     
 }
 
-Atom* parse_one_statement( string[] tokens ){
+
+Atom* parse_one_statement( string[] tokens, bool allowUnbalance = false ){
     // Return to simpler days of Scheme parsing
     ulong    seqLen  = tokens.length;
     ulong    bgn     = 0;
@@ -239,12 +239,14 @@ Atom* parse_one_statement( string[] tokens ){
         lstRoot = atomize_string( tokens[0] );
 
     // Are the parens correct?
-    }else if( p_balanced_parens( tokens ) ){
+    }else if( p_balanced_parens( tokens ) || allowUnbalance ){
+
+        if( _DEBUG_VERBOSE )  writeln( "\tMany tokens ..." );
 
         // Are we building a list?
-        if(  p_parent_parens( tokens )  ||  p_parent_semi( tokens )  ){
-            end--;
-            if( p_parent_parens( tokens ) )  bgn++;
+        if(  p_parent_parens( tokens )  ||  p_parent_semi( tokens ) || allowUnbalance ){
+            if( !allowUnbalance ) end--;
+            if( p_parent_parens( tokens ) || (p_open_paren( tokens[0] ) && allowUnbalance) )  bgn++;
             
             // Begin list
             index   = bgn;
@@ -311,10 +313,11 @@ Atom* parse_token_sequence( string[] tokens ){
     bool     parsing    = true; // -------- Is the parser at this depth running?
     Atom*[]  progBlock  = []; // -------- Block for this depth
     string[] sttmntReg  = []; // ---------- Statement "register"
+    string[] blokTokens = []; // ---------- Statement "register"
     string[] progTokens = []; // ---------- Statement "register" for a loop body or other block
     string   faultMsg;
     Atom*    blockReg  = null;
-    Atom*    loopReg   = null;
+    Atom*    formReg   = null;
     ulong    seqLen    = tokens.length; // Input length
     ulong    regLen    = 0; // ----------- Input length
     // ulong    bgn       = 0; // ----------- Input begin index
@@ -392,9 +395,14 @@ Atom* parse_token_sequence( string[] tokens ){
                         if( p_open_paren( token ) ) depth++; 
                         else
                         if( p_clos_paren( token ) ) depth--;
+                        else 
+                        if( p_open_curly( token ) ){ // NOTE: In a statement that contains a block, the block must come last!
+                            parserJobs.push( F_Parser.CONSUME_FORM_BODY );
+                            break;
+                        }  
                         sttmntReg ~= token;
                         index++;
-                    }while( (depth > 0) && (index <= seqLen) );
+                    }while( (depth > 0) && (index < seqLen) );
 
                 // else scan in an EZ list
                 }else{
@@ -403,29 +411,37 @@ Atom* parse_token_sequence( string[] tokens ){
                         if( _DEBUG_VERBOSE )  writeln( "\t`index` == " ~ index.to!string );
 
                         token = tokens[index];
+
+                        if( p_open_curly( token ) ){ // NOTE: In a statement that contains a block, the block must come last!
+                            parserJobs.push( F_Parser.CONSUME_FORM_BODY );
+                            break;
+                        }  
+
                         sttmntReg ~= token;
                         index++;
                         if( p_semicolon( token ) ){
                             if( _DEBUG_VERBOSE )  writeln( "\tSemicolon!: " ~ token );
                             break;
                         }  
-                    }while( (index <= seqLen) );
+                    }while( (index < seqLen) );
                 }
 
                 if( _DEBUG_VERBOSE )  writeln( "\tStatement Tokens: " ~ sttmntReg.to!string );
 
 
                 // Flag statement register for parsing
-                parserJobs.set_current( F_Parser.PARSE_STATEMENT );
+                if( parserJobs.get_current() != F_Parser.CONSUME_FORM_BODY )
+                    parserJobs.set_current( F_Parser.PARSE_STATEMENT );
                 break;
 
 
-            /// Case CONSUME_LOOP_BODY: Load block statements /////////////////
+            /// Case CONSUME_LOOP_BODY: Read loop or function block ///////
+            case F_Parser.CONSUME_FORM_BODY:
             /// Case CONSUME_BLOCK: Load block statements /////////////////
             case F_Parser.CONSUME_BLOCK:
                 if( _DEBUG_VERBOSE )  writeln( "\tCase CONSUME_BLOCK: Load block statements" );
 
-                sttmntReg = [];
+                blokTokens = [];
                 index++;
                 depth = 1;
                 do{
@@ -439,7 +455,7 @@ Atom* parse_token_sequence( string[] tokens ){
                             break;
                         } 
                     }
-                    sttmntReg ~= token;
+                    blokTokens ~= token;
                     index++;
                 }while( index < seqLen );
                 
@@ -458,12 +474,12 @@ Atom* parse_token_sequence( string[] tokens ){
 
             /// Case PARSE_BLOCK: Recur on block //////////////////////////
             case F_Parser.PARSE_BLOCK:
-                // Descend one depth and parse the consumed block
                 if( _DEBUG_VERBOSE )  writeln( "\tCase PARSE_BLOCK: Recur on block" );
-
-                blockReg = parse_token_sequence( sttmntReg );
+                
+                // Descend one depth and parse the consumed block
+                blockReg = parse_token_sequence( blokTokens );
                 // Ascended one depth, now put the job in context
-                // prevState = ;
+                
                 
                 switch( parserJobs.get_prev() ){
                     
@@ -471,6 +487,15 @@ Atom* parse_token_sequence( string[] tokens ){
                         progBlock ~= blockReg;
                         parserJobs.pop();
                         blockReg = null;
+                        break;
+
+                    case F_Parser.CONSUME_STATEMENT:
+                        formReg = parse_one_statement( sttmntReg, true );
+                        formReg = append( formReg, blockReg );
+                        progBlock ~= formReg;
+                        parserJobs.pop();
+                        blockReg = null;
+                        formReg  = null;
                         break;
                     
                     case F_Parser.NO_JOB:

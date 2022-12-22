@@ -115,22 +115,23 @@ Completion Key:
         [Y] Loop exits    with <counter> > <end>, 2022-12-06: Requires a new parser and also testing
          *  2022-12-06: At this time not allowing the user to specify custom conditions!
         [>] T: Loop that accesses the counter var within the loop body
-    [ ] Allow for all types of ergonomic loops
-        [ ] for (<counter> <bgn> <end>) {
+    [Y] Allow for all types of ergonomic loops, 2022-12-21: Loops!
+        [Y] for (<counter> <bgn> <end>) { <BLOCK> };, 2022-12-21: Loops!
+        [Y] for (<counter> <bgn> <end>) {
                 <BLOCK>
-            };
-        [ ] for (<counter> <bgn> <end>) 
+            };, 2022-12-21: Loops!
+        [Y] for (<counter> <bgn> <end>) 
             {
                 <BLOCK>
-            };
-        [ ] (for (<counter> <bgn> <end>) {
+            };, 2022-12-21: Loops!
+        [Y] (for (<counter> <bgn> <end>) {
                 <BLOCK>
-            })
-        [ ] (for (<counter> <bgn> <end>) 
+            }), 2022-12-21: Loops!
+        [Y] (for (<counter> <bgn> <end>) 
             {
                 <BLOCK>
-            })
-    [ ] for (<counter> <bgn> <incr> <end>) {<BLOCK>}; - Counter bounds inclusive with increment value
+            }), 2022-12-21: Loops!
+    [Y] for (<counter> <bgn> <incr> <end>) {<BLOCK>}; - Counter bounds inclusive with increment value, 2022-12-21: Loops!
     [ ] T: Print Slash Maze
         [ ] Implement `rand`, Uniform random sampling in [0,1)
         [ ] As a function with settable rows and columns
