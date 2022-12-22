@@ -23,7 +23,7 @@ import compile_env; // Compile-time flags and macros
 
 
 /// Globals ///
-Mt19937 rnd; // Randomness
+static Mt19937 rnd; // Randomness
 
 
 ////////// RANDOMNESS //////////////////////////////////////////////////////////////////////////////
@@ -138,12 +138,6 @@ bool le( double[] args ){
 }
 
 
-double rand01(){
-    // Uniform random sampling in [0,1)
-    return uniform( 0.0, 1.0, rnd);
-}
-
-
 bool ge( double[] args ){
     // Greater Than Or Equal To, 2 or more arguments, If insufficient arguments, then return False 
     if( args.length < 2 ){  return false;  }
@@ -157,6 +151,11 @@ bool ge( double[] args ){
     }
 }
 
+double rand01(){
+    // Uniform random sampling in [0,1)
+    // init_random();
+    return uniform( 0.0, 1.0, rnd );
+}
 
 ///// Primitives /////
 
@@ -170,6 +169,8 @@ bool p_primitve_function( string token ){  return (token in primitiveFunctions) 
 
 void init_primitives(){
 
+    // init_random();
+
     /// Zero Arguments ///
 
     primitiveSymbols["true"]  = function Atom*(){  return new Atom(true); /*--*/ }; // Boolean True
@@ -179,6 +180,7 @@ void init_primitives(){
     
     primitiveSymbols["rand"] = function Atom*(){  
         // Random number on [0,1)
+        // init_random();
         Atom* rtnAtom = null;
         rtnAtom = new Atom( rand01() );
         return rtnAtom;  
@@ -496,8 +498,9 @@ void init_specials(){
 
 
     specialForms["print"] = function ExprInContext( ExprInContext eINc ){  
-        // Passthru for expression args 
-        ExprInContext res = meaning( ExprInContext(
+        // Print the first arg
+        ExprInContext res;
+        res = meaning( ExprInContext(
             textOf( eINc.expr ), 
             // get_cdr( eINc.expr ),
             eINc.context,
@@ -627,8 +630,10 @@ void init_specials(){
         double  incr      = 1.0;
         double  i /*---*/ = 0.0;
         Atom*   loopProg  = third( eINc.expr ); // WARNING: TYPE NOT CHECKED
-        Atom*   rtnExpr   = null; 
-
+        Atom*   rtnExpr   = null;
+        Env*    nuEnv     = null; 
+        ExprInContext runBlock;
+        
         // Case: Default loop increments by 1.0
         if( incrByOne ){
             loBound = loopArgs[1].num;
@@ -648,19 +653,25 @@ void init_specials(){
         );
 
         // 2. Create a new nested context, bind the counter var
-        Env* nuEnv   = new Env();
+        nuEnv = new Env();
         nuEnv.parent = eINc.context;
         i /*------*/ = loBound;
         bind_atom( nuEnv, iVarName, new Atom( loBound ) );
 
+        // init_random();
+
+        runBlock = ExprInContext(
+            loopProg,
+            nuEnv,
+            "loop body"
+        );
+        // init_random();
         // 3. LOOP: If loop condition met, run block in nested context && increment, otherwise exit loop
         while( i <= hiBound ){
+            // init_random();
             // run block in nested context, Loop meaning is the last statement of the last iteration
-            rtnExpr = block_meaning( ExprInContext (
-                loopProg,
-                nuEnv,
-                "loop body"
-            ) ).expr;
+            rtnExpr = block_meaning( runBlock ).expr;
+            // rtnExpr = meaning( runBlock ).expr;
             i += incr; // increment
             bind_atom( nuEnv, iVarName, new Atom( i ) ); // Store new counter value so that loop body can access it
         }
@@ -950,12 +961,16 @@ ExprInContext meaning( ExprInContext eINc ){
             nuEnv = new Env();
             nuEnv.parent = eINc.context;
 
+            // init_random();
+
             // Pass that context to meaning && Return the meaning of the last statement in the block
             rntResult = block_meaning( ExprInContext(
                 e,
                 nuEnv,
                 "block meaning"
             ) );
+
+            nuEnv = null;
         
         // Case Primitive Function
         }else if( p_primitve_function( name ) ){
@@ -1030,11 +1045,11 @@ Atom* value( Atom* expression ){
 
 void init_SPARROW(){
     // Populate necessary global structures
+    init_random(); // --- RNG
     init_reserved(); // - Reserved symbols
     init_env(); // ------ Global context
     init_primitives(); // Special atoms and Primitive Functions
     init_specials(); // - Special forms
-    init_random(); // --- RNG
 }
 
 
@@ -1108,7 +1123,9 @@ bool p_complete_expression( string[] sExpr ){
 ExprInContext block_meaning( ExprInContext block ){
     Atom*[] statememts = block.expr.blk;
     ExprInContext lastResult;
+    // init_random();
     foreach( Atom* sttmnt; statememts ){
+        // init_random();
         lastResult = meaning(
             ExprInContext(
                 sttmnt, // ------ Expression to be evaluated
