@@ -11,6 +11,8 @@ import std.stdio; // ------------- `writeln`, `File`
 import std.math.operations; // --- `NaN`
 import std.conv; // -------------- string conversions
 import std.algorithm.searching; // `canFind`
+import std.random;
+
 
 /// Language Components ///
 import atoms; // ----- Basic datatypes and structs
@@ -18,6 +20,19 @@ import cons; // ------ Pair constructors, list processing, list structures
 import lexer; // ----- Render raw text into meaningful tokens
 import parser; // ---- Render meaningful tokens into executable CST
 import compile_env; // Compile-time flags and macros
+
+
+/// Globals ///
+Mt19937 rnd; // Randomness
+
+
+////////// RANDOMNESS //////////////////////////////////////////////////////////////////////////////
+
+void init_random(){
+    // Seed the RNG with the clock
+    rnd = Random( unpredictableSeed );
+}
+
 
 
 ////////// MATHEMATIC PRIMITIVE HELPERS ////////////////////////////////////////////////////////////
@@ -123,6 +138,12 @@ bool le( double[] args ){
 }
 
 
+double rand01(){
+    // Uniform random sampling in [0,1)
+    return uniform( 0.0, 1.0, rnd);
+}
+
+
 bool ge( double[] args ){
     // Greater Than Or Equal To, 2 or more arguments, If insufficient arguments, then return False 
     if( args.length < 2 ){  return false;  }
@@ -151,10 +172,11 @@ void init_primitives(){
 
     /// Zero Arguments ///
 
-    primitiveSymbols["true"]  = function Atom*(){  return new Atom(true);   }; // Boolean True
-    primitiveSymbols["#t"]    = function Atom*(){  return new Atom(true);   }; // Boolean True
-    primitiveSymbols["false"] = function Atom*(){  return new Atom(false);  }; // Boolean False
-    primitiveSymbols["#f"]    = function Atom*(){  return new Atom(false);  }; // Boolean False
+    primitiveSymbols["true"]  = function Atom*(){  return new Atom(true); /*--*/ }; // Boolean True
+    primitiveSymbols["#t"]    = function Atom*(){  return new Atom(true); /*--*/ }; // Boolean True
+    primitiveSymbols["false"] = function Atom*(){  return new Atom(false); /*-*/ }; // Boolean False
+    primitiveSymbols["#f"]    = function Atom*(){  return new Atom(false); /*-*/ }; // Boolean False
+    primitiveSymbols["rand"]  = function Atom*(){  return new Atom( rand01() );  }; // Random number on [0,1)
 
     /// One Argument ///
 
@@ -1006,6 +1028,7 @@ void init_SPARROW(){
     init_env(); // ------ Global context
     init_primitives(); // Special atoms and Primitive Functions
     init_specials(); // - Special forms
+    init_random(); // --- RNG
 }
 
 
