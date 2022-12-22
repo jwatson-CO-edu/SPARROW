@@ -176,7 +176,13 @@ void init_primitives(){
     primitiveSymbols["#t"]    = function Atom*(){  return new Atom(true); /*--*/ }; // Boolean True
     primitiveSymbols["false"] = function Atom*(){  return new Atom(false); /*-*/ }; // Boolean False
     primitiveSymbols["#f"]    = function Atom*(){  return new Atom(false); /*-*/ }; // Boolean False
-    primitiveSymbols["rand"]  = function Atom*(){  return new Atom( rand01() );  }; // Random number on [0,1)
+    
+    primitiveSymbols["rand"] = function Atom*(){  
+        // Random number on [0,1)
+        Atom* rtnAtom = null;
+        rtnAtom = new Atom( rand01() );
+        return rtnAtom;  
+    }; 
 
     /// One Argument ///
 

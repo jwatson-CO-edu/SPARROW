@@ -14,6 +14,8 @@
 import std.stdio; // ------------ `writeln`, `File`
 import std.conv; // ------------- string conversions
 import std.typecons; // ---------- Tuple
+import std.random;
+
 
 /// Language Components ///
 import atoms; // ------ Basic datatypes and structs
@@ -35,6 +37,7 @@ void main( string[] args ){
 
     // Populate necessary interpreter components
     init_SPARROW();
+    // rnd = Random( unpredictableSeed );
     
     // Case: File passed as CLI arg
     if( args.length > 1 ){
