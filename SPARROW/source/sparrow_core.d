@@ -28,9 +28,9 @@ static Mt19937 rnd; // Randomness
 
 ////////// RANDOMNESS //////////////////////////////////////////////////////////////////////////////
 
-void init_random(){
+void init_random( ref Mt19937 RNG ){
     // Seed the RNG with the clock
-    rnd = Random( unpredictableSeed );
+    RNG = Random( unpredictableSeed );
 }
 
 
@@ -151,10 +151,9 @@ bool ge( double[] args ){
     }
 }
 
-double rand01(){
+double rand01( ref Mt19937 RNG ){
     // Uniform random sampling in [0,1)
-    // init_random();
-    return uniform( 0.0, 1.0, rnd );
+    return uniform( 0.0, 1.0, RNG );
 }
 
 ///// Primitives /////
@@ -180,10 +179,7 @@ void init_primitives(){
     
     primitiveSymbols["rand"] = function Atom*(){  
         // Random number on [0,1)
-        // init_random();
-        Atom* rtnAtom = null;
-        rtnAtom = new Atom( rand01() );
-        return rtnAtom;  
+        return new Atom( rand01( rnd ) ); 
     }; 
 
     /// One Argument ///
@@ -649,15 +645,15 @@ void init_specials(){
 
         // Else: There is a syntax error
         }else  return ExprInContext( 
-            new Atom( F_Error.SYNTAX, loopArgs.length.to!string ~ " was an incorrect number to loop args. Expected 3 or 4." ),
+            new Atom( F_Error.SYNTAX, loopArgs.length.to!string ~ " was an incorrect number of loop args. Expected 3 or 4." ),
             eINc.context,
             "`for` got an unexpected number of args"
         );
 
         // 2. Create a new nested context, bind the counter var
+        i     = loBound;
         nuEnv = new Env();
         nuEnv.parent = eINc.context;
-        i /*------*/ = loBound;
         bind_atom( nuEnv, iVarName, new Atom( loBound ) );
 
         // init_random();
@@ -1047,7 +1043,7 @@ Atom* value( Atom* expression ){
 
 void init_SPARROW(){
     // Populate necessary global structures
-    init_random(); // --- RNG
+    init_random( rnd ); // --- RNG
     init_reserved(); // - Reserved symbols
     init_env(); // ------ Global context
     init_primitives(); // Special atoms and Primitive Functions
