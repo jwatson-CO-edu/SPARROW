@@ -47,7 +47,7 @@ Completion Key:
 * `[~]` Partially Done and/or Skipped for Now
 
 # Phase 1: Learn Computer Language Design via Scheme -- SPARROW
-### Basic Implementation
+### Basic Implementation, 2022-12-24: COMPLETE
 ```
 [Y] Translate first "ab_" evaluator to Dlang - 2022-09-07: COMPLETE
     [Y] All Functions Implemented - 2022-09-07: Nim had pointer references, so some implementation needed changing
@@ -101,8 +101,7 @@ Completion Key:
     [Y] Last line is the meaning of the block, (prog ... ) ?, 2022-11-27: Needs to be a special form as well 
     [~] Pythonic: Implicit by indentation, 2022-11-23: Not needed at this time + adds complexity
         [~] How to cleanly handle nested indented blocks?, 2022-11-23: Not needed at this time + adds complexity
-
-[>] Implement loops
+[Y] Implement loops, 2022-12-24: Works as intended!
     [Y] Write a new parser!, 2022-12-18: PARSING IS GREAT!
          *  A stack is required to handle arbitrarily nested blocks, and possibly other nested things!
         [Y] Implement FSM operating on a stack, 2022-12-18: RESTORED FUNCTIONALITY!
@@ -132,17 +131,17 @@ Completion Key:
                 <BLOCK>
             }), 2022-12-21: Loops!
     [Y] for (<counter> <bgn> <incr> <end>) {<BLOCK>}; - Counter bounds inclusive with increment value, 2022-12-21: Loops!
-    [>] T: Print Slash Maze
-        [>] Implement `rand`, Uniform random sampling in [0,1)
+    [Y] T: Print Slash Maze, 2022-12-24: `rand` works as intended!
+        [Y] Implement `rand`, Uniform random sampling in [0,1), 2022-12-24: Created the concept of "Runtime Symbols" - which are just like primitive symbols except that they are substituted at runtime instead of during parsing
          *  Unsure about RNG behavior: https://forum.dlang.org/thread/dgaudzckrhcfqozsvmmq@forum.dlang.org
-        [ ] As a function with settable rows and columns
-    [ ] while (<cond>)
-
-[ ] Streamline `ExprInContext` by reusing the input struct as it will be copied anyway
-[ ] Ergonomics Testing - Multiline and Indented
+        [N] As a function with settable rows and columns, 2022-12-24: This would require that SPARROW process terminal args and it just isn't worth it
+    [~] while (<cond>), 2022-12-24: Delayed until needed
+[N] Streamline `ExprInContext` by reusing the input struct as it will be copied anyway, 2022-12-24: This will be replaced with a pointer anyway, so why bother?
+[Y] Ergonomics Testing - Multiline and Indented, 2022-12-24: Works as intended!
     [Y] T: S-expressions, 2022-11-XX: This has almost always worked! 
     [Y] T: EZ Lists, 2022-12-05: Excellent!
-    [ ] T: Loop within a block!
+    [Y] T: Loop within a block!, 2022-12-24: Works as intended!
+    [Y] T: Loop within a Loop! , 2022-12-24: Works as intended!
     [~] Line Continuation: `\+`, 2022-11-25: Block parser possibly already covers this? Only implement `\+` if needed!
 ```
 

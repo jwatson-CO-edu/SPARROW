@@ -369,6 +369,7 @@ string str( Atom* item ){
 }
 
 void prnt( Atom* atm ){  writeln( str( atm ) );  } // Print a cons structure
+void writ( Atom* atm ){  write(   str( atm ) );  } // Print a cons structure
 
 
 ////////// ENVIRONMENT /////////////////////////////////////////////////////////////////////////////
@@ -499,7 +500,27 @@ void init_specials(){
             eINc.context,
             "print"
         ) );
-        prnt( res.expr );
+        if( p_empty( res.expr ) ){
+            writeln("");
+        }else
+            prnt( res.expr );
+        return res;
+    };
+
+
+    specialForms["write"] = function ExprInContext( ExprInContext eINc ){  
+        // Print the first arg
+        ExprInContext res;
+        res = meaning( ExprInContext(
+            textOf( eINc.expr ), 
+            // get_cdr( eINc.expr ),
+            eINc.context,
+            "print"
+        ) );
+        if( p_empty( res.expr ) ){
+            write(" ");
+        }else
+            writ( res.expr );
         return res;
     };
 
