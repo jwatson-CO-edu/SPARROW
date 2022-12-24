@@ -153,7 +153,9 @@ bool ge( double[] args ){
 
 double rand01( ref Mt19937 RNG ){
     // Uniform random sampling in [0,1)
-    return uniform( 0.0, 1.0, RNG );
+    double rtnNum = uniform( 0.0, 1.0, RNG );
+    // writeln( "\t" ~ rtnNum.to!string ); 
+    return rtnNum;
 }
 
 ///// Primitives /////
@@ -176,11 +178,6 @@ void init_primitives(){
     primitiveSymbols["#t"]    = function Atom*(){  return new Atom(true); /*--*/ }; // Boolean True
     primitiveSymbols["false"] = function Atom*(){  return new Atom(false); /*-*/ }; // Boolean False
     primitiveSymbols["#f"]    = function Atom*(){  return new Atom(false); /*-*/ }; // Boolean False
-    
-    primitiveSymbols["rand"] = function Atom*(){  
-        // Random number on [0,1)
-        return new Atom( rand01( rnd ) ); 
-    }; 
 
     /// One Argument ///
 
@@ -626,7 +623,7 @@ void init_specials(){
         double  incr      = 1.0;
         double  i /*---*/ = 0.0;
         Atom*   loopProg  = third( eINc.expr ); // WARNING: TYPE NOT CHECKED
-        Atom*   rtnExpr   = null;
+        Atom*[] rtnExpr;
         Env*    nuEnv     = null; 
         ExprInContext runBlock;
 
@@ -666,16 +663,16 @@ void init_specials(){
         // init_random();
         // 3. LOOP: If loop condition met, run block in nested context && increment, otherwise exit loop
         while( i <= hiBound ){
-            // init_random();
+            // rtnExpr = null;
             // run block in nested context, Loop meaning is the last statement of the last iteration
-            rtnExpr = block_meaning( runBlock ).expr;
+            rtnExpr ~= block_meaning( runBlock ).expr;
             // rtnExpr = meaning( runBlock ).expr;
             i += incr; // increment
             bind_atom( nuEnv, iVarName, new Atom( i ) ); // Store new counter value so that loop body can access it
         }
 
         return ExprInContext( 
-            rtnExpr,
+            rtnExpr[$-1],
             eINc.context,
             "loop result"
         );
@@ -893,6 +890,20 @@ bool first_only( Atom* atm ){
 }
 
 
+Atom* function()[string] /*--*/ runtimeSymbols; // - Dictionary of text aliases of important symbols
+bool p_runtime_symbol( string token ){    return (token in runtimeSymbols) !is null;  } // - In the primitive sym dict?
+
+void init_runtime_symbols(){
+    runtimeSymbols["rand"] = function Atom*(){  
+        // Random number on [0,1)
+        Atom* rtnAtm = null;
+        // rtnAtm = new Atom( rand01( rnd ) );
+        rtnAtm = new Atom( rand01( rnd ) );
+        return rtnAtm; 
+    }; 
+}
+
+
 ExprInContext meaning( ExprInContext eINc ){ 
     // Handle expressions more complex than literals
 
@@ -915,13 +926,14 @@ ExprInContext meaning( ExprInContext eINc ){
 
     /// Base Cases ///
 
-    // Base Case: Primitive Symbol
-    if( p_primitve_symbol( name ) ){
+    // Base Case: Runtime Symbol
+    if( p_runtime_symbol( name ) ){
 
-        if( _DEBUG_VERBOSE ) writeln( "\t`meaning`: " ~ "Primitive Symbol" );
+        if( _DEBUG_VERBOSE ) writeln( "\t`meaning`: " ~ "Runtime Symbol" );
 
+        // rntResult = ExprInContext();
         rntResult = ExprInContext(
-            primitiveSymbols[ name ](), // Balance of arguments
+            runtimeSymbols[ name ](), // Balance of arguments
             eINc.context, // ---- Original context
             "primitive: " ~ name // ------- Tag
         );
@@ -962,6 +974,7 @@ ExprInContext meaning( ExprInContext eINc ){
             // init_random();
 
             // Pass that context to meaning && Return the meaning of the last statement in the block
+            rntResult = ExprInContext();
             rntResult = block_meaning( ExprInContext(
                 e,
                 nuEnv,
@@ -1048,6 +1061,7 @@ void init_SPARROW(){
     init_env(); // ------ Global context
     init_primitives(); // Special atoms and Primitive Functions
     init_specials(); // - Special forms
+    init_runtime_symbols(); // Symbols evaluated at runtime
 }
 
 
@@ -1119,12 +1133,10 @@ bool p_complete_expression( string[] sExpr ){
 
 
 ExprInContext block_meaning( ExprInContext block ){
-    Atom*[] statememts = block.expr.blk;
-    ExprInContext lastResult;
-    // init_random();
+    Atom*[] /*---*/ statememts = block.expr.blk;
+    ExprInContext[] result;
     foreach( Atom* sttmnt; statememts ){
-        // init_random();
-        lastResult = meaning(
+        result ~= meaning(
             ExprInContext(
                 sttmnt, // ------ Expression to be evaluated
                 block.context, // Given context
@@ -1132,7 +1144,7 @@ ExprInContext block_meaning( ExprInContext block ){
             )
         );
     }
-    return lastResult;
+    return result[$-1];
 }
 
 
