@@ -147,7 +147,18 @@ Completion Key:
 
 ### Modest Extensions
 ```
-[ ] Replace `ExprInContext` with global `Env` pointer, Assume one context per interpreter/thread
+[>] Replace `ExprInContext` with global `Env` pointer, Assume one context per interpreter/thread
+     *  New global var: `envPtr`
+    [Y] `meaning`, 2022-12-31: Easy switch
+        [N] `p_binding_exists`, 2022-12-31: It is the responsibility of the calling code to set context
+        [Y] `block_meaning`, 2022-12-31: Easy switch
+    [ ] `apply_primitive_function`
+    [ ] `apply_closure`
+    [ ] Runtime Symbols
+    [ ] Special Symbols
+    [ ] T: All existing examples
+    [ ] Strip old `ExprInContext` code
+
 [ ] Change Closures to block implementation
 {Y} E: Source file > 2k lines?, 2022-12-18: Split into logical sections without getting crazy.
     {Y} Yes: Split functions into separate categories and organize as a project, 2022-12-18: Split into logical sections without getting crazy.
@@ -167,6 +178,7 @@ Completion Key:
 [ ] E: R6RS, Complete Scheme without Error System (If yes, then expand this bullet with SELECTED topics ONLY )
 [ ] E: R7RS, Complete Scheme *with*  Error System (If yes, then expand this bullet with SELECTED topics ONLY )
 ```
+
 ### Compatibility Testing & Structural Evaluation
 ```
 [ ] T: Will SPARROW compile & run in Windows without modification?
@@ -187,6 +199,7 @@ Completion Key:
 ```
 
 # Phase 2: **FINCH Transition**: What are you even doing?
+
 ### Manage the FINCH vision: Maintain feasibility for a brain snack format
 **NOTE**: FINCH is **NOT** going to help you graduate!
 * `[Y]` What is the purpose of FINCH?, 2022-12-21: This is a feasible goal and an appropriate brain snack

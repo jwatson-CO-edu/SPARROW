@@ -434,16 +434,19 @@ void init_env(){
     baseEnv = new Env();
 }
 
+Env* envPtr = baseEnv; // Context pointer
+
 ////////// SPECIAL FORMS ///////////////////////////////////////////////////////////////////////////
 
-struct ExprInContext{
-    // Container struct for an expression and its context, Used to simultaneously return expression and context
-    Atom*  expr;
-    Env*   context;
-    string tag;
-}
+// struct ExprInContext{
+//     // Container struct for an expression and its context, Used to simultaneously return expression and context
+//     Atom*  expr;
+//     Env*   context;
+//     string tag;
+// }
 
-ExprInContext function( ExprInContext )[string] specialForms; // Dictionary of forms other than func applications, implemented in Dlang
+// ExprInContext function( ExprInContext )[string] specialForms; // Dictionary of forms other than func applications, implemented in Dlang
+Atom* function( Atom* )[string] specialForms; // Dictionary of forms other than func applications, implemented in Dlang
 
 
 bool truthiness( Atom* atm = null ){
@@ -481,17 +484,20 @@ bool truthiness( Atom* atm = null ){
 void init_specials(){
     // Assign functions to handle special forms
 
-    specialForms["quote"] = function ExprInContext( ExprInContext eINc ){  
+    // specialForms["quote"] = function ExprInContext( ExprInContext eINc ){  
+    specialForms["quote"] = function Atom*( Atom* expr ){  
         // Passthru for expression args 
-        return ExprInContext(
-            textOf( eINc.expr ),
-            eINc.context,
-            "quote"
-        );
+        return textOf( expr );
+        // return ExprInContext(
+        //     textOf( eINc.expr ),
+        //     eINc.context,
+        //     "quote"
+        // );
     };
 
 
-    specialForms["print"] = function ExprInContext( ExprInContext eINc ){  
+    // specialForms["print"] = function ExprInContext( ExprInContext eINc ){  
+    specialForms["print"] = function Atom*( Atom* expr ){  
         // Print the first arg
         ExprInContext res;
         res = meaning( ExprInContext(
@@ -768,14 +774,18 @@ ExprInContext evcon( ExprInContext eINc ){
 }
 
 
-ExprInContext apply_primitive_function( ExprInContext eINc ){
+// ExprInContext apply_primitive_function( ExprInContext eINc ){
+Atom* apply_primitive_function( Atom* e ){
     // Invocation of primitive function in a context
 
     if( _DEBUG_VERBOSE ) writeln( "`apply_primitive_function`" );
 
-    string /*--*/ name /*-*/ = get_car( eINc.expr ).str;
+    string /*--*/ name /*-*/ = get_car( e ).str;
     Atom* /*---*/ interpArgs = null;
-    ExprInContext result;
+    // ExprInContext result;
+    Atom* result;
+
+    // FIXME, START HERE: CONTINUE RIPPING OUT OLD STRUCT
 
     if( p_primitve_function( name ) ){
 
@@ -925,21 +935,24 @@ void init_runtime_symbols(){
 }
 
 
-ExprInContext meaning( ExprInContext eINc ){ 
+// ExprInContext meaning( ExprInContext eINc ){ 
+Atom* meaning( Atom* e ){ 
     // Handle expressions more complex than literals
 
-    Atom* /*---*/ e /*-*/  = eINc.expr;
+    // Atom* /*---*/ e /*-*/  = eINc.expr;
+
     if( _DEBUG_VERBOSE ){
         writeln( "`meaning`" );
         writeln( "\t" ~ str(e) );
         writeln( "\t" ~ str(get_cdr( e )) );
     } 
-    Atom* /*---*/ balance  = get_cdr( e );
-    Atom* /*---*/ rtnRoot  = null;
-    Atom* /*---*/ inputPtr = null;
-    string /*--*/ name     = "";
-    Env* /*----*/ nuEnv    = null;
-    ExprInContext rntResult;
+
+    Atom*  balance  = get_cdr( e );
+    Atom*  rtnRoot  = null;
+    Atom*  inputPtr = null;
+    string name     = "";
+    Env*   nuEnv    = null;
+    Atom*  rtnResult;
 
     if( p_string( e ) ){  name = e.str;  }
 
@@ -952,32 +965,35 @@ ExprInContext meaning( ExprInContext eINc ){
 
         if( _DEBUG_VERBOSE ) writeln( "\t`meaning`: " ~ "Runtime Symbol" );
 
-        // rntResult = ExprInContext();
-        rntResult = ExprInContext(
-            runtimeSymbols[ name ](), // Balance of arguments
-            eINc.context, // ---- Original context
-            "primitive: " ~ name // ------- Tag
-        );
+        rtnResult = runtimeSymbols[ name ]();
+
+        // rtnResult = ExprInContext(
+        //     runtimeSymbols[ name ](), // Balance of arguments
+        //     eINc.context, // ---- Original context
+        //     "primitive: " ~ name // ------- Tag
+        // );
 
     // Base Case: Bound Symbol
-    }else if( p_binding_exists( eINc.context, name ) && (!p_bound_function( eINc.context, name )) ){
+    }else if( p_binding_exists( envPtr, name ) && (!p_bound_function( envPtr, name )) ){
 
         if( _DEBUG_VERBOSE ){ 
             writeln( "\t`meaning`: " ~ "Bound Symbol, " ~ name );
-            writeln( "\t`meaning`: " ~ name ~ " = " ~ str( get_bound_atom( eINc.context, name ) ) );
-            writeln( eINc.context );
+            writeln( "\t`meaning`: " ~ name ~ " = " ~ str( get_bound_atom( envPtr, name ) ) );
+            writeln( envPtr );
         }
 
-        rntResult = ExprInContext(
-            get_bound_atom( eINc.context, name ), // Balance of arguments
-            eINc.context, // ---- Original context
-            "Variable: " ~ name // ------- Tag
-        );
+        rtnResult = get_bound_atom( eINc.context, name );
+        // rtnResult = ExprInContext(
+        //     get_bound_atom( eINc.context, name ), // Balance of arguments
+        //     eINc.context, // ---- Original context
+        //     "Variable: " ~ name // ------- Tag
+        // );
 
     // Base Case Literal -OR- Base Case Empty: Pass thru
     }else if( p_literal(e) || p_empty(e) ){
         if( _DEBUG_VERBOSE ) writeln( "\tmeaning: " ~ "Was atom, " ~ str(e) ~ " is a " ~ e.kind.to!string );
-        rntResult = eINc;
+        // rtnResult = eINc;
+        rtnResult = e;
 
     /// Recursive Cases ///
     }else{
@@ -988,21 +1004,26 @@ ExprInContext meaning( ExprInContext eINc ){
         // Case Code Block
         if( p_block( e ) ){
 
-            // Create a nested context
+            // Create a nested context && set pointer
             nuEnv = new Env();
-            nuEnv.parent = eINc.context;
+            nuEnv.parent = envPtr;
+            envPtr = nuEnv;
 
             // init_random();
 
             // Pass that context to meaning && Return the meaning of the last statement in the block
-            rntResult = ExprInContext();
-            rntResult = block_meaning( ExprInContext(
-                e,
-                nuEnv,
-                "block meaning"
-            ) );
+            // rtnResult = ExprInContext();
+            rtnResult = block_meaning( e );
+            // rtnResult = block_meaning( ExprInContext(
+            //     e,
+            //     nuEnv,
+            //     "block meaning"
+            // ) );
 
-            nuEnv = null;
+            // Ascend pointer
+            envPtr = envPtr.parent;
+
+            // nuEnv = null;
         
         // Case Primitive Function
         }else if( p_primitve_function( name ) ){
@@ -1012,21 +1033,21 @@ ExprInContext meaning( ExprInContext eINc ){
                 writeln( "\t`meaning`: " ~ "Args - ", str( balance ) );
             }
 
-            rntResult = apply_primitive_function( eINc );
+            rtnResult = apply_primitive_function( e ); // There are no context changes for primitive functions
 
         // Case Special Form
         }else if( p_special_form( name ) ){
 
             if( _DEBUG_VERBOSE ) writeln( "`meaning`: " ~ "Special Form" );
 
-            rntResult = specialForms[ name ]( eINc );
+            rtnResult = specialForms[ name ]( e );
 
         // Case Function Application
-        }else if( p_bound_function( eINc.context, name ) ){
+        }else if( p_bound_function( envPtr, name ) ){
 
             if( _DEBUG_VERBOSE ) writeln( "`meaning`: " ~ "Bound Function (Closure)" );
 
-            rntResult = apply_closure( eINc );
+            rtnResult = apply_closure( e );
 
         // Case Cons Structure
         }else{
@@ -1041,24 +1062,26 @@ ExprInContext meaning( ExprInContext eINc ){
 
             do{
                 rtnRoot = append( rtnRoot,  
-                    meaning( ExprInContext(
-                        first( inputPtr ), // Balance of arguments
-                        eINc.context, // ---- Original context
-                        "suppress cons" // ------- Tag
-                    ) ).expr
+                    meaning( first( inputPtr ) )
+                    // meaning( ExprInContext(
+                    //     first( inputPtr ), // Balance of arguments
+                    //     eINc.context, // ---- Original context
+                    //     "suppress cons" // ------- Tag
+                    // ) ).expr
                 );
                 inputPtr = get_cdr( inputPtr );
             }while( !p_empty( inputPtr ) );
 
-            rntResult = ExprInContext(
-                rtnRoot,
-                eINc.context, // ---- Original context
-                str( rtnRoot ) // ------- Tag
-            );            
+            rtnResult = rtnRoot;
+            // rtnResult = ExprInContext(
+            //     rtnRoot,
+            //     eINc.context, // ---- Original context
+            //     str( rtnRoot ) // ------- Tag
+            // );            
         }
     } 
-    if( _DEBUG_VERBOSE ) writeln( "\t`meaning`: " ~ "Final ->" ~ str( rntResult.expr ) );
-    return rntResult;
+    if( _DEBUG_VERBOSE ) writeln( "\t`meaning`: " ~ "Final ->" ~ str( rtnResult ) );
+    return rtnResult;
 }
 
 
@@ -1153,17 +1176,18 @@ bool p_complete_expression( string[] sExpr ){
 }
 
 
-ExprInContext block_meaning( ExprInContext block ){
-    Atom*[] /*---*/ statememts = block.expr.blk;
-    ExprInContext[] result;
+Atom* block_meaning( Atom* block ){
+    // Execute the block, then return the meaning of the last statement in the block
+    Atom*[] statememts = block.blk;
+    Atom*   result;
     foreach( Atom* sttmnt; statememts ){
-        result ~= meaning(
-            ExprInContext(
-                sttmnt, // ------ Expression to be evaluated
-                block.context, // Given context
-                str( sttmnt ) //- String representation of the original expression
-            )
-        );
+        result ~= meaning( sttmnt );
+        //     ExprInContext(
+        //         , // ------ Expression to be evaluated
+        //         block.context, // Given context
+        //         str( sttmnt ) //- String representation of the original expression
+        //     )
+        // );
     }
     return result[$-1];
 }
