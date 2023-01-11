@@ -723,6 +723,8 @@ bool p_eq( Atom* op1, Atom* op2 ){  return primitiveFunctions["eq?"]( make_list_
 bool p_else( Atom* x ){  return p_literal( x ) && p_eq( x, new Atom( "else" ) );  } // is the arg an 'else symbol?
 
 
+// FIXME, START HERE: CONVERT TO `envPtr`
+
 ExprInContext evcon( ExprInContext eINc ){
     // evaluate cond form by form, this is the guts of cond
     Atom* /*---*/ forms     = eINc.expr; // ------------------------------ Fetch cond lines from the expression
@@ -785,28 +787,30 @@ Atom* apply_primitive_function( Atom* e ){
     // ExprInContext result;
     Atom* result;
 
-    // FIXME, START HERE: CONTINUE RIPPING OUT OLD STRUCT
+    
 
     if( p_primitve_function( name ) ){
 
-        interpArgs = meaning( ExprInContext(
-            get_cdr( eINc.expr ),
-            eINc.context,
-            "primitive arguments"
-        )).expr;
+        // interpArgs = meaning( ExprInContext(
+        //     get_cdr( eINc.expr ),
+        //     eINc.context,
+        //     "primitive arguments"
+        // )).expr;
         // interpArgs = get_cdr( eINc.expr );
+        interpArgs = meaning( get_cdr( e ) );
 
         if( _DEBUG_VERBOSE ) writeln( 
             "\t`apply_primitive_function`: " ~ "About to call " ~ name ~ " with the following args -> " ~ str( interpArgs ) 
         );
 
-        result = ExprInContext(
-            primitiveFunctions[ name ]( 
-                interpArgs
-            ), // Balance of arguments
-            eINc.context, // ---- Original context
-            "primitive: " ~ name // ------- Tag
-        );
+        // result = ExprInContext(
+        //     primitiveFunctions[ name ]( 
+        //         interpArgs
+        //     ), // Balance of arguments
+        //     eINc.context, // ---- Original context
+        //     "primitive: " ~ name // ------- Tag
+        // );
+        result = primitiveFunctions[ name ]( interpArgs );
 
         if( _DEBUG_VERBOSE ) writeln( 
             "\t`apply_primitive_function`: " ~ str( eINc.expr ) ~ "--(" ~ name ~ ")-> " ~ str( result.expr )
@@ -819,13 +823,17 @@ Atom* apply_primitive_function( Atom* e ){
             "\t`apply_primitive_function`: Search for primitive function " ~ name ~ " has no result!" 
         );
 
-        return ExprInContext(
-            new Atom(
-                F_Error.DNE,
-                "Oops, \"" ~ get_car( eINc.expr ).str ~ "\" is NOT a primitive function in SPARROW!"
-            ),
-            eINc.context, // ---- Original context
-            "ERROR"
+        // return ExprInContext(
+        //     new Atom(
+        //         F_Error.DNE,
+        //         "Oops, \"" ~ get_car( eINc.expr ).str ~ "\" is NOT a primitive function in SPARROW!"
+        //     ),
+        //     eINc.context, // ---- Original context
+        //     "ERROR"
+        // );
+        return new Atom(
+            F_Error.DNE,
+            "Oops, \"" ~ get_car( eINc.expr ).str ~ "\" is NOT a primitive function in SPARROW!"
         );
     }
 }
@@ -842,30 +850,39 @@ bool p_user_def_function( Env* env, string funcName ){
 }
 
 
-ExprInContext apply_closure( ExprInContext input ){ 
+// ExprInContext apply_closure( ExprInContext input ){ 
+Atom* apply_closure( Atom* input ){ 
     // apply a non-primitive function
 
     if( _DEBUG_VERBOSE )  writeln( "`apply_closure`" );
 
-    Env* /*----*/ nuEnv = null;
-    Atom* /*---*/ func  = null;
-    ExprInContext argMeaning;
+    // Env*  nuEnv = null; // Enclosed environment
+    Atom* rtnRes = null; // Enclosed environment
+    Atom* func   = null;
+    Atom* argMeaning;
 
     // 0. Determine if the function exists, then construct a new context
-    if(  p_user_def_function( input.context, nameOf( input.expr ).str )  ){
+    // if(  p_user_def_function( input.context, nameOf( input.expr ).str )  ){
+    if(  p_user_def_function( envPtr, nameOf( input ).str )  ){
+        
         // 1. Create a new context with the arguments given values as a child of the containing context
 
-        func  = get_bound_atom( input.context, nameOf( input.expr ).str );
+        // func = get_bound_atom( input.context, nameOf( input.expr ).str );
+        func = get_bound_atom( envPtr, nameOf( input ).str );
 
-        argMeaning = meaning(ExprInContext(
-        // argMeaning = ExprInContext(
-            argsOf( input.expr ), // arguments
-            input.context,
-            "args meaning"
-        ));
-        // );
+        // argMeaning = meaning( ExprInContext(
+        // // argMeaning = ExprInContext(
+        //     argsOf( input.expr ), // arguments
+        //     input.context,
+        //     "args meaning"
+        // ) );
+        // // );
+        argMeaning = meaning( argsOf( input ) );
 
-        nuEnv = enclose( 
+        // FIXME, START HERE: FIX `enclose`, THEN RESUME XFER TO `envPtr`
+
+        // nuEnv = enclose( 
+        envPtr = enclose( 
             input.context, // ------- parent 
             formalsOf( func ), // --- parameters
             argMeaning.expr, 
@@ -879,24 +896,31 @@ ExprInContext apply_closure( ExprInContext input ){
         }
 
         // 2. Evaluate the function within the new context
-        return meaning(
-            ExprInContext(
-                bodyOf( func ),
-                nuEnv,
-                "closure"
-            )
-        );
+        // return meaning(
+        //     ExprInContext(
+        //         bodyOf( func ),
+        //         nuEnv,
+        //         "closure"
+        //     )
+        // );
+        rtnRes = meaning( bodyOf( func ) );
+
+        // 3. Ascend from closure
+        envPtr = envPtr.parent;
+
+        // N. Return result
+        return rtnRes;
     }
 
-    if( _DEBUG_VERBOSE )  writeln( "`apply_closure`: " ~ "NO function named " ~ nameOf( input.expr ).str );
+    if( _DEBUG_VERBOSE )  writeln( "`apply_closure`: " ~ "NO function named " ~ nameOf( input ).str );
 
     // 2. Evaluate the function within the new context
-    return ExprInContext(
-        new Atom( F_Error.NOVALUE, "There is no function with the name " ~ nameOf( input.expr ).str ),
-        nuEnv,
-        "closure"
-    );
-    
+    // return ExprInContext(
+    //     new Atom( F_Error.NOVALUE, "There is no function with the name " ~ nameOf( input.expr ).str ),
+    //     nuEnv,
+    //     "closure"
+    // );
+    return new Atom( F_Error.NOVALUE, "There is no function with the name " ~ nameOf( input ).str );
 }
 
 

@@ -152,11 +152,15 @@ Completion Key:
     [Y] `meaning`, 2022-12-31: Easy switch
         [N] `p_binding_exists`, 2022-12-31: It is the responsibility of the calling code to set context
         [Y] `block_meaning`, 2022-12-31: Easy switch
-    [ ] `apply_primitive_function`
-    [ ] `apply_closure`
+    [Y] `apply_primitive_function`, 2023-01-11: NEEDS TESTING
+    [Y] `apply_closure`, 2023-01-11: NEEDS TESTING
+        [N] `enclose`, 2023-01-11: These are the correct steps
+    [ ] `evcon`
     [ ] Runtime Symbols
     [ ] Special Symbols
     [ ] T: All existing examples
+        [ ] Remove compile-time errors
+        [ ] Remove runtime errors
     [ ] Strip old `ExprInContext` code
 
 [ ] Change Closures to block implementation
