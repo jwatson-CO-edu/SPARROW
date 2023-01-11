@@ -155,9 +155,9 @@ Completion Key:
     [Y] `apply_primitive_function`, 2023-01-11: NEEDS TESTING
     [Y] `apply_closure`, 2023-01-11: NEEDS TESTING
         [N] `enclose`, 2023-01-11: These are the correct steps
-    [ ] `evcon`
-    [ ] Runtime Symbols
-    [ ] Special Symbols
+    [Y] `evcon`, 2023-01-11: NEEDS TESTING
+    [N] Runtime Symbols, 2023-01-11: These are the correct steps
+    [ ] Special Forms
     [ ] T: All existing examples
         [ ] Remove compile-time errors
         [ ] Remove runtime errors

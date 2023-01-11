@@ -476,7 +476,7 @@ bool truthiness( Atom* atm = null ){
                 return false;
         }
     }
-    // No arg or null arg, returh false
+    // No arg or null arg, return false
     return false;
 }
 
@@ -499,13 +499,14 @@ void init_specials(){
     // specialForms["print"] = function ExprInContext( ExprInContext eINc ){  
     specialForms["print"] = function Atom*( Atom* expr ){  
         // Print the first arg
-        ExprInContext res;
-        res = meaning( ExprInContext(
-            textOf( eINc.expr ), 
-            // get_cdr( eINc.expr ),
-            eINc.context,
-            "print"
-        ) );
+        Atom* res = meaning( textOf( expr ) );
+            
+        //     ExprInContext(
+        //     textOf( eINc.expr ), 
+        //     // get_cdr( eINc.expr ),
+        //     eINc.context,
+        //     "print"
+        // ) );
         if( p_empty( res.expr ) ){
             writeln("");
         }else
@@ -514,73 +515,86 @@ void init_specials(){
     };
 
 
-    specialForms["write"] = function ExprInContext( ExprInContext eINc ){  
+    // specialForms["write"] = function ExprInContext( ExprInContext eINc ){  
+    specialForms["write"] = function Atom*( Atom* e ){  
         // Print the first arg
-        ExprInContext res;
-        res = meaning( ExprInContext(
-            textOf( eINc.expr ), 
-            // get_cdr( eINc.expr ),
-            eINc.context,
-            "print"
-        ) );
-        if( p_empty( res.expr ) ){
+        // res = meaning( ExprInContext(
+        //     textOf( eINc.expr ), 
+        //     // get_cdr( eINc.expr ),
+        //     eINc.context,
+        //     "print"
+        // ) );
+        Atom* res = meaning( textOf( e ) );
+        if( p_empty( res ) ){
             write(" ");
         }else
-            writ( res.expr );
+            writ( res );
         return res;
     };
 
 
-    specialForms["lambda"] = function ExprInContext( ExprInContext eINc ){  
+    // specialForms["lambda"] = function ExprInContext( ExprInContext eINc ){  
+    specialForms["lambda"] = function Atom*( Atom* e ){  
         // Package anonymous function for eval
-        Atom* forms = get_cdr( eINc.expr );
-        return ExprInContext(
-            make_function( first( forms ), get_cdr( forms ) ),
-            eINc.context,
-            "non-primitive"
-        );
+        Atom* forms = get_cdr( e );
+        // return ExprInContext(
+        //     make_function( first( forms ), get_cdr( forms ) ),
+        //     eINc.context,
+        //     "non-primitive"
+        // );
+        return make_function( first( forms ), get_cdr( forms ) );
     };
 
 
-    specialForms["cond"] = function ExprInContext( ExprInContext eINc ){  
+    // specialForms["cond"] = function ExprInContext( ExprInContext eINc ){  
+    specialForms["cond"] = function Atom*( Atom* e ){  
         // Package cond for eval
-        return evcon( ExprInContext(
-            condLinesOf(eINc.expr),
-            eINc.context,
-            "cond"
-        ) );
+        // return evcon( ExprInContext(
+        //     condLinesOf(eINc.expr),
+        //     eINc.context,
+        //     "cond"
+        // ) );
+        return evcon( condLinesOf( e ) );
     };
 
 
-    specialForms["define"] = function ExprInContext( ExprInContext eINc ){  
+    // specialForms["define"] = function ExprInContext( ExprInContext eINc ){  
+    specialForms["define"] = function Atom*( Atom* e ){  
         // Bind expression result to a name
 
-        if( _DEBUG_VERBOSE ) writeln( "`define`: " ~ str( eINc.expr )  );
+        // if( _DEBUG_VERBOSE ) writeln( "`define`: " ~ str( eINc.expr )  );
+        if( _DEBUG_VERBOSE ) writeln( "`define`: " ~ str( e )  );
         
         // 1. Bind name
         bind_atom( 
-            eINc.context, // ---------- Context to bind to
-            second( eINc.expr ).str, // Name to bind
-            meaning( ExprInContext( //- Expression result to bind
-                third( eINc.expr ), // Eval this
-                eINc.context, // ----- Context for eval
-                "meaning" // --------- Eval tag
-            ) ).expr 
+            // eINc.context, // ---------- Context to bind to
+            envPtr, // ---------- Context to bind to
+            second( e ).str, // Name to bind
+            // meaning( ExprInContext( //- Expression result to bind
+            //     third( eINc.expr ), // Eval this
+            //     eINc.context, // ----- Context for eval
+            //     "meaning" // --------- Eval tag
+            // ) ).expr 
+            meaning( third( e ) ) // Eval this
         );
 
-        // 2. Return modified context
-        return ExprInContext(
-            second( eINc.expr ), // Name that was bound
-            eINc.context, // ------ Modified context
-            "define" // ----------- Binding tag
-        );
+        // N. Return bound name
+        // return ExprInContext(
+        //     second( eINc.expr ), // Name that was bound
+        //     eINc.context, // ------ Modified context
+        //     "define" // ----------- Binding tag
+        // );
+        return second( e );
     };
 
 
-    specialForms["and"] = function ExprInContext( ExprInContext eINc ){  
+    // specialForms["and"] = function ExprInContext( ExprInContext eINc ){  
+    specialForms["and"] = function Atom*( Atom* e ){  
         // Return true only if all the forms evaluate to true, otherwise return false
-        Atom*   forms   = formLinesOf( eINc.expr );
+        Atom*   forms   = formLinesOf( e );
         Atom*[] formLst = flatten_atom_list( forms );
+
+        // FIXME, START HERE: CONTINUE CONVERSION TO `envPtr`
 
         foreach (Atom* form; formLst){
             if( !truthiness(
@@ -723,11 +737,11 @@ bool p_eq( Atom* op1, Atom* op2 ){  return primitiveFunctions["eq?"]( make_list_
 bool p_else( Atom* x ){  return p_literal( x ) && p_eq( x, new Atom( "else" ) );  } // is the arg an 'else symbol?
 
 
-// FIXME, START HERE: CONVERT TO `envPtr`
 
-ExprInContext evcon( ExprInContext eINc ){
+// ExprInContext evcon( ExprInContext eINc ){
+Atom* evcon( Atom* e ){
     // evaluate cond form by form, this is the guts of cond
-    Atom* /*---*/ forms     = eINc.expr; // ------------------------------ Fetch cond lines from the expression
+    Atom* /*---*/ forms     = e; // ------------------------------ Fetch cond lines from the expression
     Atom* /*---*/ condition = null;
     Atom* /*---*/ answer    = null;
     ExprInContext result; // ------------------------------------------- Evaluation result
@@ -743,36 +757,47 @@ ExprInContext evcon( ExprInContext eINc ){
         if( _DEBUG_VERBOSE ) writeln( "\tevcon: " ~ "evaluate ..." );
         if( p_else( condition ) ){
             if( _DEBUG_VERBOSE ) writeln( "\tevcon: " ~ "Default to else" );
-            return meaning( ExprInContext( 
-                answer,
-                eINc.context,
-                str( answer )
-            ) );
+
+            // return meaning( ExprInContext( 
+            //     answer,
+            //     eINc.context,
+            //     str( answer )
+            // ) );
+            return meaning( answer );
+
         }else{
             if( _DEBUG_VERBOSE ) writeln( "\tevcon: " ~ "Regular condition" );
-            result = meaning( ExprInContext( 
-                condition,
-                eINc.context,
-                str( condition )
-            ) );
-            if( truthiness( result.expr ) ){
+
+            // result = meaning( ExprInContext( 
+            //     condition,
+            //     eINc.context,
+            //     str( condition )
+            // ) );
+
+            result = meaning( condition );
+
+            // if( truthiness( result.expr ) ){
+            if( truthiness( result ) ){
 
                 if( _DEBUG_VERBOSE ) writeln( "\tevcon: " ~ "Expression was TRUE" );
 
-                return meaning( ExprInContext( 
-                    answer,
-                    eINc.context,
-                    str( answer )
-                ) );
+                // return meaning( ExprInContext( 
+                //     answer,
+                //     eINc.context,
+                //     str( answer )
+                // ) );
+                return meaning( answer );
             }
         }
     }
 
-    return meaning( ExprInContext( 
-        new Atom( false ),
-        baseEnv,
-        "No Cond True"
-    ) );
+    // return meaning( ExprInContext( 
+    //     new Atom( false ),
+    //     baseEnv,
+    //     "No Cond True"
+    // ) );
+
+    return new Atom( false );
 }
 
 
