@@ -147,7 +147,7 @@ Completion Key:
 
 ### Modest Extensions
 ```
-[>] Replace `ExprInContext` with global `Env` pointer, Assume one context per interpreter/thread
+[Y] Replace `ExprInContext` with global `Env` pointer, Assume one context per interpreter/thread, 2023-01-12: Removed over 200 lines of code!, ALL TESTS PASS
      *  New global var: `envPtr`
     [Y] `meaning`, 2022-12-31: Easy switch
         [N] `p_binding_exists`, 2022-12-31: It is the responsibility of the calling code to set context
@@ -157,13 +157,14 @@ Completion Key:
         [N] `enclose`, 2023-01-11: These are the correct steps
     [Y] `evcon`, 2023-01-11: NEEDS TESTING
     [N] Runtime Symbols, 2023-01-11: These are the correct steps
-    [ ] Special Forms
-    [ ] T: All existing examples
-        [ ] Remove compile-time errors
-        [ ] Remove runtime errors
-    [ ] Strip old `ExprInContext` code
+    [Y] Special Forms, 2023-01-11: NEEDS TESTING
+    [Y] T: All existing examples, 2023-01-12: ALL TESTS PASS
+        [Y] Remove compile-time errors, 2023-01-12: ALL TESTS PASS
+        [Y] Remove runtime errors, 2023-01-12: ALL TESTS PASS
+    [Y] Strip old `ExprInContext` code, 2023-01-12: Removed over 200 lines of code!, ALL TESTS PASS
 
-[ ] Change Closures to block implementation
+[>] Change Closures to block implementation
+
 {Y} E: Source file > 2k lines?, 2022-12-18: Split into logical sections without getting crazy.
     {Y} Yes: Split functions into separate categories and organize as a project, 2022-12-18: Split into logical sections without getting crazy.
     {N} No:  Are the functions at least arranged in a meaningful way?, N/A

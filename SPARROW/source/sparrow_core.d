@@ -24,6 +24,7 @@ import compile_env; // Compile-time flags and macros
 
 /// Globals ///
 static Mt19937 rnd; // Randomness
+string /*---*/ VERSION = "2023.1.0";
 
 
 ////////// RANDOMNESS //////////////////////////////////////////////////////////////////////////////
@@ -65,7 +66,6 @@ double minus( double[] args ){
             total -= x;
         return total;
     }
-    // return NaN(0);
 }
 
 
@@ -92,7 +92,6 @@ double divide( double[] args ){
             total /= x;
         return total;
     }
-    // return NaN(0);
 }
 
 
@@ -154,7 +153,6 @@ bool ge( double[] args ){
 double rand01( ref Mt19937 RNG ){
     // Uniform random sampling in [0,1)
     double rtnNum = uniform( 0.0, 1.0, RNG );
-    // writeln( "\t" ~ rtnNum.to!string ); 
     return rtnNum;
 }
 
@@ -169,8 +167,6 @@ bool p_primitve_function( string token ){  return (token in primitiveFunctions) 
 
 
 void init_primitives(){
-
-    // init_random();
 
     /// Zero Arguments ///
 
@@ -427,25 +423,18 @@ Env* enclose( Env* parent, Atom* names, Atom* values ){
 
 
 Env* baseEnv; // Global context
+Env* envPtr; // Context pointer
 
 
 void init_env(){
     // Create the base environment that is parent of all contexts in the interpreter
     baseEnv = new Env();
+    envPtr  = baseEnv;
 }
 
-Env* envPtr = baseEnv; // Context pointer
 
 ////////// SPECIAL FORMS ///////////////////////////////////////////////////////////////////////////
 
-// struct ExprInContext{
-//     // Container struct for an expression and its context, Used to simultaneously return expression and context
-//     Atom*  expr;
-//     Env*   context;
-//     string tag;
-// }
-
-// ExprInContext function( ExprInContext )[string] specialForms; // Dictionary of forms other than func applications, implemented in Dlang
 Atom* function( Atom* )[string] specialForms; // Dictionary of forms other than func applications, implemented in Dlang
 
 
@@ -484,46 +473,25 @@ bool truthiness( Atom* atm = null ){
 void init_specials(){
     // Assign functions to handle special forms
 
-    // specialForms["quote"] = function ExprInContext( ExprInContext eINc ){  
     specialForms["quote"] = function Atom*( Atom* expr ){  
         // Passthru for expression args 
         return textOf( expr );
-        // return ExprInContext(
-        //     textOf( eINc.expr ),
-        //     eINc.context,
-        //     "quote"
-        // );
     };
 
 
-    // specialForms["print"] = function ExprInContext( ExprInContext eINc ){  
     specialForms["print"] = function Atom*( Atom* expr ){  
         // Print the first arg
         Atom* res = meaning( textOf( expr ) );
-            
-        //     ExprInContext(
-        //     textOf( eINc.expr ), 
-        //     // get_cdr( eINc.expr ),
-        //     eINc.context,
-        //     "print"
-        // ) );
-        if( p_empty( res.expr ) ){
+        if( p_empty( res ) ){
             writeln("");
         }else
-            prnt( res.expr );
+            prnt( res );
         return res;
     };
 
 
-    // specialForms["write"] = function ExprInContext( ExprInContext eINc ){  
     specialForms["write"] = function Atom*( Atom* e ){  
         // Print the first arg
-        // res = meaning( ExprInContext(
-        //     textOf( eINc.expr ), 
-        //     // get_cdr( eINc.expr ),
-        //     eINc.context,
-        //     "print"
-        // ) );
         Atom* res = meaning( textOf( e ) );
         if( p_empty( res ) ){
             write(" ");
@@ -533,57 +501,32 @@ void init_specials(){
     };
 
 
-    // specialForms["lambda"] = function ExprInContext( ExprInContext eINc ){  
     specialForms["lambda"] = function Atom*( Atom* e ){  
         // Package anonymous function for eval
         Atom* forms = get_cdr( e );
-        // return ExprInContext(
-        //     make_function( first( forms ), get_cdr( forms ) ),
-        //     eINc.context,
-        //     "non-primitive"
-        // );
         return make_function( first( forms ), get_cdr( forms ) );
     };
 
 
-    // specialForms["cond"] = function ExprInContext( ExprInContext eINc ){  
     specialForms["cond"] = function Atom*( Atom* e ){  
         // Package cond for eval
-        // return evcon( ExprInContext(
-        //     condLinesOf(eINc.expr),
-        //     eINc.context,
-        //     "cond"
-        // ) );
         return evcon( condLinesOf( e ) );
     };
 
 
-    // specialForms["define"] = function ExprInContext( ExprInContext eINc ){  
     specialForms["define"] = function Atom*( Atom* e ){  
         // Bind expression result to a name
 
-        // if( _DEBUG_VERBOSE ) writeln( "`define`: " ~ str( eINc.expr )  );
         if( _DEBUG_VERBOSE ) writeln( "`define`: " ~ str( e )  );
         
         // 1. Bind name
         bind_atom( 
-            // eINc.context, // ---------- Context to bind to
             envPtr, // ---------- Context to bind to
             second( e ).str, // Name to bind
-            // meaning( ExprInContext( //- Expression result to bind
-            //     third( eINc.expr ), // Eval this
-            //     eINc.context, // ----- Context for eval
-            //     "meaning" // --------- Eval tag
-            // ) ).expr 
             meaning( third( e ) ) // Eval this
         );
 
         // N. Return bound name
-        // return ExprInContext(
-        //     second( eINc.expr ), // Name that was bound
-        //     eINc.context, // ------ Modified context
-        //     "define" // ----------- Binding tag
-        // );
         return second( e );
     };
 
@@ -594,82 +537,54 @@ void init_specials(){
         Atom*   forms   = formLinesOf( e );
         Atom*[] formLst = flatten_atom_list( forms );
 
-        // FIXME, START HERE: CONTINUE CONVERSION TO `envPtr`
-
         foreach (Atom* form; formLst){
             if( !truthiness(
-                meaning( ExprInContext( //- Expression result to bind
-                    form, // Eval this
-                    eINc.context, // ------- Context for eval
-                    str( form ) // --------- Eval tag
-                )).expr
+                meaning( form )
             ) ){
-                return ExprInContext(
-                    new Atom( false ), // Truthiness of the element
-                    eINc.context, //- Original context
-                    "truthiness" // ---- Tag
-                );
+                return new Atom( false );
             }
         }
 
-        return ExprInContext(
-            new Atom( true ), // Truthiness of the element
-            eINc.context, // Original context
-            "truthiness" // --- Tag
-        );
+        return new Atom( true );
     };
 
 
-    specialForms["or"] = function ExprInContext( ExprInContext eINc ){  
+    specialForms["or"] = function Atom*( Atom* e ){  
         // Return true if any of the forms evaluate to true, otherwise return false
-        Atom*   forms   = formLinesOf( eINc.expr );
+        Atom*   forms   = formLinesOf( e );
         Atom*[] formLst = flatten_atom_list( forms );
 
         if( _DEBUG_VERBOSE ) writeln( "OR" );
 
         foreach (Atom* form; formLst){
             if( truthiness(
-                meaning( ExprInContext( //- Expression result to bind
-                    form, // Eval this
-                    eINc.context, // ------- Context for eval
-                    str( form ) // --------- Eval tag
-                )).expr
+                meaning( form )
             ) ){
-                return ExprInContext(
-                    new Atom( true ), // Truthiness of the element
-                    eINc.context, //- Original context
-                    "truthiness" // ---- Tag
-                );
+                return new Atom( true );
             }
         }
 
-        return ExprInContext(
-            new Atom( false ), // Truthiness of the element
-            eINc.context, // Original context
-            "truthiness" // --- Tag
-        );
+        return new Atom( false );
     };
 
 
-    specialForms["for"] = function ExprInContext( ExprInContext eINc ){
+    specialForms["for"] = function Atom*( Atom* e ){
         // Execute a `for` loop, Loop meaning is the last statement of the last iteration, 
         // Default is to increment up by one, inclusive bounds
 
         // 1. Parse loop args
-        Atom*[] loopArgs  = flatten_atom_list( second( eINc.expr ) ); // Fetch args as atom vector
+        Atom*[] loopArgs  = flatten_atom_list( second( e ) ); // Fetch args as atom vector
         string  iVarName  = loopArgs[0].str; // ------------------------ Get the counter var name, WARNING: TYPE NOT CHECKED
         bool    incrByOne = (loopArgs.length == 3); // ----------------- Default is to increment up by one, inclusive bounds
         double  loBound   = 0.0;
         double  hiBound   = 0.0;
         double  incr      = 1.0;
         double  i /*---*/ = 0.0;
-        Atom*   loopProg  = third( eINc.expr ); // WARNING: TYPE NOT CHECKED
-        Atom*[] rtnExpr;
+        Atom*   loopProg  = third( e ); // WARNING: TYPE NOT CHECKED
         Env*    nuEnv     = null; 
-        ExprInContext runBlock;
+        Atom*   runBlock  = null; 
+        Atom*[] rtnExpr;
 
-        // init_random();
-        
         // Case: Default loop increments by 1.0
         if( incrByOne ){
             loBound = loopArgs[1].num;
@@ -682,48 +597,33 @@ void init_specials(){
             hiBound = loopArgs[3].num;
 
         // Else: There is a syntax error
-        }else  return ExprInContext( 
-            new Atom( F_Error.SYNTAX, loopArgs.length.to!string ~ " was an incorrect number of loop args. Expected 3 or 4." ),
-            eINc.context,
-            "`for` got an unexpected number of args"
-        );
+        }else  return new Atom( F_Error.SYNTAX, loopArgs.length.to!string ~ 
+                                " was an incorrect number of loop args. Expected 3 or 4." );
 
         // 2. Create a new nested context, bind the counter var
         i     = loBound;
         nuEnv = new Env();
-        nuEnv.parent = eINc.context;
+        nuEnv.parent = envPtr;
         bind_atom( nuEnv, iVarName, new Atom( loBound ) );
 
-        // init_random();
+        // Descend to loop env
+        envPtr = nuEnv;
 
-        runBlock = ExprInContext(
-            loopProg,
-            nuEnv,
-            "loop body"
-        );
-        // init_random();
         // 3. LOOP: If loop condition met, run block in nested context && increment, otherwise exit loop
         while( i <= hiBound ){
-            // rtnExpr = null;
-            // run block in nested context, Loop meaning is the last statement of the last iteration
-            rtnExpr ~= block_meaning( runBlock ).expr;
-            // rtnExpr = meaning( runBlock ).expr;
+            rtnExpr ~= block_meaning( loopProg );
             i += incr; // increment
             bind_atom( nuEnv, iVarName, new Atom( i ) ); // Store new counter value so that loop body can access it
         }
 
-        return ExprInContext( 
-            rtnExpr[$-1],
-            eINc.context,
-            "loop result"
-        );
+        // Ascend to parent env
+        envPtr = envPtr.parent;
 
+        return rtnExpr[$-1];
     };
 
     // FIXME: LOAD FILE, A WAY TO IMPORT FILES WITHIN EITHER FILES OR REPL
     // specialForms["load"] = function ExprInContext( ExprInContext eINc ){ /* LOAD FILE */ } 
-
-
 
 }
 
@@ -738,13 +638,12 @@ bool p_else( Atom* x ){  return p_literal( x ) && p_eq( x, new Atom( "else" ) );
 
 
 
-// ExprInContext evcon( ExprInContext eINc ){
 Atom* evcon( Atom* e ){
     // evaluate cond form by form, this is the guts of cond
     Atom* /*---*/ forms     = e; // ------------------------------ Fetch cond lines from the expression
     Atom* /*---*/ condition = null;
     Atom* /*---*/ answer    = null;
-    ExprInContext result; // ------------------------------------------- Evaluation result
+    Atom* result; // ------------------------------------------- Evaluation result
 
     if( _DEBUG_VERBOSE ) writeln( "\t`evcon`: received the following forms: " ~ str( forms ) );
 
@@ -757,51 +656,25 @@ Atom* evcon( Atom* e ){
         if( _DEBUG_VERBOSE ) writeln( "\tevcon: " ~ "evaluate ..." );
         if( p_else( condition ) ){
             if( _DEBUG_VERBOSE ) writeln( "\tevcon: " ~ "Default to else" );
-
-            // return meaning( ExprInContext( 
-            //     answer,
-            //     eINc.context,
-            //     str( answer )
-            // ) );
             return meaning( answer );
-
         }else{
             if( _DEBUG_VERBOSE ) writeln( "\tevcon: " ~ "Regular condition" );
 
-            // result = meaning( ExprInContext( 
-            //     condition,
-            //     eINc.context,
-            //     str( condition )
-            // ) );
-
             result = meaning( condition );
 
-            // if( truthiness( result.expr ) ){
             if( truthiness( result ) ){
 
                 if( _DEBUG_VERBOSE ) writeln( "\tevcon: " ~ "Expression was TRUE" );
 
-                // return meaning( ExprInContext( 
-                //     answer,
-                //     eINc.context,
-                //     str( answer )
-                // ) );
                 return meaning( answer );
             }
         }
     }
 
-    // return meaning( ExprInContext( 
-    //     new Atom( false ),
-    //     baseEnv,
-    //     "No Cond True"
-    // ) );
-
     return new Atom( false );
 }
 
 
-// ExprInContext apply_primitive_function( ExprInContext eINc ){
 Atom* apply_primitive_function( Atom* e ){
     // Invocation of primitive function in a context
 
@@ -809,36 +682,19 @@ Atom* apply_primitive_function( Atom* e ){
 
     string /*--*/ name /*-*/ = get_car( e ).str;
     Atom* /*---*/ interpArgs = null;
-    // ExprInContext result;
     Atom* result;
 
-    
-
     if( p_primitve_function( name ) ){
-
-        // interpArgs = meaning( ExprInContext(
-        //     get_cdr( eINc.expr ),
-        //     eINc.context,
-        //     "primitive arguments"
-        // )).expr;
-        // interpArgs = get_cdr( eINc.expr );
         interpArgs = meaning( get_cdr( e ) );
 
         if( _DEBUG_VERBOSE ) writeln( 
             "\t`apply_primitive_function`: " ~ "About to call " ~ name ~ " with the following args -> " ~ str( interpArgs ) 
         );
 
-        // result = ExprInContext(
-        //     primitiveFunctions[ name ]( 
-        //         interpArgs
-        //     ), // Balance of arguments
-        //     eINc.context, // ---- Original context
-        //     "primitive: " ~ name // ------- Tag
-        // );
         result = primitiveFunctions[ name ]( interpArgs );
 
         if( _DEBUG_VERBOSE ) writeln( 
-            "\t`apply_primitive_function`: " ~ str( eINc.expr ) ~ "--(" ~ name ~ ")-> " ~ str( result.expr )
+            "\t`apply_primitive_function`: " ~ str( e ) ~ "--(" ~ name ~ ")-> " ~ str( result )
         );
 
         return result;
@@ -848,17 +704,9 @@ Atom* apply_primitive_function( Atom* e ){
             "\t`apply_primitive_function`: Search for primitive function " ~ name ~ " has no result!" 
         );
 
-        // return ExprInContext(
-        //     new Atom(
-        //         F_Error.DNE,
-        //         "Oops, \"" ~ get_car( eINc.expr ).str ~ "\" is NOT a primitive function in SPARROW!"
-        //     ),
-        //     eINc.context, // ---- Original context
-        //     "ERROR"
-        // );
         return new Atom(
             F_Error.DNE,
-            "Oops, \"" ~ get_car( eINc.expr ).str ~ "\" is NOT a primitive function in SPARROW!"
+            "Oops, \"" ~ get_car( e ).str ~ "\" is NOT a primitive function in SPARROW!"
         );
     }
 }
@@ -875,59 +723,35 @@ bool p_user_def_function( Env* env, string funcName ){
 }
 
 
-// ExprInContext apply_closure( ExprInContext input ){ 
 Atom* apply_closure( Atom* input ){ 
     // apply a non-primitive function
 
     if( _DEBUG_VERBOSE )  writeln( "`apply_closure`" );
 
-    // Env*  nuEnv = null; // Enclosed environment
     Atom* rtnRes = null; // Enclosed environment
     Atom* func   = null;
     Atom* argMeaning;
 
     // 0. Determine if the function exists, then construct a new context
-    // if(  p_user_def_function( input.context, nameOf( input.expr ).str )  ){
     if(  p_user_def_function( envPtr, nameOf( input ).str )  ){
         
         // 1. Create a new context with the arguments given values as a child of the containing context
-
-        // func = get_bound_atom( input.context, nameOf( input.expr ).str );
-        func = get_bound_atom( envPtr, nameOf( input ).str );
-
-        // argMeaning = meaning( ExprInContext(
-        // // argMeaning = ExprInContext(
-        //     argsOf( input.expr ), // arguments
-        //     input.context,
-        //     "args meaning"
-        // ) );
-        // // );
+        func /*-*/ = get_bound_atom( envPtr, nameOf( input ).str );
         argMeaning = meaning( argsOf( input ) );
-
-        // FIXME, START HERE: FIX `enclose`, THEN RESUME XFER TO `envPtr`
-
-        // nuEnv = enclose( 
-        envPtr = enclose( 
-            input.context, // ------- parent 
+        envPtr     = enclose( 
+            envPtr, // ------- parent 
             formalsOf( func ), // --- parameters
-            argMeaning.expr, 
+            argMeaning, 
         );
 
         if( _DEBUG_VERBOSE ){  
-            writeln( "\t`apply_closure`: " ~ "Found function " ~ nameOf( input.expr ).str );
+            writeln( "\t`apply_closure`: " ~ "Found function " ~ nameOf( input ).str );
             writeln( "\t`apply_closure`: " ~ "Parameters - " ~ str(formalsOf( func ) ));
-            writeln( "\t`apply_closure`: " ~ "Arguments  - " ~ str( argMeaning.expr ) );
+            writeln( "\t`apply_closure`: " ~ "Arguments  - " ~ str( argMeaning ) );
             writeln( "\t`apply_closure`: " ~ "Body       - " ~ str( bodyOf( func ) ) );
         }
 
         // 2. Evaluate the function within the new context
-        // return meaning(
-        //     ExprInContext(
-        //         bodyOf( func ),
-        //         nuEnv,
-        //         "closure"
-        //     )
-        // );
         rtnRes = meaning( bodyOf( func ) );
 
         // 3. Ascend from closure
@@ -940,11 +764,6 @@ Atom* apply_closure( Atom* input ){
     if( _DEBUG_VERBOSE )  writeln( "`apply_closure`: " ~ "NO function named " ~ nameOf( input ).str );
 
     // 2. Evaluate the function within the new context
-    // return ExprInContext(
-    //     new Atom( F_Error.NOVALUE, "There is no function with the name " ~ nameOf( input.expr ).str ),
-    //     nuEnv,
-    //     "closure"
-    // );
     return new Atom( F_Error.NOVALUE, "There is no function with the name " ~ nameOf( input ).str );
 }
 
@@ -973,22 +792,21 @@ bool first_only( Atom* atm ){
 Atom* function()[string] /*--*/ runtimeSymbols; // - Dictionary of text aliases of important symbols
 bool p_runtime_symbol( string token ){    return (token in runtimeSymbols) !is null;  } // - In the primitive sym dict?
 
+
 void init_runtime_symbols(){
+
     runtimeSymbols["rand"] = function Atom*(){  
         // Random number on [0,1)
         Atom* rtnAtm = null;
-        // rtnAtm = new Atom( rand01( rnd ) );
         rtnAtm = new Atom( rand01( rnd ) );
         return rtnAtm; 
     }; 
+
 }
 
 
-// ExprInContext meaning( ExprInContext eINc ){ 
 Atom* meaning( Atom* e ){ 
     // Handle expressions more complex than literals
-
-    // Atom* /*---*/ e /*-*/  = eINc.expr;
 
     if( _DEBUG_VERBOSE ){
         writeln( "`meaning`" );
@@ -1016,12 +834,6 @@ Atom* meaning( Atom* e ){
 
         rtnResult = runtimeSymbols[ name ]();
 
-        // rtnResult = ExprInContext(
-        //     runtimeSymbols[ name ](), // Balance of arguments
-        //     eINc.context, // ---- Original context
-        //     "primitive: " ~ name // ------- Tag
-        // );
-
     // Base Case: Bound Symbol
     }else if( p_binding_exists( envPtr, name ) && (!p_bound_function( envPtr, name )) ){
 
@@ -1031,17 +843,11 @@ Atom* meaning( Atom* e ){
             writeln( envPtr );
         }
 
-        rtnResult = get_bound_atom( eINc.context, name );
-        // rtnResult = ExprInContext(
-        //     get_bound_atom( eINc.context, name ), // Balance of arguments
-        //     eINc.context, // ---- Original context
-        //     "Variable: " ~ name // ------- Tag
-        // );
+        rtnResult = get_bound_atom( envPtr, name );
 
     // Base Case Literal -OR- Base Case Empty: Pass thru
     }else if( p_literal(e) || p_empty(e) ){
         if( _DEBUG_VERBOSE ) writeln( "\tmeaning: " ~ "Was atom, " ~ str(e) ~ " is a " ~ e.kind.to!string );
-        // rtnResult = eINc;
         rtnResult = e;
 
     /// Recursive Cases ///
@@ -1058,21 +864,11 @@ Atom* meaning( Atom* e ){
             nuEnv.parent = envPtr;
             envPtr = nuEnv;
 
-            // init_random();
-
             // Pass that context to meaning && Return the meaning of the last statement in the block
-            // rtnResult = ExprInContext();
             rtnResult = block_meaning( e );
-            // rtnResult = block_meaning( ExprInContext(
-            //     e,
-            //     nuEnv,
-            //     "block meaning"
-            // ) );
 
             // Ascend pointer
             envPtr = envPtr.parent;
-
-            // nuEnv = null;
         
         // Case Primitive Function
         }else if( p_primitve_function( name ) ){
@@ -1112,21 +908,11 @@ Atom* meaning( Atom* e ){
             do{
                 rtnRoot = append( rtnRoot,  
                     meaning( first( inputPtr ) )
-                    // meaning( ExprInContext(
-                    //     first( inputPtr ), // Balance of arguments
-                    //     eINc.context, // ---- Original context
-                    //     "suppress cons" // ------- Tag
-                    // ) ).expr
                 );
                 inputPtr = get_cdr( inputPtr );
             }while( !p_empty( inputPtr ) );
 
             rtnResult = rtnRoot;
-            // rtnResult = ExprInContext(
-            //     rtnRoot,
-            //     eINc.context, // ---- Original context
-            //     str( rtnRoot ) // ------- Tag
-            // );            
         }
     } 
     if( _DEBUG_VERBOSE ) writeln( "\t`meaning`: " ~ "Final ->" ~ str( rtnResult ) );
@@ -1136,14 +922,7 @@ Atom* meaning( Atom* e ){
 
 Atom* value( Atom* expression ){
     // call `meaning`` on expression in the '$global' context
-    ExprInContext result = meaning(
-        ExprInContext(
-            expression, // ----- Expression to be evaluated
-            baseEnv, // -------- Global context
-            str( expression ) // String representation of the original expression
-        )
-    );
-    return result.expr;
+    return meaning( expression );
 }
 
 
@@ -1164,13 +943,12 @@ void init_SPARROW(){
 void read_eval_prnt_loop(){
     // Terminal interaction with SPARROW
     bool   quit   = false; // Use request to quit
-    // char[] inBuf;
     string input; // -------- User input
     Atom*  expr   = null; //- S-Expression
     Atom*  output = null; //- Eval result
     
     // Preamble //
-    writeln( "\n##### SPARROW Interpreter, Version 2022.11.0 #####" );
+    writeln( "\n##### SPARROW Interpreter, Version " ~ VERSION ~ " #####" );
     writeln( "Interpreter expects complete, well-formed s-expressions,\n" ~
              "and does not currently support multi-line input.\n" ~
              "Input validation is unsupported, your mistakes will crash the program. ;P" );
@@ -1230,15 +1008,9 @@ Atom* block_meaning( Atom* block ){
     Atom*[] statememts = block.blk;
     Atom*   result;
     foreach( Atom* sttmnt; statememts ){
-        result ~= meaning( sttmnt );
-        //     ExprInContext(
-        //         , // ------ Expression to be evaluated
-        //         block.context, // Given context
-        //         str( sttmnt ) //- String representation of the original expression
-        //     )
-        // );
+        result = meaning( sttmnt );
     }
-    return result[$-1];
+    return result;
 }
 
 
@@ -1246,11 +1018,5 @@ Atom* run_file( string fName ){
     // Execute every statement in a file and return the result of the last expression
     string[] allTokens = tokenize_file( fName );
     Atom*    code = parse_token_sequence( allTokens );
-    return block_meaning(
-        ExprInContext(
-            code, // ----- Expression to be evaluated
-            baseEnv, // -------- Global context
-            fName // String representation of the original expression
-        )
-    ).expr;
+    return block_meaning( code );
 }
